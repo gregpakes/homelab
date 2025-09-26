@@ -7,7 +7,7 @@ deployment:
   enabled: true
   initContainers: []
   podAnnotations: {}
-  replicas: 2
+  replicas: 4
 globalArguments:
 - --global.sendanonymoususage=false
 - --global.checknewversion=false
