@@ -26,19 +26,4 @@ spec:
       target:
         name: podinfo
         kind: HorizontalPodAutoscaler
-
-    - patch: |-
-        apiVersion: v1
-        kind: Service
-        metadata:
-          name: podinfo
-        spec:
-          type: LoadBalancer
-          ports:
-            - name: http
-              port: 80
-              targetPort: 9898
-      target:
-        kind: Service
-        name: podinfo
     
