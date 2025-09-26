@@ -15,7 +15,7 @@ spec:
   chart:
     spec:
       chart: longhorn
-      version: 1.6.1           # <-- set the version you want
+      version: 1.6.2           # <-- set the version you want
       sourceRef:
         kind: HelmRepository
         name: longhorn
