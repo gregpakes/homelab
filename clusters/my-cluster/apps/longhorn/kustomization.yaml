@@ -4,11 +4,3 @@ kind: Kustomization
 resources:
   - longhorn.yaml
   - settings.yaml
-patches:
-  - path: tolerations-patch.yaml
-    target:
-      group: apps
-      version: v1
-      kind: DaemonSet
-      name: longhorn-manager
-      namespace: longhorn-system
