@@ -27,3 +27,13 @@ spec:
         name: podinfo
         kind: HorizontalPodAutoscaler
     
+    - patch: |-
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: podinfo
+        spec:
+          type: LoadBalancer
+      target:
+        kind: Service
+        name: podinfo
