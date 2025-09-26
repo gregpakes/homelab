@@ -8,9 +8,10 @@ spec:
   install:
     createNamespace: true
     remediation: { retries: 3 }
+    crds: Create
   upgrade:
     remediation: { retries: 3 }
-    crds: Create
+    crds: CreateReplace
   chart:
     spec:
       chart: longhorn
