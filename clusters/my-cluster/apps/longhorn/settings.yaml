@@ -1,15 +1,15 @@
+# Taint toleration so Longhorn can run on tainted storage nodes
 apiVersion: longhorn.io/v1beta2
 kind: Setting
 metadata:
   name: taint-toleration
   namespace: longhorn-system
-spec:
-  value: dedicated=longhorn:NoSchedule
+value: dedicated=longhorn:NoSchedule
 ---
+# Keep Longhorn system components on storage nodes (JSON string)
 apiVersion: longhorn.io/v1beta2
 kind: Setting
 metadata:
   name: system-managed-components-node-selector
   namespace: longhorn-system
-spec:
-  value: '{"longhorn":"true"}'
+value: '{"longhorn":"true"}'
