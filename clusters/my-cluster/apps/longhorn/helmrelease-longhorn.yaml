@@ -36,6 +36,8 @@ spec:
           effect: NoSchedule
       nodeSelector: { longhorn: "true" }
     csi:
+      kubeletRootDir: /var/lib/kubelet
+      nodeSelector: {}
       attacher:    { tolerations: [{key: dedicated, operator: Equal, value: longhorn, effect: NoSchedule}], nodeSelector: {longhorn: "true"} }
       provisioner: { tolerations: [{key: dedicated, operator: Equal, value: longhorn, effect: NoSchedule}], nodeSelector: {longhorn: "true"} }
       resizer:     { tolerations: [{key: dedicated, operator: Equal, value: longhorn, effect: NoSchedule}], nodeSelector: {longhorn: "true"} }
