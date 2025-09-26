@@ -1,0 +1,44 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: longhorn
+  namespace: longhorn-system
+spec:
+  interval: 5m
+  install:
+    createNamespace: true
+    remediation: { retries: 3 }
+  upgrade:
+    remediation: { retries: 3 }
+    crds: Create
+  chart:
+    spec:
+      chart: longhorn
+      version: 1.6.1           # <-- set the version you want
+      sourceRef:
+        kind: HelmRepository
+        name: longhorn
+        namespace: flux-system
+  values:
+    longhornManager:
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: longhorn
+          effect: NoSchedule
+      nodeSelector: { longhorn: "true" }
+    longhornDriver:
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: longhorn
+          effect: NoSchedule
+      nodeSelector: { longhorn: "true" }
+    csi:
+      attacher:    { tolerations: [{key: dedicated, operator: Equal, value: longhorn, effect: NoSchedule}], nodeSelector: {longhorn: "true"} }
+      provisioner: { tolerations: [{key: dedicated, operator: Equal, value: longhorn, effect: NoSchedule}], nodeSelector: {longhorn: "true"} }
+      resizer:     { tolerations: [{key: dedicated, operator: Equal, value: longhorn, effect: NoSchedule}], nodeSelector: {longhorn: "true"} }
+      snapshotter: { tolerations: [{key: dedicated, operator: Equal, value: longhorn, effect: NoSchedule}], nodeSelector: {longhorn: "true"} }
+    defaultSettings:
+      taintToleration: dedicated=longhorn:NoSchedule
+      systemManagedComponentsNodeSelector: '{"longhorn":"true"}'
