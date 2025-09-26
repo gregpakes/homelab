@@ -4,4 +4,4 @@ kind: Kustomization
 resources:
   - helmrepository-longhorn.yaml
   - helmrelease-longhorn.yaml
-  - settings.yaml
+  # - settings.yaml
