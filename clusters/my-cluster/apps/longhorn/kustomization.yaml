@@ -5,4 +5,4 @@ resources:
   - namespace.yaml
   - helmrepository-longhorn.yaml
   - helmrelease-longhorn.yaml
-  - settings.yaml
+  # - settings.yaml
