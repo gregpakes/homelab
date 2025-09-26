@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./flux-system                  # keep Flux bootstrap bits
+  - ./apps/traefik                 # makes Traefik explicit
+  - ./apps/longhorn                # add Longhorn (your Helm repo+release)
+  # - ./apps/longhorn-settings     # optional: if you keep Settings separate
