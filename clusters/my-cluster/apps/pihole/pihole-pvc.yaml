@@ -3,6 +3,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: pihole
   namespace: pihole
+  annotations:
+    longhorn.io/volume-name: pihole-config
 spec:
   accessModes:
     - ReadWriteOnce
