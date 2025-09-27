@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pihole-exporter
+  namespace: pihole
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: pihole-exporter }
+  template:
+    metadata:
+      labels: { app: pihole-exporter }
+    spec:
+      containers:
+        - name: exporter
+          image: ekofr/pihole-exporter:latest
+          args:
+            - "-pihole_hostname=pihole.pihole.svc"
+            - "-port=9617"
+          env:
+            - name: PIHOLE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pihole-exporter
+                  key: PIHOLE_PASSWORD
+          ports:
+            - containerPort: 9617
+              name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pihole-exporter
+  namespace: pihole
+spec:
+  selector: { app: pihole-exporter }
+  ports:
+    - name: http
+      port: 9617
+      targetPort: 9617

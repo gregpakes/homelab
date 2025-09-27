@@ -1,0 +1,13 @@
+# monitoring/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: monitoring
+resources:
+  - namespace.yaml
+  - helmrepo-prometheus-community.yaml
+  - helmrelease-kube-prometheus-stack.yaml
+  - probe-pihole-dns.yaml
+  - rule-pihole-dns.yaml
+  - ../apps/pihole/namespace.yaml   # if your pihole ns is elsewhere; else remove
+  - pihole-exporter.yaml
+  - servicemonitor-pihole-exporter.yaml

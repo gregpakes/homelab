@@ -1,0 +1,18 @@
+# monitoring/rule-pihole-dns.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: homelab-rules
+  namespace: monitoring
+spec:
+  groups:
+    - name: homelab.probes
+      rules:
+        - alert: PiHoleDNSDown
+          expr: probe_success{job="pihole-dns"} == 0
+          for: 3m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pi-hole DNS probe failing"
+            description: "Blackbox DNS probe to 172.16.51.67:53 is failing."
