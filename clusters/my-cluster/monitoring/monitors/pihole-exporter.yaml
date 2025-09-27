@@ -14,12 +14,12 @@ spec:
       containers:
         - name: exporter
           image: ekofr/pihole-exporter:latest
-          # NOTE: no "command:" here — keep the image's entrypoint
-          args:
-            - "--pihole_hostname=pihole.pihole.svc"   # or pihole.pihole.svc.cluster.local
-            - "--port=9617"
           env:
-            - name: PIHOLE_PASSWORD                    # exporter reads this automatically
+            - name: PIHOLE_HOSTNAME
+              value: "pihole.pihole.svc"
+            - name: PORT
+              value: "9617"
+            - name: PIHOLE_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: pihole-exporter
