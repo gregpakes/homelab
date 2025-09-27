@@ -24,15 +24,16 @@ spec:
         # --- NextDNS sidecar (replaces cloudflared) ---
         - name: nextdns
           image: nextdns/nextdns:latest
-          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh","-c"]
           args:
-            - "run"
-            - "-listen=127.0.0.1:5054"
-            - "-profile=$NEXTDNS_PROFILE"
-            - "-report-client-info"
-            - "-cache-size=10MB"
-            - "-timeout=5s"
-            - "-discovery-dns=off"
+            - >
+              nextdns run
+              -listen=127.0.0.1:5054
+              -profile="$NEXTDNS_PROFILE"
+              -report-client-info
+              -cache-size=10MB
+              -timeout=5s
+              -discovery-dns=off
           env:
             - name: NEXTDNS_PROFILE  # a secret in k3s
               valueFrom:
