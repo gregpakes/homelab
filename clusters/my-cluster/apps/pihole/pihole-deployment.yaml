@@ -11,6 +11,8 @@ spec:
   selector:
     matchLabels:
       app: pihole
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -86,8 +88,6 @@ spec:
         - name: pihole
           persistentVolumeClaim:
             claimName: pihole
-      strategy:
-        type: Recreate
 ---
 # Service stays the same (no 5054 exposure needed)
 apiVersion: v1
