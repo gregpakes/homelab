@@ -3,3 +3,5 @@ kind: Kustomization
 resources:
   - probe-pihole-dns.yaml
   - rule-pihole-dns.yaml
+  - pihole-exporter.yaml
+  - servicemonitor-pihole-exporter.yaml
