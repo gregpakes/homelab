@@ -25,9 +25,16 @@ spec:
         - name: nextdns
           image: nextdns/nextdns:latest
           imagePullPolicy: IfNotPresent
-          args: ["run","-listen=127.0.0.1:5054","-report-client-info","-cache-size=10MB","-timeout=5s","-discovery-dns=off"]
+          args:
+            - "run"
+            - "-listen=127.0.0.1:5054"
+            - "-report-client-info"
+            - "-cache-size=10MB"
+            - "-timeout=5s"
+            - "-discovery-dns=off"
+            - "-config=$(NEXTDNS_CONFIG)"   # <-- use your secret via env var expansion
           env:
-            - name: NEXTDNS_CONFIG # a secret in k3s
+            - name: NEXTDNS_CONFIG  # a secret in k3s
               valueFrom:
                 secretKeyRef:
                   name: nextdns-config
@@ -47,7 +54,7 @@ spec:
               cpu: 200m
               memory: 128Mi
 
-        # --- Pi-hole container (unchanged ports/env except it points to 127.0.0.1#5054) ---
+        # --- Pi-hole container (unchanged) ---
         - name: pihole
           image: pihole/pihole:latest
           imagePullPolicy: IfNotPresent
@@ -58,7 +65,7 @@ spec:
               value: password # change this!
             - name: FTLCONF_REPLY_ADDR4
               value: pihole
-            - name: PIHOLE_DNS_
+            - name: PIHOLE_DNS_1
               value: 127.0.0.1#5054
           ports:
             - containerPort: 80
@@ -89,7 +96,6 @@ spec:
           persistentVolumeClaim:
             claimName: pihole
 ---
-# Service stays the same (no 5054 exposure needed)
 apiVersion: v1
 kind: Service
 metadata:
