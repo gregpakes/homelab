@@ -28,7 +28,7 @@ spec:
           args:
             - "run"
             - "-listen=127.0.0.1:5054"
-            - profile="$NEXTDNS_PROFILE"
+            - "-profile=$NEXTDNS_PROFILE"
             - "-report-client-info"
             - "-cache-size=10MB"
             - "-timeout=5s"
