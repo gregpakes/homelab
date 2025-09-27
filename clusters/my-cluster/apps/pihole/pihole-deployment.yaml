@@ -32,7 +32,6 @@ spec:
             - "-cache-size=10MB"
             - "-timeout=5s"
             - "-discovery-dns=off"
-            - "-config=$(NEXTDNS_CONFIG)"   # <-- use your secret via env var expansion
           env:
             - name: NEXTDNS_CONFIG  # a secret in k3s
               valueFrom:
