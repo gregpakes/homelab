@@ -4,7 +4,6 @@ resources:
   - ./flux-system                  # keep Flux bootstrap bits
   - ./flux-kustomizations/monitoring-bootstrap.yaml
   - ./flux-kustomizations/monitoring-monitors.yaml
-  - ./monitoring/grafana
   - ./apps/traefik                 # makes Traefik explicit
   - ./apps/longhorn                # add Longhorn (your Helm repo+release)
   - ./apps/pihole                  # pihole
