@@ -17,8 +17,12 @@ spec:
           env:
             - name: PIHOLE_HOSTNAME
               value: "pihole.pihole.svc"
+            - name: PIHOLE_PROTOCOL
+              value: "http"                      # or "https" if your GUI is TLS
+            - name: PIHOLE_PORT
+              value: "80"                        # "443" if using https
             - name: PORT
-              value: "9617"
+              value: "9617"                      # exporter listen port
             - name: PIHOLE_PASSWORD
               valueFrom:
                 secretKeyRef:
