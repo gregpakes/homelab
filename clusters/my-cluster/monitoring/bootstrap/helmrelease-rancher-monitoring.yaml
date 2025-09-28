@@ -19,6 +19,9 @@ spec:
   values:
     # keep values minimal; you can customize later
     prometheus:
+      enabled: true
+      service:
+        enabled: true
       prometheusSpec:
         retention: 15d
         retentionSize: 10Gi
