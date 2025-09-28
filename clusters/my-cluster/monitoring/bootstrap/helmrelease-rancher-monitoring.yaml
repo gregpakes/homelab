@@ -24,7 +24,7 @@ spec:
         enabled: true
       prometheusSpec:
         retention: 15d
-        retentionSize: 10Gi
+        retentionSize: 10GiB
         scrapeInterval: 30s
         evaluationInterval: 30s
     grafana:
