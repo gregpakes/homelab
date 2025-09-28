@@ -1,31 +1,18 @@
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: grafana
-  namespace: cattle-monitoring-system
----
+# grafana-rbac.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: grafana-k8s-read
 rules:
   - apiGroups: [""]
-    resources:
-      - pods
-      - pods/log
-      - services
-      - endpoints
-      - nodes
-      - namespaces
-      - events
-      - configmaps
-    verbs: ["get","list","watch"]
+    resources: [pods,pods/log,services,endpoints,nodes,namespaces,events,configmaps]
+    verbs: [get,list,watch]
   - apiGroups: ["apps"]
-    resources: ["deployments","daemonsets","statefulsets","replicasets"]
-    verbs: ["get","list","watch"]
+    resources: [deployments,daemonsets,statefulsets,replicasets]
+    verbs: [get,list,watch]
   - apiGroups: ["batch"]
-    resources: ["jobs","cronjobs"]
-    verbs: ["get","list","watch"]
+    resources: [jobs,cronjobs]
+    verbs: [get,list,watch]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -37,5 +24,5 @@ roleRef:
   name: grafana-k8s-read
 subjects:
   - kind: ServiceAccount
-    name: grafana
-    namespace: cattle-monitoring-system
+    name: rancher-monitoring-grafana          # <-- your SA
+    namespace: cattle-monitoring-system       # <-- your Grafana namespace

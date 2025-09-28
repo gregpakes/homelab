@@ -1,12 +1,13 @@
+# grafana-datasource-kubernetes.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-datasource-kubernetes
   namespace: cattle-monitoring-system
   labels:
-    grafana_datasource: "1"   # kube-prometheus-stack/rancher-monitoring will mount this automatically
+    grafana_datasource: "1"
 data:
-  kubernetes-datasource.yaml: |
+  kubernetes-ds.yaml: |
     apiVersion: 1
     datasources:
       - name: Kubernetes
@@ -15,8 +16,8 @@ data:
         isDefault: false
         editable: true
         jsonData:
-          authType: serviceAccount          # use the pod’s SA token
+          authType: serviceAccount
+          forwardOauthIdentity: false
           cluster:
             name: in-cluster
             url: https://kubernetes.default.svc
-          # Do NOT enable forward OAuth identity unless you’ve set up OAuth in Grafana
