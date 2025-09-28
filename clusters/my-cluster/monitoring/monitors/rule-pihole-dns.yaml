@@ -4,6 +4,8 @@ kind: PrometheusRule
 metadata:
   name: homelab-rules
   namespace: monitoring
+  labels:
+    release: rancher-monitoring  
 spec:
   groups:
     - name: homelab.probes

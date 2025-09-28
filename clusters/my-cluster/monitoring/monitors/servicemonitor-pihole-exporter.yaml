@@ -5,7 +5,7 @@ metadata:
   name: pihole-exporter
   namespace: monitoring
   labels:
-    release: kps
+    release: rancher-monitoring
 spec:
   selector:
     matchLabels: { app: pihole-exporter }

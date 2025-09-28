@@ -4,6 +4,8 @@ kind: Probe
 metadata:
   name: pihole-dns
   namespace: monitoring
+  labels:
+    release: rancher-monitoring  
 spec:
   jobName: pihole-dns
   prober:
