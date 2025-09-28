@@ -1,17 +1,16 @@
-# monitoring/probe-pihole-dns.yaml
 apiVersion: monitoring.coreos.com/v1
 kind: Probe
 metadata:
   name: pihole-dns
   namespace: monitoring
   labels:
-    release: rancher-monitoring  
+    release: rancher-monitoring             # make Rancher Prometheus select it
 spec:
   jobName: pihole-dns
   prober:
-    url: blackbox-exporter:9115
+    url: blackbox-exporter.cattle-monitoring-system.svc:9115
   module: dns_udp
   targets:
     staticConfig:
       static:
-        - "172.16.51.67:53"   # Pi-hole LoadBalancer IP (change if needed)
+        - "172.16.51.67:53"                 # your Pi-hole LB IP:port

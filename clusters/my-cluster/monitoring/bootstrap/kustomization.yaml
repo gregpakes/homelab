@@ -6,3 +6,5 @@ resources:
   - helmrepository-rancher-charts.yaml
   - helmrelease-rancher-monitoring-crd.yaml
   - helmrelease-rancher-monitoring.yaml
+  - helmrepo-prometheus-community.yaml
+  - helmrelease-blackbox-exporter.yaml  
