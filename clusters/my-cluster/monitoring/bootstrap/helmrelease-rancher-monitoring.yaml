@@ -28,4 +28,6 @@ spec:
         scrapeInterval: 30s
         evaluationInterval: 30s
     grafana:
+      plugins:
+        - grafana-kubernetes-datasource
       adminPassword: "changeme"   # move to a Secret later if you want
