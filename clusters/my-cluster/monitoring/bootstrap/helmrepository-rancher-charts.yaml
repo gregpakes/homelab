@@ -1,0 +1,9 @@
+# clusters/my-cluster/monitoring/bootstrap/helmrepo-rancher-charts.yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: rancher-charts
+  namespace: cattle-monitoring-system
+spec:
+  interval: 1h
+  url: https://charts.rancher.io
