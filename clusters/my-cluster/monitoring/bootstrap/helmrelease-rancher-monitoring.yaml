@@ -36,6 +36,4 @@ spec:
         GF_AUTH_ANONYMOUS_ENABLED: "true"
         GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
         GF_USERS_ALLOW_SIGN_UP: "false"
-      grafana.ini:
-        server:
-          serve_from_sub_path: true
+        GF_SERVER_SERVE_FROM_SUB_PATH: true
