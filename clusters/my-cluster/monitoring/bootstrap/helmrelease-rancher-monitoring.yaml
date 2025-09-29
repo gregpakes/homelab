@@ -36,3 +36,4 @@ spec:
       grafana.ini:
         server:
           serve_from_sub_path: true
+          root_url: "%(protocol)s://%(domain)s:%(http_port)s/api/v1/namespaces/cattle-monitoring-system/services/http:rancher-monitoring-grafana:80/proxy/" # required to get the login to work
