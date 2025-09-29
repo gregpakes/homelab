@@ -36,4 +36,4 @@ spec:
       grafana.ini:
         server:
           serve_from_sub_path: true
-          root_url: "https://<rancher-host>/k8s/clusters/<CLUSTER_ID>/api/v1/namespaces/cattle-monitoring-system/services/http:rancher-monitoring-grafana:80/proxy/"
+          root_url: "http://172.16.51.61:8080/api/v1/namespaces/cattle-monitoring-system/services/http:rancher-monitoring-grafana:80/proxy/"
