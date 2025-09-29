@@ -17,6 +17,9 @@ spec:
         name: rancher-charts
         namespace: cattle-monitoring-system
   values:
+    global:
+      cattle:
+        clusterId: local
     # keep values minimal; you can customize later
     prometheus:
       enabled: true
