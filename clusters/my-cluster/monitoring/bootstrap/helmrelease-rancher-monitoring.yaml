@@ -30,10 +30,37 @@ spec:
         retentionSize: 10GiB
         scrapeInterval: 30s
         evaluationInterval: 30s
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: longhorn         # <-- Longhorn StorageClass
+              accessModes: ["ReadWriteOnce"]     # Prometheus is single-writer
+              resources:
+                requests:
+                  storage: 50Gi                  # pick a size you want
+
+      alertmanager:
+        alertmanagerSpec:
+          storage:
+            volumeClaimTemplate:
+              spec:
+                storageClassName: longhorn
+                accessModes: ["ReadWriteOnce"]
+                resources:
+                  requests:
+                    storage: 5Gi
+
+
     grafana:
+      persistence:
+        enabled: true
+        type: pvc
+        storageClassName: longhorn
+        accessModes: ["ReadWriteOnce"]
+        size: 10Gi
       adminPassword: "changeme"   # move to a Secret later if you want
       env:
         GF_AUTH_ANONYMOUS_ENABLED: "true"
         GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
         GF_USERS_ALLOW_SIGN_UP: "false"
-        GF_SERVER_SERVE_FROM_SUB_PATH: true
+        GF_SERVER_SERVE_FROM_SUB_PATH: "true"
