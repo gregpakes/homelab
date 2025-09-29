@@ -29,3 +29,9 @@ spec:
         evaluationInterval: 30s
     grafana:
       adminPassword: "changeme"   # move to a Secret later if you want
+      env:
+        GF_AUTH_ANONYMOUS_ENABLED: "true"
+        GF_AUTH_ANONYMOUS_ORG_ROLE: "Editor"   # let you import dashboards without logging in
+      grafana.ini:
+        server:
+          serve_from_sub_path: true
