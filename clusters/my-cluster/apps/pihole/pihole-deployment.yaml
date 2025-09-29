@@ -21,39 +21,40 @@ spec:
       nodeSelector:
         worker: "true"
       containers:
+        # Removed NextDns container as can point to UNIFI instead and still get local name resolution
         # --- NextDNS sidecar (replaces cloudflared) ---
-        - name: nextdns
-          image: nextdns/nextdns:latest
-          command: ["/bin/sh","-c"]
-          args:
-            - >
-              nextdns run
-              -listen=127.0.0.1:5054
-              -profile="$NEXTDNS_PROFILE"
-              -report-client-info
-              -cache-size=10MB
-              -timeout=5s
-              -discovery-dns=off
-          env:
-            - name: NEXTDNS_PROFILE  # a secret in k3s
-              valueFrom:
-                secretKeyRef:
-                  name: nextdns-config
-                  key: CONFIG_ID
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 65532
-            capabilities:
-              drop: ["ALL"]
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 200m
-              memory: 128Mi
+        # - name: nextdns
+        #   image: nextdns/nextdns:latest
+        #   command: ["/bin/sh","-c"]
+        #   args:
+        #     - >
+        #       nextdns run
+        #       -listen=127.0.0.1:5054
+        #       -profile="$NEXTDNS_PROFILE"
+        #       -report-client-info
+        #       -cache-size=10MB
+        #       -timeout=5s
+        #       -discovery-dns=off
+        #   env:
+        #     - name: NEXTDNS_PROFILE  # a secret in k3s
+        #       valueFrom:
+        #         secretKeyRef:
+        #           name: nextdns-config
+        #           key: CONFIG_ID
+        #   securityContext:
+        #     allowPrivilegeEscalation: false
+        #     readOnlyRootFilesystem: true
+        #     runAsNonRoot: true
+        #     runAsUser: 65532
+        #     capabilities:
+        #       drop: ["ALL"]
+        #   resources:
+        #     requests:
+        #       cpu: 50m
+        #       memory: 64Mi
+        #     limits:
+        #       cpu: 200m
+        #       memory: 128Mi
 
         # --- Pi-hole container (unchanged) ---
         - name: pihole
@@ -67,7 +68,7 @@ spec:
             - name: FTLCONF_REPLY_ADDR4
               value: pihole
             - name: PIHOLE_DNS_1
-              value: 127.0.0.1#5054
+              value: 172.16.51.1
           ports:
             - containerPort: 80
               name: pihole-http
