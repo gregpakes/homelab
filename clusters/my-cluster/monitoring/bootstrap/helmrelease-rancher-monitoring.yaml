@@ -50,7 +50,6 @@ spec:
                   requests:
                     storage: 5Gi
 
-
     grafana:
       persistence:
         enabled: true
