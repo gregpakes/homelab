@@ -6,6 +6,6 @@ resources:
   - ./flux-kustomizations/rancher-stack.yaml
   - ./flux-kustomizations/monitoring-bootstrap.yaml
   - ./flux-kustomizations/monitoring-monitors.yaml
-  - ./apps/traefik                 # makes Traefik explicit
+  - ./flux-kustomizations/traefik.yaml               # makes Traefik explicit
   #- ./apps/longhorn                # add Longhorn (your Helm repo+release)
-  - ./apps/pihole                  # pihole
+  - ./flux-kustomizations/pihole.yaml              # pihole
