@@ -7,13 +7,14 @@ spec:
   interval: 10m
   install:
     createNamespace: true
+    crds: Create
     remediation:
       retries: 3
   upgrade:
     remediation:
       retries: 3
     # Uncomment the next line to allow CRD upgrades (if chart supports it)
-    # crds: CreateReplace
+    crds: CreateReplace
   chart:
     spec:
       chart: traefik
