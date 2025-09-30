@@ -2,8 +2,10 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./flux-system                  # keep Flux bootstrap bits
+  - ./flux-kustomizations/cert-manager.yaml
+  - ./flux-kustomizations/rancher-stack.yaml
   - ./flux-kustomizations/monitoring-bootstrap.yaml
   - ./flux-kustomizations/monitoring-monitors.yaml
   - ./apps/traefik                 # makes Traefik explicit
-  - ./apps/longhorn                # add Longhorn (your Helm repo+release)
+  #- ./apps/longhorn                # add Longhorn (your Helm repo+release)
   - ./apps/pihole                  # pihole

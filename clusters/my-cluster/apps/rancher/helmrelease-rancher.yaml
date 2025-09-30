@@ -1,0 +1,30 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta2
+kind: HelmRelease
+metadata:
+  name: rancher
+  namespace: cattle-system
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: rancher
+      version: 2.8.x      # pick the minor you want
+      sourceRef:
+        kind: HelmRepository
+        name: rancher-stable
+        namespace: flux-system
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    hostname: rancher.gregpakes.co.uk
+    replicas: 3                 # or 1 to start small
+    bootstrapPassword: "superSecretBootstrap!"   # change after first login
+    ingress:
+      tls:
+        source: secret          # use our cert-manager-generated secret
+    additionalTrustedCAs: false

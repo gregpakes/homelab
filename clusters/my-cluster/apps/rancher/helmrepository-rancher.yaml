@@ -1,0 +1,9 @@
+# rancher-hr.yaml
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: rancher-stable
+  namespace: flux-system
+spec:
+  url: https://releases.rancher.com/server-charts/stable    # or .../latest
+  interval: 30m

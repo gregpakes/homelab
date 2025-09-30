@@ -1,0 +1,11 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+# (This file is a plain Kustomize file, not the Flux CR. Using Kustomize v1 format)
+# If your Flux version expects apiVersion: kustomize.config.k8s.io/v1beta1, use that instead:
+# apiVersion: kustomize.config.k8s.io/v1beta1
+# kind: Kustomization
+resources:
+  - namespace.yaml
+  - rancher-certificate.yaml
+  - helmrepository-rancher.yaml
+  - helmrelease-rancher.yaml
