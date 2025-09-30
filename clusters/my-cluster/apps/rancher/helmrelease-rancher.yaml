@@ -27,7 +27,9 @@ spec:
     replicas: 3                 # or 1 to start small
     bootstrapPassword: "superSecretBootstrap!"   # change after first login
     ingress:
+      ingressClassName: traefik
       tls:
         source: secret         # use our cert-manager-generated secret
         secretName: rancher-tls
+      extraAnnotations: {}
     additionalTrustedCAs: false
