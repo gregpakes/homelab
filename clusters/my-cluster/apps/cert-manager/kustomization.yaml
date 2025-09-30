@@ -4,4 +4,3 @@ resources:
   - namespace.yaml
   - helmrepository-certmanager.yaml
   - helmrelease-certmanager.yaml
-  - cert-issuer.yaml
