@@ -2,6 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./flux-system                  # keep Flux bootstrap bits
+  - ./flux-kustomizations/cert-issuer.yaml
   - ./flux-kustomizations/cert-manager.yaml
   - ./flux-kustomizations/rancher-stack.yaml
   - ./flux-kustomizations/monitoring-bootstrap.yaml
