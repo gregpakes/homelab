@@ -14,10 +14,12 @@ spec:
         name: rancher-stable
         namespace: flux-system
   install:
-    createNamespace: false
+    createNamespace: true
+    crds: Create
     remediation:
       retries: 3
   upgrade:
+    crds: CreateReplace
     remediation:
       retries: 3
   values:
@@ -26,5 +28,5 @@ spec:
     bootstrapPassword: "superSecretBootstrap!"   # change after first login
     ingress:
       tls:
-        source: secret          # use our cert-manager-generated secret
+        source: gregpakes-tls          # use our cert-manager-generated secret
     additionalTrustedCAs: false

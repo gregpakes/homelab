@@ -5,11 +5,20 @@ metadata:
   name: letsencrypt-prod
 spec:
   acme:
-    email: you@YOUR_DOMAIN
+    email: greg@gregpakes.me
     server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
+      - dns01:
+          cloudflare:
+            email: greg@gregpakes.me # add your email to your cloudflare account
+            apiTokenSecretRef:
+              name: cloudflare-token-secret
+              key: cloudflare-token
+        selector:
+          dnsZones:
+            - "gregpakes.co.uk" # change to your zone on CloudFlare
       - http01:
           ingress:
             class: traefik-external 
