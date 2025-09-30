@@ -28,5 +28,5 @@ spec:
     bootstrapPassword: "superSecretBootstrap!"   # change after first login
     ingress:
       tls:
-        source: gregpakes-tls          # use our cert-manager-generated secret
+        source: rancher-tls         # use our cert-manager-generated secret
     additionalTrustedCAs: false
