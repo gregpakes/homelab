@@ -92,7 +92,7 @@ spec:
       defaultDataLocality: best-effort
       # Respect your taint and node selector for ALL Longhorn system components
       taintToleration: dedicated=longhorn:NoSchedule
-      systemManagedComponentsNodeSelector: '{"longhorn":"true"}'
+      systemManagedComponentsNodeSelector: 'longhorn:true'
       # QoL: ensure the StorageClass name is predictable
       defaultLonghornStaticStorageClass: longhorn
 
