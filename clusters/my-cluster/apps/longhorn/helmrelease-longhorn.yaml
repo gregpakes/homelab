@@ -41,7 +41,6 @@ spec:
           operator: Equal
           value: longhorn
           effect: NoSchedule
-
     longhornDriver:
       nodeSelector:
         longhorn: "true"
