@@ -7,41 +7,88 @@ spec:
   interval: 5m
   install:
     createNamespace: true
-    remediation: { retries: 3 }
+    remediation:
+      retries: 3
     crds: Create
   upgrade:
-    remediation: { retries: 3 }
+    remediation:
+      retries: 3
     crds: CreateReplace
   chart:
     spec:
       chart: longhorn
-      version: 1.6.2           # <-- set the version you want
+      version: 1.6.2
       sourceRef:
         kind: HelmRepository
         name: longhorn
         namespace: flux-system
   values:
+    # --- Pin Longhorn to your 3 dedicated storage nodes ---
     longhornManager:
+      nodeSelector:
+        longhorn: "true"
       tolerations:
         - key: dedicated
           operator: Equal
           value: longhorn
           effect: NoSchedule
-      nodeSelector: { longhorn: "true" }
+
     longhornDriver:
+      nodeSelector:
+        longhorn: "true"
       tolerations:
         - key: dedicated
           operator: Equal
           value: longhorn
           effect: NoSchedule
-      nodeSelector: { longhorn: "true" }
+
     csi:
       kubeletRootDir: /var/lib/kubelet
-      nodeSelector: {}
-      attacher:    { tolerations: [{key: dedicated, operator: Equal, value: longhorn, effect: NoSchedule}], nodeSelector: {longhorn: "true"} }
-      provisioner: { tolerations: [{key: dedicated, operator: Equal, value: longhorn, effect: NoSchedule}], nodeSelector: {longhorn: "true"} }
-      resizer:     { tolerations: [{key: dedicated, operator: Equal, value: longhorn, effect: NoSchedule}], nodeSelector: {longhorn: "true"} }
-      snapshotter: { tolerations: [{key: dedicated, operator: Equal, value: longhorn, effect: NoSchedule}], nodeSelector: {longhorn: "true"} }
+      # CSI sidecars restricted to the same nodes + taint tolerated
+      attacher:
+        nodeSelector: { longhorn: "true" }
+        tolerations:
+          - key: dedicated
+            operator: Equal
+            value: longhorn
+            effect: NoSchedule
+      provisioner:
+        nodeSelector: { longhorn: "true" }
+        tolerations:
+          - key: dedicated
+            operator: Equal
+            value: longhorn
+            effect: NoSchedule
+      resizer:
+        nodeSelector: { longhorn: "true" }
+        tolerations:
+          - key: dedicated
+            operator: Equal
+            value: longhorn
+            effect: NoSchedule
+      snapshotter:
+        nodeSelector: { longhorn: "true" }
+        tolerations:
+          - key: dedicated
+            operator: Equal
+            value: longhorn
+            effect: NoSchedule
+
+    # --- Core Longhorn settings you want now ---
     defaultSettings:
+      # Use the dedicated disk you mounted in each VM
+      defaultDataPath: /var/lib/longhorn
+      # True HA across your 3 storage nodes
+      defaultReplicaCount: 3
+      # Keep replicas local when possible (nice-to-have once you scale)
+      defaultDataLocality: best-effort
+      # Respect your taint and node selector for ALL Longhorn system components
       taintToleration: dedicated=longhorn:NoSchedule
       systemManagedComponentsNodeSelector: '{"longhorn":"true"}'
+      # QoL: ensure the StorageClass name is predictable
+      defaultLonghornStaticStorageClass: longhorn
+
+    # Metrics/ServiceMonitor: enable later if you have kube-prometheus-stack
+    metrics:
+      serviceMonitor:
+        enabled: false
