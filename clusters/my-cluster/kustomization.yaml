@@ -5,8 +5,8 @@ resources:
   - ./flux-kustomizations/cert-issuer.yaml
   - ./flux-kustomizations/cert-manager.yaml
   - ./flux-kustomizations/rancher-stack.yaml
+  - ./apps/longhorn                # add Longhorn (your Helm repo+release)
   - ./flux-kustomizations/monitoring-bootstrap.yaml
   - ./flux-kustomizations/monitoring-monitors.yaml
   - ./flux-kustomizations/traefik.yaml               # makes Traefik explicit
-  #- ./apps/longhorn                # add Longhorn (your Helm repo+release)
   - ./flux-kustomizations/pihole.yaml              # pihole
