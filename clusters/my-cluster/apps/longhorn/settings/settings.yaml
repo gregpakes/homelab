@@ -11,4 +11,4 @@ kind: Setting
 metadata:
   name: system-managed-components-node-selector
   namespace: longhorn-system
-value: '{"longhorn":"true"}'
+value: 'longhorn:true'
