@@ -81,6 +81,14 @@ spec:
             operator: Equal
             value: longhorn
             effect: NoSchedule
+      engine:
+        tolerations:
+          - key: dedicated
+            operator: Equal
+            value: longhorn
+            effect: NoSchedule
+        nodeSelector:
+          longhorn: "true"
 
     # --- Core Longhorn settings you want now ---
     defaultSettings:
