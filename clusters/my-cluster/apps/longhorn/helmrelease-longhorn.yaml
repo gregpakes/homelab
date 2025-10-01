@@ -23,6 +23,15 @@ spec:
         name: longhorn
         namespace: flux-system
   values:
+    global:
+      nodeSelector:
+        longhorn: "true"
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: longhorn
+          effect: NoSchedule
+
     # --- Pin Longhorn to your 3 dedicated storage nodes ---
     longhornManager:
       nodeSelector:

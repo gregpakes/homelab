@@ -1,0 +1,14 @@
+# does not work from a fresh install - CRDS are missing
+apiVersion: longhorn.io/v1beta2
+kind: Setting
+metadata:
+  name: taint-toleration
+  namespace: longhorn-system
+value: dedicated=longhorn:NoSchedule
+---
+apiVersion: longhorn.io/v1beta2
+kind: Setting
+metadata:
+  name: system-managed-components-node-selector
+  namespace: longhorn-system
+value: '{"longhorn":"true"}'
