@@ -104,6 +104,10 @@ spec:
       systemManagedComponentsNodeSelector: 'longhorn:true'
       # QoL: ensure the StorageClass name is predictable
       defaultLonghornStaticStorageClass: longhorn
+    
+    persistence:
+      reclaimPolicy: Retain
+      volumeBindingMode: WaitForFirstConsumer
 
     # Metrics/ServiceMonitor: enable later if you have kube-prometheus-stack
     metrics:
