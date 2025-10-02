@@ -60,6 +60,13 @@ spec:
         - name: pihole
           image: pihole/pihole:latest
           imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              # no cpu limit as recommended to avoid throttling jitter
+              memory: 512Mi
           env:
             - name: TZ
               value: "Europe/London"
