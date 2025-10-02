@@ -55,6 +55,7 @@ spec:
       persistence:
         enabled: true
         type: pvc
+        existingClaim: rancher-monitoring-grafana
         storageClassName: longhorn
         accessModes: ["ReadWriteOnce"]
         size: 10Gi

@@ -5,6 +5,7 @@ resources:
   - namespace.yaml
   - helmrepository-rancher-charts.yaml
   - helmrelease-rancher-monitoring-crd.yaml
+  - grafana-pvc.yaml
   - helmrelease-rancher-monitoring.yaml
   - helmrepo-prometheus-community.yaml
   - helmrelease-blackbox-exporter.yaml  
