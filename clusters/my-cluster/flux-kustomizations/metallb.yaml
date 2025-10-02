@@ -7,5 +7,8 @@ spec:
   interval: 10m
   path: /clusters/my-cluster/infrastructure/metallb
   prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
   wait: true
   timeout: 3m
