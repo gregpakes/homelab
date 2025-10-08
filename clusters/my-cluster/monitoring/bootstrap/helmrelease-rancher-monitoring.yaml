@@ -37,7 +37,7 @@ spec:
               accessModes: ["ReadWriteOnce"]     # Prometheus is single-writer
               resources:
                 requests:
-                  storage: 5Gi                  # pick a size you want
+                  storage: 25Gi                  # pick a size you want
 
       alertmanager:
         alertmanagerSpec:
