@@ -9,7 +9,7 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   source:
-    repoURL: https://github.com/1Password/connect-helm-charts
+    repoURL: https://1password.github.io/connect-helm-charts
     targetRevision: 1.x.x
     chart: connect
     helm:
