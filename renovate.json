@@ -3,7 +3,7 @@
   "extends": ["config:recommended"],
 
   "argocd": {
-    "managerFilePatterns": [".*\\.ya?ml$"]
+    "managerFilePatterns": ["/argocd/.+\\.yaml$/"]
   },
   "flux": {
     "managerFilePatterns": ["^clusters/.*\\.ya?ml$"]
