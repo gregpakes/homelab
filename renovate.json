@@ -6,9 +6,9 @@
     "managerFilePatterns": ["/argocd/.+\\.yaml$/"]
   },
   "flux": {
-    "managerFilePatterns": ["^clusters/.*\\.ya?ml$"]
+    "managerFilePatterns": ["/clusters/.+\\.yaml$/"]
   },
   "kubernetes": {
-    "managerFilePatterns": ["^clusters/.*\\.ya?ml$"]
+    "managerFilePatterns": ["/clusters/.+\\.yaml$/"]
   }
 }
