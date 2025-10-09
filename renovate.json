@@ -3,22 +3,12 @@
   "extends": ["config:recommended"],
 
   "argocd": {
-    "managerFilePatterns": [
-      "(?i)^(?:argocd)(?:/.*)?/[^/]+\\.ya?ml$",
-      "(?i)^argocd/[^/]+\\.ya?ml$",
-      "(?i)^argocd\\.ya?ml$"
-    ]
+    "managerFilePatterns": [".*\\.ya?ml$"]
   },
-
   "flux": {
-    "managerFilePatterns": [
-      "^clusters/.*\\.ya?ml$"
-    ]
+    "managerFilePatterns": ["^clusters/.*\\.ya?ml$"]
   },
-
   "kubernetes": {
-    "managerFilePatterns": [
-      "^clusters/.*\\.ya?ml$"
-    ]
+    "managerFilePatterns": ["^clusters/.*\\.ya?ml$"]
   }
 }
