@@ -4,6 +4,6 @@
     "config:recommended"
   ],
   "kubernetes": {
-    "managerFilePatterns": ["/^config/.*\\.yaml$/"]
+    "managerFilePatterns": ["/argocd/.+\\.yaml$/"]
   }
 }
