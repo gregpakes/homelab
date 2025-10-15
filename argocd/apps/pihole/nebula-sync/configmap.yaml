@@ -10,6 +10,7 @@ data:
   FULL_SYNC: "true"            # set "false" to use granular SYNC_* flags instead
   RUN_GRAVITY: "true"
   CRON: "0 * * * *"            # run hourly
+  CLIENT_SKIP_TLS_VERIFICATION: "false" # Remove later
   # If you disable FULL_SYNC above, you can selectively turn on pieces, e.g.:
   # SYNC_GRAVITY_AD_LIST: "true"
   # SYNC_GRAVITY_DOMAIN_LIST: "true"
