@@ -11,6 +11,9 @@ data:
   RUN_GRAVITY: "true"
   CRON: "0 * * * *"            # run hourly
   CLIENT_SKIP_TLS_VERIFICATION: "true" # Remove later
+  WEBHOOK_SYNC_SUCCESS_URL: https://hc-ping.com/062faf8c-07ee-4fe3-98f9-4b373c93cd93
+  WEBHOOK_SYNC_FAILURE_URL: https://hc-ping.com/062faf8c-07ee-4fe3-98f9-4b373c93cd93/fail
+  
   # If you disable FULL_SYNC above, you can selectively turn on pieces, e.g.:
   # SYNC_GRAVITY_AD_LIST: "true"
   # SYNC_GRAVITY_DOMAIN_LIST: "true"
