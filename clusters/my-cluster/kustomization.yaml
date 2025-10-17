@@ -3,8 +3,6 @@ kind: Kustomization
 resources:
   - ./flux-system                  # keep Flux bootstrap bits
   - ./flux-kustomizations/metallb.yaml
-  - ./flux-kustomizations/cert-issuer.yaml
-  - ./flux-kustomizations/cert-manager.yaml
   - ./flux-kustomizations/rancher-stack.yaml
   - ./flux-kustomizations/longhorn.yaml
   - ./flux-kustomizations/longhorn-settings.yaml
@@ -12,5 +10,4 @@ resources:
   - ./flux-kustomizations/monitoring-prebootstrap.yaml
   - ./flux-kustomizations/monitoring-bootstrap.yaml
   - ./flux-kustomizations/monitoring-monitors.yaml
-  - ./flux-kustomizations/traefik.yaml               # makes Traefik explicit
   - ./flux-kustomizations/pihole.yaml              # pihole
