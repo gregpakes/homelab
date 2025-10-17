@@ -14,23 +14,57 @@ spec:
     targetRevision: 37.1.2                            # <— pin EXACT version
     helm:
       releaseName: traefik                             # <— MUST match current release
-      values: |                                        # <— paste from traefik.values.effective.yaml
-        # (example) keep your current config identical
+      values: |
+        additionalArguments:
+        - --serversTransport.insecureSkipVerify=true
+        - --log.level=INFO
         deployment:
+          additionalContainers: []
+          annotations: {}
+          enabled: true
+          initContainers: []
+          podAnnotations: {}
           replicas: 2
-        ports:
-          web:
-            redirectTo: websecure
-        providers:
-          kubernetesCRD:
-            enabled: true
-        experimental:
-          kubernetesGateway:
-            enabled: false
+        globalArguments:
+        - --global.sendanonymoususage=false
+        - --global.checknewversion=false
         ingressRoute:
           dashboard:
+            enabled: false
+        nodeSelector:
+          worker: "true"
+        ports:
+          web:
+            redirections:
+              entryPoint:
+                permanent: true
+                scheme: https
+                to: websecure
+          websecure:
+            tls:
+              enabled: true
+        providers:
+          kubernetesCRD:
+            allowExternalNameServices: true
             enabled: true
-        # ...
+            ingressClass: traefik-external
+          kubernetesIngress:
+            allowExternalNameServices: true
+            enabled: true
+            publishedService:
+              enabled: false
+        rbac:
+          enabled: true
+        service:
+          annotations: {}
+          enabled: true
+          externalIPs: []
+          labels: {}
+          loadBalancerSourceRanges: []
+          spec:
+            loadBalancerIP: 172.16.51.65
+          type: LoadBalancer
+
   syncPolicy:
     automated: {}          # optional; or enable later
     syncOptions:
