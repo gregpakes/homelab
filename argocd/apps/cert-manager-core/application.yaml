@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+  annotations:
+    # make it sync before Issuers/Certificates
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  source:
+    repoURL: https://charts.jetstack.io
+    chart: cert-manager
+    targetRevision: v1.14.7                 # matches Flux (v1.14.x -> v1.14.7)
+    helm:
+      releaseName: cert-manager             # MUST match existing release
+      values: |
+        installCRDs: true                   # same as Flux
+        # add any other values you used (none shown in your HR)
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false                          # enable after first good sync if you want
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  # reduce expected drift noise from webhook CA bundle regeneration
+  ignoreDifferences:
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+      name: cert-manager-webhook
+      jsonPointers:
+        - /webhooks/0/clientConfig/caBundle
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      name: cert-manager-webhook
+      jsonPointers:
+        - /webhooks/0/clientConfig/caBundle
