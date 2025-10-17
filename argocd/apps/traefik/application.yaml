@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik
+  source:
+    repoURL: https://traefik.github.io/charts          # <— from Flux
+    chart: traefik                                     # <— from Flux
+    targetRevision: 37.1.2                            # <— pin EXACT version
+    helm:
+      releaseName: traefik                             # <— MUST match current release
+      values: |                                        # <— paste from traefik.values.effective.yaml
+        # (example) keep your current config identical
+        deployment:
+          replicas: 2
+        ports:
+          web:
+            redirectTo: websecure
+        providers:
+          kubernetesCRD:
+            enabled: true
+        experimental:
+          kubernetesGateway:
+            enabled: false
+        ingressRoute:
+          dashboard:
+            enabled: true
+        # ...
+  syncPolicy:
+    automated: {}          # optional; or enable later
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
