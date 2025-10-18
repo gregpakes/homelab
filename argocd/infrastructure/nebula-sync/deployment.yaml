@@ -6,6 +6,8 @@ metadata:
   namespace: nebula-sync
   labels:
     app.kubernetes.io/name: nebula-sync
+  annotations:
+    argocd.argoproj.io/sync-wave: "5" # deploy after the external secret
 spec:
   replicas: 1
   selector:
