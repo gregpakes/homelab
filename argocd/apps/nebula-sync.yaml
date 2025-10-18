@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nebula-sync
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"   # after Traefik/cert-manager if you like
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nebula-sync
+  source:
+    repoURL: https://github.com/gregpakes/homelab  # <- change
+    targetRevision: main
+    path: argocd/infrastructure/nebula-sync
+    # If you use kustomize here, Argo will detect it automatically from kustomization.yaml
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false                        # enable later once you're happy
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
