@@ -52,6 +52,12 @@ spec:
 
     grafana:
       fullnameOverride: rancher-monitoring-grafana   # keeps names predictable (optional but helpful)
+      sidecar:
+        dashboards:
+          enabled: true
+          label: grafana_dashboard
+          labelValue: "1"
+          searchNamespace: "cattle-monitoring-system"
       persistence:
         enabled: true
         type: pvc
