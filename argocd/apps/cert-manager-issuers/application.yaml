@@ -13,7 +13,7 @@ spec:
   source:
     repoURL: https://github.com/gregpakes/homelab  # <-- replace with yours
     targetRevision: main
-    path: argocd/apps/cert-manager-core/issuers
+    path: argocd/infrastructure/cert-manager/issuers
   syncPolicy:
     automated:
       selfHeal: true
