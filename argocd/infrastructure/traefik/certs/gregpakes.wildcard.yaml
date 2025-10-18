@@ -1,0 +1,16 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-gregpakes-co-uk
+  namespace: traefik
+  annotations:
+    argocd.argoproj.io/sync-wave: "14"   # ensure this lands before TLSStore
+spec:
+  secretName: wildcard-gregpakes-co-uk
+  commonName: "*.gregpakes.co.uk"
+  dnsNames:
+    - "*.gregpakes.co.uk"
+    - "gregpakes.co.uk"
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod
