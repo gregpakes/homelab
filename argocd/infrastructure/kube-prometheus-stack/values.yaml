@@ -1,0 +1,86 @@
+# Keep CRDs managed by the chart
+crds:
+  enabled: true
+  keep: true
+
+# Prometheus (Operator) config
+prometheus:
+  prometheusSpec:
+    retention: 15d
+    scrapeInterval: 30s
+    enableAdminAPI: true
+
+    # Persist TSDB on Longhorn with Retain
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 30Gi
+
+    # Scrape ANY ServiceMonitor/PodMonitor in ANY namespace
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}
+    podMonitorSelector: {}
+    podMonitorNamespaceSelector: {}
+    ruleSelector: {}
+    ruleNamespaceSelector: {}
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+
+# Alertmanager (optional persistence)
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 2Gi
+
+# Grafana
+grafana:
+  adminUser: admin
+  adminPassword: "changeme"  # (recommend moving to External Secrets later)
+  persistence:
+    enabled: true
+    storageClassName: longhorn
+    size: 10Gi
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: "ALL"   # pick up Rancher/other namespaces too
+    datasources:
+      enabled: true
+      defaultDatasourceEnabled: true
+  grafana.ini:
+    server:
+      # If you publish Grafana under a subpath in Rancher, use e.g. https://rancher.example/grafana and set serve_from_sub_path: true
+      root_url: https://grafana.gregpakes.co.uk
+      serve_from_sub_path: false
+    security:
+      cookie_samesite: none
+      cookie_secure: true
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - grafana.gregpakes.co.uk
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    # no tls section as traefik will use the default cert
+
+# K3s specifics — keep etcd off unless you wire certs/endpoint
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: true
+kubeScheduler:
+  enabled: true
