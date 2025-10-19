@@ -32,7 +32,7 @@ spec:
           - --global.checknewversion=false
           ingressRoute:
             dashboard:
-              enabled: true
+              enabled: false
           nodeSelector:
             worker: "true"
           ports:
