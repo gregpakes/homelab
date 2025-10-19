@@ -19,7 +19,8 @@ spec:
       helm:
         releaseName: metallb
         values: |
-          {}  # usually empty; config is via CRs below
+          crds:
+            create: true  
 
     # 2) Your Git repo with the IP pools / L2 advertisements (the CRs you cleaned)
     - repoURL: https://github.com/gregpakes/homelab
