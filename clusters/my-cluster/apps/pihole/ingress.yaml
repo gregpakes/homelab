@@ -22,5 +22,3 @@ spec:
           port: 80
       middlewares:
         - name: default-headers
-  tls:
-    secretName: gregpakes-tls # change to your cert name
