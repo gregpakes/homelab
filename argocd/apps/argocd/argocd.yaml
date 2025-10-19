@@ -8,17 +8,19 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
-  source:
-    repoURL: https://argoproj.github.io/argo-helm
-    chart: argo-cd
-    targetRevision:  8.5.7
-    helm:
-      releaseName: argocd
-      valueFiles: [values.yaml]
+  sources:
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-cd
+      targetRevision: 8.5.7
+      helm:
+        releaseName: argocd
+        valueFiles:
+          - $values/argocd/infrastructure/argocd/values.yaml   # <-- from your repo
+    - repoURL: https://github.com/gregpakes/homelab
+      targetRevision: main
+      ref: values
   syncPolicy:
     automated:
       selfHeal: true
-      # IMPORTANT: don't enable prune yet; we’ll enable after adoption.
-      # prune: true
     syncOptions:
       - CreateNamespace=true
