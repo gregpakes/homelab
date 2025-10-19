@@ -6,8 +6,4 @@ resources:
   - ./flux-kustomizations/rancher-stack.yaml
   - ./flux-kustomizations/longhorn.yaml
   - ./flux-kustomizations/longhorn-settings.yaml
-  - ./flux-kustomizations/monitoring-namespace.yaml
-  - ./flux-kustomizations/monitoring-prebootstrap.yaml
-  - ./flux-kustomizations/monitoring-bootstrap.yaml
-  - ./flux-kustomizations/monitoring-monitors.yaml
   - ./flux-kustomizations/pihole.yaml              # pihole
