@@ -12,7 +12,7 @@ spec:
   # --- Multiple sources: 1) Helm chart, 2) Your GitOps repo with values & extra manifests
   sources:
     # 1) Upstream Helm chart (bjw-s/app-template)
-    - repoURL: https://bjw-s.github.io/helm-charts
+    - repoURL: https://bjw-s-labs.github.io/helm-charts/
       chart: app-template
       targetRevision: 3.1.0
       helm:
