@@ -34,3 +34,5 @@ configs:
         - /metadata
         - /endpoints
         - /ports
+  redis:
+    enabled: true
