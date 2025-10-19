@@ -1,8 +1,35 @@
+crds:
+  install: true
+
 server:
   service:
     type: LoadBalancer
-    loadBalancerIP: 172.16.51.61            # <- your static VIP
+    loadBalancerIP: 172.16.51.61
     annotations:
       metallb.universe.tf/address-pool: first-pool
     externalTrafficPolicy: Cluster
-    
+
+# Make sure the controller evaluates resource status and watches all namespaces
+controller:
+  processors:
+    status: 20
+    operation: 10
+
+configs:
+  # Watch ALL namespaces (empty means all)
+  params:
+    application.namespaces: ""
+
+  # Argo settings (NO global /status ignore!)
+  cm:
+    # If you want ignore rules, scope them to specific kinds only.
+    # Examples (safe):
+    resource.customizations.ignoreResourceUpdates.ConfigMap: |
+      jqPathExpressions:
+        - '.metadata.annotations."cluster-autoscaler.kubernetes.io/last-updated"'
+        - '.metadata.annotations."control-plane.alpha.kubernetes.io/leader"'
+    resource.customizations.ignoreResourceUpdates.discovery.k8s.io_EndpointSlice: |
+      jsonPointers:
+        - /metadata
+        - /endpoints
+        - /ports
