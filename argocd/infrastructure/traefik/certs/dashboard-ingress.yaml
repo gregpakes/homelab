@@ -4,6 +4,7 @@ metadata:
   name: traefik-dashboard
   namespace: traefik
 spec:
+  ingressClassName: traefik-external
   entryPoints:
     - websecure
   routes:
