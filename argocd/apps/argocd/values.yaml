@@ -5,3 +5,4 @@ server:
     annotations:
       metallb.universe.tf/address-pool: first-pool
     externalTrafficPolicy: Cluster
+    
