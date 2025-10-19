@@ -24,6 +24,7 @@ configs:
   cm:
     # If you want ignore rules, scope them to specific kinds only.
     # Examples (safe):
+    resource.customizations.ignoreResourceUpdates.all: ""
     resource.customizations.ignoreResourceUpdates.ConfigMap: |
       jqPathExpressions:
         - '.metadata.annotations."cluster-autoscaler.kubernetes.io/last-updated"'
