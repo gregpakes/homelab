@@ -48,7 +48,6 @@ ingress:
             service:
               identifier: app
               port: http
-    tls: {}
 
 persistence:
   # 1️⃣ CONFIG on Longhorn (RWO)
