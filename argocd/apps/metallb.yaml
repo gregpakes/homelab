@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: metallb
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1" 
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: metallb-system
+
+  sources:
+    # 1) MetalLB controller (match your live version)
+    - repoURL: https://metallb.github.io/metallb
+      chart: metallb
+      targetRevision: 0.15.2
+      helm:
+        releaseName: metallb
+        values: |
+          {}  # usually empty; config is via CRs below
+
+    # 2) Your Git repo with the IP pools / L2 advertisements (the CRs you cleaned)
+    - repoURL: https://github.com/gregpakes/homelab
+      targetRevision: main
+      path: argocd/infrastructure/metallb
+
+  syncPolicy:
+    automated:
+      selfHeal: true
+      # enable prune AFTER adoption (step 4)
+      # prune: true
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true

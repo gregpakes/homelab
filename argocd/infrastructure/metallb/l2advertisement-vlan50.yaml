@@ -1,0 +1,12 @@
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: vlan50-adv
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+    - vlan50-pool
+  # If only some nodes can talk on VLAN 50, uncomment:
+  # nodeSelectors:
+  #   - matchLabels:
+  #       vlan50-capable: "true"

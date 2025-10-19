@@ -1,0 +1,9 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: vlan50-pool
+  namespace: metallb-system
+spec:
+  addresses:
+    - 192.168.50.200-192.168.50.219   # <-- adjust to your VLAN 50 range
+  autoAssign: false                   # usually you want explicit assignment per Service
