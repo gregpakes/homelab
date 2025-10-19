@@ -1,0 +1,7 @@
+server:
+  service:
+    type: LoadBalancer
+    loadBalancerIP: 172.16.51.61            # <- your static VIP
+    annotations:
+      metallb.universe.tf/address-pool: first-pool
+    externalTrafficPolicy: Cluster
