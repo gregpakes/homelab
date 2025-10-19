@@ -1,0 +1,89 @@
+controllers:
+  plex:
+    replicas: 1
+    containers:
+      app:
+        image:
+          repository: lscr.io/linuxserver/plex
+          tag: latest
+        env:
+          PUID: "1000"
+          PGID: "1000"
+          TZ: "Europe/London"
+        # envFrom:
+        #   - secretRef:
+        #       name: plex-env
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            memory: 4Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+
+    pod:
+      securityContext:
+        fsGroup: 1000
+        # Match these to your host GIDs for video/render
+        supplementalGroups: [44, 992]
+
+service:
+  app:
+    controller: plex
+    type: LoadBalancer
+    externalTrafficPolicy: Cluster
+    ports:
+      http:
+        port: 32400
+
+ingress:
+  app:
+    enabled: true
+    className: traefik
+    hosts:
+      - host: plex.gregpakes.co.uk
+        paths:
+          - path: /
+            service:
+              identifier: app
+              port: http
+    tls: {}
+
+persistence:
+  # 1️⃣ CONFIG on Longhorn (RWO)
+  config:
+    enabled: true
+    storageClass: longhorn
+    size: 50Gi
+    accessMode: ReadWriteOnce
+    retain: true
+    globalMounts:
+      - path: /config
+
+  # 2️⃣ MEDIA via direct NFS mount (your NAS library)
+  media:
+    enabled: true
+    type: nfs
+    server: 172.16.250.191           # <-- your UniFi UNAS IP
+    path: /var/nfs/shared/Media      # <-- existing export path
+    # readOnly: true                  # enable if you want Plex read-only
+    globalMounts:
+      - path: /data
+
+  # 3️⃣ TRANSCODE scratch in memory (fast)
+  transcode:
+    enabled: true
+    type: emptyDir
+    medium: Memory
+    sizeLimit: 8Gi
+    globalMounts:
+      - path: /transcode
+
+  # 4️⃣ Intel Arc A310 (VAAPI)
+  dri:
+    enabled: true
+    type: hostPath
+    hostPath: /dev/dri
+    globalMounts:
+      - path: /dev/dri

@@ -73,6 +73,99 @@ I have a UniFi Unas Pro 8 which only supports NFS v3.  Therefore there needs to 
 > TCP: `111,2049,37511,42989,58873,39543,42463`  
 > UDP: `111,2049,46622,45992,55670,53394,50514`
 
-### NFS Provisioner (K3s)
+### GPU passthrough
 
-With this in place, the NFS-Provisioner application (in argocd) is able to install on any k3s node and provision NFS shares available to pods.
+GPU Passthrough needs to be enabled on all Proxmox nodes.
+
+```bash
+nano /etc/default/grub
+```
+
+Add/Edit this line
+
+```
+GRUB_CMDLINE_LINUX_DEFAULT="quiet intel_iommu=on iommu=pt"
+```
+
+```bash
+update-grub
+update-initramfs -u
+reboot
+```
+
+You need to get the gpu IDs from here:
+
+```bash
+lspci -nn | grep -i 'vga\|display\|audio'
+```
+
+Will show:
+
+```
+03:00.0 VGA compatible controller [0300]: Intel Corporation Arc A310 [8086:56a0]
+03:00.1 Audio device [0403]: Intel Corporation Device [8086:56c0]
+```
+
+Edit or create /etc/modprobe.d/vfio.conf:
+
+```
+options vfio-pci ids=8086:56a6,8086:4f92
+```
+
+Ensure vfio is loaded at boot
+
+```
+cat > /etc/modules-load.d/vfio.conf <<'EOF'
+vfio
+vfio_iommu_type1
+vfio_pci
+vfio_virqfd
+EOF
+```
+
+Reboot
+
+```
+update-initramfs -u
+reboot
+```
+
+After Reboot, confirm
+
+```
+lspci -nnk | grep -A3 -E '0a:00.0|09:00.0'
+```
+
+Expected Result:
+
+```
+Kernel driver in use: vfio-pci
+```
+
+#### Ensure GPU is enabled in Proxmox VMS.  
+
+Every k3s worker nodes needs a Hardware PCI device in Proxmox.
+
+> Proxmox UI -> VM -> Hardware -> Add PCI Device
+
+- Select the Intel Arc 310
+- Tick All Functions
+- Reboot the VM
+
+Ensure the worker VM has the drivers installed
+
+```bash
+sudo apt update
+sudo apt install -y linux-modules-extra-$(uname -r) linux-firmware
+sudo reboot
+```
+
+Test
+
+```
+sudo modprobe i915
+ls -l /dev/dri
+```
+
+If /dev/dri/card0 and /dev/dri/renderD128 appear, you’re good.
+(The linux-modules-extra package contains i915.ko; linux-firmware provides the Arc microcode.)
