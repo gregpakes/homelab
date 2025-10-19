@@ -30,7 +30,7 @@ spec:
     automated:
       selfHeal: true
       # enable prune AFTER adoption (step 4)
-      # prune: true
+      prune: true
     syncOptions:
       - CreateNamespace=true
       - PruneLast=true
