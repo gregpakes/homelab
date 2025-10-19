@@ -25,7 +25,7 @@ spec:
       helm:
         releaseName: monitoring
         valueFiles:
-          - $values/srgocd/infrastructure/kube-prometheus-stack/values.yaml
+          - $values/argocd/infrastructure/kube-prometheus-stack/values.yaml
     # C. Values come from your Git repo
     - repoURL: https://github.com/gregpakes/homelab
       targetRevision: main
