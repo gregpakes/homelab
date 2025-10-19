@@ -24,7 +24,6 @@ spec:
     - repoURL: https://github.com/gregpakes/homelab              # <-- your repo
       targetRevision: main                                       # branch/tag/commit
       ref: values                                                # name this ref "values"
-      path: .                                                    # root (values path is absolute under the repo)
 
   syncPolicy:
     automated:
