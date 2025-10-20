@@ -38,8 +38,9 @@ controllers:
           # let the pod talk to the cluster and NAS directly (no leak of Internet traffic)
           FIREWALL_OUTBOUND_SUBNETS: "10.42.0.0/16,10.43.0.0/16,172.16.51.0/24,172.16.250.191/32"
 
-          DOT: "off"
-          DNS_PLAINTEXT_ADDRESS: "1.1.1.1"
+          DOT: "on"
+          DNS_OVER_TLS: "cloudflare"
+          
           BLOCK_MALICIOUS: "off"
         securityContext:
           allowPrivilegeEscalation: false
