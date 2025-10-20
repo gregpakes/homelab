@@ -131,8 +131,6 @@ persistence:
     type: nfs
     server: 172.16.250.191
     path: /var/nfs/shared/Media
-    mountOptions:
-      - nfsvers=3
 
 advancedMounts:
   main:
