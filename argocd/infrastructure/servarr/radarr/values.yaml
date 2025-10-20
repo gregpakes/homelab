@@ -14,27 +14,29 @@ controllers:
           TZ: Europe/London
           PUID: "1000"
           PGID: "988"
+        ports:
+          - name: http
+            containerPort: 7878
+            protocol: TCP
+
         probes:
           startup:
             enabled: true
             custom: true
             spec:
-              httpGet:
-                path: /ping
+              tcpSocket:
                 port: 7878
-              initialDelaySeconds: 30
+              initialDelaySeconds: 10
               periodSeconds: 5
-              failureThreshold: 60
-          liveness:
-            enabled: true
-            type: HTTP
-            port: 7878
-            path: /ping
+              failureThreshold: 120   # up to ~10 minutes
           readiness:
             enabled: true
-            type: HTTP
+            type: TCP
             port: 7878
-            path: /ping
+          liveness:
+            enabled: true
+            type: TCP
+            port: 7878
 
 service:
   web:
