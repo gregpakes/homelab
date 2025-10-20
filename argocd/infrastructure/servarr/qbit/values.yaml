@@ -35,6 +35,9 @@ controllers:
           FIREWALL_INPUT_PORTS: "8080"
         securityContext:
           allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
           capabilities:
             add: ["NET_ADMIN"]
 
@@ -50,11 +53,7 @@ controllers:
           # Set the listening peer port in qBittorrent config
           QBT_BitTorrent__Session__Port:
             valueFrom: { secretKeyRef: { name: gluetun-secrets, key: FIREWALL_VPN_INPUT_PORTS } }
-        securityContext:
-          allowPrivilegeEscalation: false
-          runAsNonRoot: true
-          runAsUser: 1000
-          runAsGroup: 1000
+
         ports:
           - name: http
             containerPort: 8080
