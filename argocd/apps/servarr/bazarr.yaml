@@ -15,7 +15,7 @@ spec:
       targetRevision: 3.1.0
       helm:
         valueFiles:
-          - $values/argocd/infrastructure/bazarr/radarr/values.yaml
+          - $values/argocd/infrastructure/bazarr/values.yaml
 
     - repoURL: https://github.com/gregpakes/homelab
       targetRevision: main
