@@ -25,6 +25,7 @@ service:
     ports:
       http:
         port: 6767
+        targetPort: 6767
         protocol: TCP
 
 ingress:
