@@ -28,16 +28,12 @@ controllers:
 
           # Health & firewall
           FIREWALL: "on"
-          HEALTH_VPN_DURATION_INITIAL: 120s
           HEALTH_TARGET_ADDRESS: "1.1.1.1:53"
 
           # Allow LAN/cluster to reach WebUI on 8080
           FIREWALL_INPUT_PORTS: "8080"
         securityContext:
           allowPrivilegeEscalation: false
-          runAsNonRoot: true
-          runAsUser: 1000
-          runAsGroup: 1000
           capabilities:
             add: ["NET_ADMIN"]
 
