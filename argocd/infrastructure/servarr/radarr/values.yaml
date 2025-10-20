@@ -25,7 +25,7 @@ service:
     ports:
       http:
         port: 8989
-        targetPort: http
+        targetPort: 8989
 
 ingress:
   web:
