@@ -54,6 +54,11 @@ controllers:
           # Set the listening peer port in qBittorrent config
           QBT_BitTorrent__Session__Port:
             valueFrom: { secretKeyRef: { name: gluetun-secrets, key: FIREWALL_VPN_INPUT_PORTS } }
+            
+          QBT_WebUI__HostHeaderValidation: "false"
+          QBT_WebUI__CSRFProtection: "false"                   # you can re-enable later once it's working
+          QBT_WebUI__ServerDomains: "qbit.gregpakes.co.uk,localhost,127.0.0.1"
+          QBT_WebUI__TrustedReverseProxies: "10.42.0.0/16,172.16.0.0/12,192.168.0.0/16"
 
         ports:
           - name: http
