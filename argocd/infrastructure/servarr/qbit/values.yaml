@@ -67,10 +67,13 @@ controllers:
         # readiness probe to qbittorrent waits for glutun to be healthy
         probes:
           readiness:
-            tcpSocket:
-              port: 9999
-            initialDelaySeconds: 5
-            periodSeconds: 5
+            enabled: true
+            type: tcp
+            port: 8080
+          liveness:
+            enabled: true
+            type: tcp
+            port: 8080
 
 service:
   webui:
