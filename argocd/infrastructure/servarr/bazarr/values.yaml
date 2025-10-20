@@ -1,0 +1,63 @@
+controllers:
+  main:
+    containers:
+      bazarr:
+        image:
+          repository: ghcr.io/linuxserver/bazarr
+          tag: latest
+        env:
+          TZ: Europe/London
+          PUID: "1000"
+          PGID: "988"
+        probes:
+          liveness:
+            enabled: true
+            type: HTTP
+            port: 6767
+          readiness:
+            enabled: true
+            type: HTTP
+            port: 6767
+
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 6767
+        protocol: TCP
+
+ingress:
+  main:
+    enabled: true
+    className: traefik
+    hosts:
+      - host: bazarr.gregpakes.co.uk
+        paths:
+          - path: /
+            service:
+              identifier: main
+              port: http
+    # tls:   # optional if your wildcard cert already covers it
+
+persistence:
+  config:
+    enabled: true
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    size: 5Gi
+    storageClass: longhorn
+
+  downloads:
+    enabled: true
+    type: nfs
+    server: 172.16.250.191
+    path: /var/nfs/shared/Media
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
