@@ -37,6 +37,10 @@ controllers:
 
           # let the pod talk to the cluster and NAS directly (no leak of Internet traffic)
           FIREWALL_OUTBOUND_SUBNETS: "10.42.0.0/16,10.43.0.0/16,172.16.51.0/24,172.16.250.191/32"
+
+          DOT: "off"
+          DNS_PLAINTEXT_ADDRESS: "1.1.1.1,9.9.9.9"
+          BLOCK_MALICIOUS: "off"
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -54,11 +58,8 @@ controllers:
           # Set the listening peer port in qBittorrent config
           QBT_BitTorrent__Session__Port:
             valueFrom: { secretKeyRef: { name: gluetun-secrets, key: FIREWALL_VPN_INPUT_PORTS } }
-            
-          QBT_WebUI__HostHeaderValidation: "false"
-          QBT_WebUI__CSRFProtection: "false"                   # you can re-enable later once it's working
-          QBT_WebUI__ServerDomains: "qbit.gregpakes.co.uk,localhost,127.0.0.1"
-          QBT_WebUI__TrustedReverseProxies: "10.42.0.0/16,172.16.0.0/12,192.168.0.0/16"
+
+          QBT_Application__NetworkInterface: tun0
 
         ports:
           - name: http
