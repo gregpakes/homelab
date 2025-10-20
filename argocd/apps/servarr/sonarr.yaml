@@ -1,25 +1,22 @@
-# argo-deployments/prowlarr.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: prowlarr
+  name: sonarr
   namespace: argocd
 spec:
   project: default
   destination:
     server: https://kubernetes.default.svc
     namespace: servarr
-
   sources:
-    # 1) bjw-s app-template
+
     - repoURL: https://bjw-s-labs.github.io/helm-charts/
       chart: app-template
       targetRevision: 3.1.0
       helm:
         valueFiles:
-          - $values/argocd/infrastructure/servarr/prowlarr/values.yaml
+          - $values/argocd/infrastructure/servarr/sonarr/values.yaml
 
-    # 2) your repo with values.yaml
     - repoURL: https://github.com/gregpakes/homelab
       targetRevision: main
       ref: values

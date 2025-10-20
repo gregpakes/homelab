@@ -1,0 +1,63 @@
+controllers:
+  main:
+    replicas: 1
+    pod:
+      securityContext:
+        fsGroup: 988
+        fsGroupChangePolicy: OnRootMismatch
+    containers:
+      radarr:
+        image:
+          repository: ghcr.io/linuxserver/radarr
+          tag: latest
+        env:
+          TZ: Europe/London
+          PUID: "1000"
+          PGID: "988"
+        probes:
+          liveness:  { enabled: true,  type: TCP, port: 7878 }
+          readiness: { enabled: true,  type: TCP, port: 7878 }
+
+service:
+  web:
+    controller: main
+    type: ClusterIP
+    ports:
+      http:
+        port: 7878
+        targetPort: 7878
+
+ingress:
+  web:
+    enabled: true
+    className: traefik
+    hosts:
+      - host: radarr.gregpakes.co.uk
+        paths:
+          - path: /
+            service:
+              identifier: web
+              port: http
+    # tls: []  # add if you want certs now
+
+persistence:
+  config:
+    enabled: true
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    size: 5Gi
+    storageClass: longhorn
+
+  downloads:
+    enabled: true
+    type: nfs
+    server: 172.16.250.191
+    path: /var/nfs/shared/Media
+
+advancedMounts:
+  main:
+    radarr:
+      - name: config
+        path: /config
+      - name: downloads
+        path: /downloads
