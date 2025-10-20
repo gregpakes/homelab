@@ -3,6 +3,14 @@ controllers:
   main:
     replicas: 1
     pod:
+      dnsPolicy: None
+      dnsConfig:
+        nameservers:
+          - 127.0.0.1
+        options:
+          - name: ndots
+            value: "1"
+            
       securityContext:
         fsGroup: 988
         fsGroupChangePolicy: OnRootMismatch
@@ -67,7 +75,6 @@ controllers:
             valueFrom: { secretKeyRef: { name: gluetun-secrets, key: FIREWALL_VPN_INPUT_PORTS } }
 
           QBT_Application__NetworkInterface: tun0
-          DNS_ADDRESS: "127.0.0.1"
 
         ports:
           - name: http
