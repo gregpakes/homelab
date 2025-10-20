@@ -21,7 +21,7 @@ spec:
     # B. Helm chart for kube-prometheus-stack
     - repoURL: https://prometheus-community.github.io/helm-charts
       chart: kube-prometheus-stack
-      targetRevision: 65.3.1   # pick a stable release
+      targetRevision: 65.8.1   # pick a stable release
       helm:
         releaseName: monitoring
         valueFiles:
