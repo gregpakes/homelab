@@ -1,0 +1,146 @@
+# servarr/qbit-vpn/values.yaml
+controllers:
+  main:
+    replicas: 1
+    pod:
+      securityContext:
+        fsGroup: 1000 # make NFS writes owned by 1000
+        fsGroupChangePolicy: "OnRootMismatch"
+    containers:
+
+      gluetun:
+        image:
+          repository: qmcgaw/gluetun
+          tag: latest
+        env:
+          TZ: Europe/London
+
+          # --- AirVPN over WireGuard ---
+          VPN_SERVICE_PROVIDER: airvpn
+          VPN_TYPE: wireguard
+          WIREGUARD_PRIVATE_KEY:
+            valueFrom: { secretKeyRef: { name: gluetun-secrets, key: WIREGUARD_PRIVATE_KEY } }
+          WIREGUARD_PUBLIC_KEY:
+            valueFrom: { secretKeyRef: { name: gluetun-secrets, key: WIREGUARD_PUBLIC_KEY } }
+          WIREGUARD_PRESHARED_KEY:
+            valueFrom: { secretKeyRef: { name: gluetun-secrets, key: WIREGUARD_PRESHARED_KEY } }
+          WIREGUARD_ADDRESSES:
+            valueFrom: { secretKeyRef: { name: gluetun-secrets, key: WIREGUARD_ADDRESSES } }
+
+          # Health & firewall
+          FIREWALL: "on"
+          HEALTH_VPN_DURATION_INITIAL: 120s
+          HEALTH_TARGET_ADDRESS: "1.1.1.1:53"
+
+          # Allow LAN/cluster to reach WebUI on 8080
+          FIREWALL_INPUT_PORTS: "8080"
+          # (Optional) allow cluster/LAN subnets to egress directly if needed:
+          # FIREWALL_OUTBOUND_SUBNETS: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+
+          # If you have a forwarded peer port from AirVPN, open it on the VPN iface:
+          # FIREWALL_VPN_INPUT_PORTS: "xxxxx"
+
+          # Optional proxies for other apps (not needed here)
+          # HTTPPROXY: "on"
+          # HTTPPROXY_LOG: "on"
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            add: ["NET_ADMIN"]
+
+      qbittorrent:
+        image:
+          repository: ghcr.io/linuxserver/qbittorrent
+          tag: latest
+        env:
+          TZ: Europe/London
+          PUID: "1000"
+          PGID: "1000"
+          WEBUI_PORT: "8080"
+          # Make qBittorrent listen on a fixed peer port (match your AirVPN forwarded port if you have one)
+          QBT_BitTorrent__Session__Port: 
+            valueFrom: { secretKeyRef: { name: gluetun-secrets, key: FIREWALL_VPN_INPUT_PORTS } }
+          TORRENTING_PORT: 
+            valueFrom: { secretKeyRef: { name: gluetun-secrets, key: FIREWALL_VPN_INPUT_PORTS } }
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+
+service:
+  # Web UI inside the cluster (expose via Ingress if you like)
+  webui:
+    controller: main
+    type: ClusterIP
+    ports:
+      http:
+        port: 8080
+        targetPort: 8080
+        protocol: TCP
+  # Peer ports (cluster-internal; inbound from Internet will arrive via the VPN tunnel/port forward)
+  bittorrent:
+    controller: main
+    type: ClusterIP
+    ports:
+      tcp:
+        port: 6881
+        targetPort: 6881
+        protocol: TCP
+      udp:
+        port: 6881
+        targetPort: 6881
+        protocol: UDP
+
+ingress:
+  webui:
+    enabled: true
+    className: traefik
+    hosts:
+      - host: qbit.gregpakes.co.uk
+        paths:
+          - path: /
+            service:
+              identifier: webui
+              port: http
+    # TLS block here if you want
+
+persistence:
+  # REQUIRED: /dev/net/tun so Gluetun can create the tunnel
+  dev-tun:
+    enabled: true
+    type: hostPath
+    hostPath: /dev/net/tun
+    hostPathType: CharDevice
+    mountPath: /dev/net/tun
+
+  # qBittorrent config
+  config:
+    enabled: true
+    type: pvc
+    accessMode: ReadWriteOnce
+    size: 5Gi
+    storageClass: longhorn
+    mountPath: /config
+
+  # Downloads location (point this at your NAS or an RWX PVC)
+  downloads:
+    enabled: true
+    # Example NFS:
+    type: nfs
+    server: 172.16.250.191
+    path: /var/nfs/shared/Media
+    mountPath: /downloads
+    mountOptions:
+      - nfsvers=3
+      - rsize=1048576
+      - wsize=1048576
+    # Or PVC:
+    # type: pvc
+    # accessMode: ReadWriteMany
+    # size: 200Gi
+    # mountPath: /downloads
