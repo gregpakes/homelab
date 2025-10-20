@@ -38,9 +38,15 @@ controllers:
           # let the pod talk to the cluster and NAS directly (no leak of Internet traffic)
           FIREWALL_OUTBOUND_SUBNETS: "10.42.0.0/16,10.43.0.0/16,172.16.51.0/24,172.16.250.191/32"
 
+          # this dns config tells gluetun to start using plaintext dns, then switch over to DoT when ready
           DOT: "on"
           DNS_OVER_TLS: "cloudflare"
-          
+          DNS_KEEP_NAMESERVER: "on"
+          DNS_UPDATE_PERIOD: "24h"
+
+          DNS_USE_PLAIN_TEXT_UPSTREAM: "on"
+          DNS_PLAINTEXT_ADDRESS: "1.1.1.1"
+
           BLOCK_MALICIOUS: "off"
         securityContext:
           allowPrivilegeEscalation: false
