@@ -32,6 +32,9 @@ controllers:
 
           # Allow LAN/cluster to reach WebUI on 8080
           FIREWALL_INPUT_PORTS: "8080"
+
+          # let the pod talk to the cluster and NAS directly (no leak of Internet traffic)
+          FIREWALL_OUTBOUND_SUBNETS: "10.42.0.0/16,10.43.0.0/16,172.16.51.0/24,172.16.250.191/32"
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -60,6 +63,14 @@ controllers:
           - name: bt-udp
             containerPort: 6881
             protocol: UDP
+
+        # readiness probe to qbittorrent waits for glutun to be healthy
+        probes:
+          readiness:
+            tcpSocket:
+              port: 9999
+            initialDelaySeconds: 5
+            periodSeconds: 5
 
 service:
   webui:

@@ -8,7 +8,7 @@ spec:
   project: default
   destination:
     server: https://kubernetes.default.svc
-    namespace: qbit
+    namespace: servarr
 
   # --- Multiple sources: 1) Helm chart, 2) Your GitOps repo with values & extra manifests
   sources:
