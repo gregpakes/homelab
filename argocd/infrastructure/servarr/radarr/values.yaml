@@ -15,8 +15,26 @@ controllers:
           PUID: "1000"
           PGID: "988"
         probes:
-          liveness:  { enabled: true,  type: TCP, port: 7878 }
-          readiness: { enabled: true,  type: TCP, port: 7878 }
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /ping
+                port: 7878
+              initialDelaySeconds: 30
+              periodSeconds: 5
+              failureThreshold: 60
+          liveness:
+            enabled: true
+            type: HTTP
+            port: 7878
+            path: /ping
+          readiness:
+            enabled: true
+            type: HTTP
+            port: 7878
+            path: /ping
 
 service:
   web:
