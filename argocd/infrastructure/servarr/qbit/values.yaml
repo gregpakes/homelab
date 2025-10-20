@@ -39,7 +39,7 @@ controllers:
           FIREWALL_OUTBOUND_SUBNETS: "10.42.0.0/16,10.43.0.0/16,172.16.51.0/24,172.16.250.191/32"
 
           DOT: "off"
-          DNS_PLAINTEXT_ADDRESS: "1.1.1.1,9.9.9.9"
+          DNS_PLAINTEXT_ADDRESS: "1.1.1.1"
           BLOCK_MALICIOUS: "off"
         securityContext:
           allowPrivilegeEscalation: false
