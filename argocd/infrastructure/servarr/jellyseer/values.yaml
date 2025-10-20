@@ -1,6 +1,12 @@
 # argocd/infrastructure/servarr/jellyseerr/values.yaml
 controllers:
   main:
+    replicas: 1
+    pod:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+
     # init container creates config dir
     initContainers:
       perms:
@@ -16,14 +22,7 @@ controllers:
         securityContext:
           runAsUser: 0
           runAsGroup: 0
-        # mount the same config volume:
-        resources: {}
 
-    replicas: 1
-    pod:
-      securityContext:
-        fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
     containers:
       jellyseerr:
         image:
@@ -84,15 +83,17 @@ persistence:
     size: 5Gi
     storageClass: longhorn
     retain: true
+    globalMounts:
+      - path: /app/config
 
-advancedMounts:
-  main:
-    perms:
-      - name: config
-        path: /app/config
-    jellyseerr:
-      - name: config
-        path: /app/config
+# advancedMounts:
+#   main:
+#     perms:
+#       - name: config
+#         path: /app/config
+#     jellyseerr:
+#       - name: config
+#         path: /app/config
 
 # Optional: mount media read-only (not required; Jellyseerr doesn’t scan files)
 # persistence:
