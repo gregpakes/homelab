@@ -9,22 +9,9 @@ server:
       metallb.universe.tf/address-pool: first-pool
     externalTrafficPolicy: Cluster
 
-# Make sure the controller evaluates resource status and watches all namespaces
-controller:
-  processors:
-    status: 20
-    operation: 10
-
 configs:
-  # Watch ALL namespaces (empty means all)
-  params:
-    application.namespaces: ""
-
-  # Argo settings (NO global /status ignore!)
   cm:
-    # If you want ignore rules, scope them to specific kinds only.
-    # Examples (safe):
-    resource.customizations.ignoreResourceUpdates.all: ""
+    # Keep narrowly-scoped ignores only
     resource.customizations.ignoreResourceUpdates.ConfigMap: |
       jqPathExpressions:
         - '.metadata.annotations."cluster-autoscaler.kubernetes.io/last-updated"'
@@ -34,5 +21,3 @@ configs:
         - /metadata
         - /endpoints
         - /ports
-  redis:
-    enabled: true
