@@ -87,6 +87,9 @@ persistence:
 
 advancedMounts:
   main:
+    perms:
+      - name: config
+        path: /app/config
     jellyseerr:
       - name: config
         path: /app/config
