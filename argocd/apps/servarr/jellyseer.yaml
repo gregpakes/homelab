@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: jellyseer
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: servarr
+  sources:
+
+    - repoURL: https://bjw-s-labs.github.io/helm-charts/
+      chart: app-template
+      targetRevision: 3.1.0
+      helm:
+        valueFiles:
+          - $values/argocd/infrastructure/servarr/jellyseer/values.yaml
+
+    - repoURL: https://github.com/gregpakes/homelab
+      targetRevision: main
+      ref: values
+      path: argocd/infrastructure/servarr/jellyseer
+      directory:
+        recurse: true  
+
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true

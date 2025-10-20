@@ -1,0 +1,88 @@
+# argocd/infrastructure/servarr/jellyseerr/values.yaml
+controllers:
+  main:
+    replicas: 1
+    pod:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    containers:
+      jellyseerr:
+        image:
+          repository: ghcr.io/fallenbagel/jellyseerr
+          tag: latest
+        env:
+          TZ: Europe/London
+          # If you want to force non-root:
+          # (Upstream defaults work fine; uncomment if you need it for NFS)
+          # PUID: "1000"
+          # PGID: "1000"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+        # TCP probes are simple & robust here
+        probes:
+          readiness:
+            enabled: true
+            type: TCP
+            port: 5055
+          liveness:
+            enabled: true
+            type: TCP
+            port: 5055
+
+service:
+  web:
+    controller: main
+    type: ClusterIP
+    ports:
+      http:
+        port: 5055
+        targetPort: 5055
+        protocol: TCP
+
+ingress:
+  web:
+    enabled: true
+    className: traefik
+    hosts:
+      - host: jellyseerr.gregpakes.co.uk
+        paths:
+          - path: /
+            service:
+              identifier: web
+              port: http
+    # Uncomment if you have certs set up with cert-manager/Traefik
+    # tls:
+    #   - hosts: [jellyseerr.gregpakes.co.uk]
+    #     secretName: jellyseerr-tls
+
+persistence:
+  config:
+    enabled: true
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    size: 5Gi
+    storageClass: longhorn
+    retain: true
+
+advancedMounts:
+  main:
+    jellyseerr:
+      - name: config
+        path: /app/config
+
+# Optional: mount media read-only (not required; Jellyseerr doesn’t scan files)
+# persistence:
+#   media:
+#     enabled: true
+#     type: nfs
+#     server: 172.16.250.191
+#     path: /var/nfs/shared/Media
+# advancedMounts:
+#   main:
+#     jellyseerr:
+#       - name: media
+#         path: /media
+#         readOnly: true
