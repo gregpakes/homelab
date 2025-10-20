@@ -29,6 +29,8 @@ controllers:
           # Health & firewall
           FIREWALL: "on"
           HEALTH_TARGET_ADDRESS: "1.1.1.1:53"
+          FIREWALL_VPN_INPUT_PORTS:
+            valueFrom: { secretKeyRef: { name: gluetun-secrets, key: FIREWALL_VPN_INPUT_PORTS } }
 
           # Allow LAN/cluster to reach WebUI on 8080
           FIREWALL_INPUT_PORTS: "8080"
