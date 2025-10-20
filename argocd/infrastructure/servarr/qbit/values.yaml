@@ -13,6 +13,8 @@ controllers:
           tag: latest
         env:
           TZ: Europe/London
+
+          # --- AirVPN over WireGuard ---
           VPN_SERVICE_PROVIDER: airvpn
           VPN_TYPE: wireguard
           WIREGUARD_PRIVATE_KEY:
@@ -23,9 +25,13 @@ controllers:
             valueFrom: { secretKeyRef: { name: gluetun-secrets, key: WIREGUARD_PRESHARED_KEY } }
           WIREGUARD_ADDRESSES:
             valueFrom: { secretKeyRef: { name: gluetun-secrets, key: WIREGUARD_ADDRESSES } }
+
+          # Health & firewall
           FIREWALL: "on"
           HEALTH_VPN_DURATION_INITIAL: 120s
           HEALTH_TARGET_ADDRESS: "1.1.1.1:53"
+
+          # Allow LAN/cluster to reach WebUI on 8080
           FIREWALL_INPUT_PORTS: "8080"
         securityContext:
           allowPrivilegeEscalation: false
@@ -34,9 +40,6 @@ controllers:
           runAsGroup: 1000
           capabilities:
             add: ["NET_ADMIN"]
-        mounts:
-          - name: dev-tun
-            path: /dev/net/tun
 
       qbittorrent:
         image:
@@ -65,11 +68,6 @@ controllers:
           - name: bt-udp
             containerPort: 6881
             protocol: UDP
-        mounts:
-          - name: config
-            path: /config
-          - name: downloads
-            path: /downloads
 
 service:
   webui:
@@ -125,3 +123,14 @@ persistence:
     type: nfs
     server: 172.16.250.191
     path: /var/nfs/shared/Media
+
+advancedMounts:
+  main:
+    gluetun:
+      - name: dev-tun
+        path: /dev/net/tun
+    qbittorrent:
+      - name: config
+        path: /config
+      - name: downloads
+        path: /downloads
