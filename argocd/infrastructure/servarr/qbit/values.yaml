@@ -68,11 +68,11 @@ controllers:
         probes:
           readiness:
             enabled: true
-            type: tcp
+            type: TCP
             port: 8080
           liveness:
             enabled: true
-            type: tcp
+            type: TCP
             port: 8080
 
 service:
