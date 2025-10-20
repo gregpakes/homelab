@@ -14,29 +14,9 @@ controllers:
           TZ: Europe/London
           PUID: "1000"
           PGID: "988"
-        ports:
-          - name: http
-            containerPort: 7878
-            protocol: TCP
-
         probes:
-          startup:
-            enabled: true
-            custom: true
-            spec:
-              tcpSocket:
-                port: 7878
-              initialDelaySeconds: 10
-              periodSeconds: 5
-              failureThreshold: 120   # up to ~10 minutes
-          readiness:
-            enabled: true
-            type: TCP
-            port: 7878
-          liveness:
-            enabled: true
-            type: TCP
-            port: 7878
+          liveness:  { enabled: true,  type: TCP, port: 8989 }
+          readiness: { enabled: true,  type: TCP, port: 8989 }
 
 service:
   web:
