@@ -20,7 +20,7 @@ spec:
     - repoURL: https://github.com/gregpakes/homelab
       targetRevision: main
       ref: values
-      path: argocd/infrastructure/servarr/prowlarr
+      path: argocd/infrastructure/servarr/sonarr
       directory:
         recurse: true  
 

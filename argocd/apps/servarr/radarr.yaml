@@ -15,12 +15,12 @@ spec:
       targetRevision: 3.1.0
       helm:
         valueFiles:
-          - $values/argocd/infrastructure/servarr/sonarr/values.yaml
+          - $values/argocd/infrastructure/servarr/radarr/values.yaml
 
     - repoURL: https://github.com/gregpakes/homelab
       targetRevision: main
       ref: values
-      path: argocd/infrastructure/servarr/prowlarr
+      path: argocd/infrastructure/servarr/radarr
       directory:
         recurse: true  
 
