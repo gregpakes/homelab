@@ -68,10 +68,11 @@ csi:
 defaultSettings:
   defaultDataPath: /var/lib/longhorn
   defaultReplicaCount: 3
-  defaultDataLocality: best-effort
+  defaultDataLocality: disabled
   taintToleration: dedicated=longhorn:NoSchedule
   systemManagedComponentsNodeSelector: 'longhorn:true'
   defaultLonghornStaticStorageClass: longhorn
+
 
 persistence:
   reclaimPolicy: Retain
