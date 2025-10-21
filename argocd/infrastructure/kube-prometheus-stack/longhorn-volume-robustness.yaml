@@ -1,0 +1,29 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: longhorn-volume-robustness
+  namespace: longhorn-system
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+  - name: longhorn.volume
+    rules:
+    - alert: LonghornVolumeDegraded
+      # Adjust the metric name/label if your discovery shows a different one
+      expr: sum by (volume) (longhorn_volume_robustness{robustness!="healthy"}) > 0
+      for: 30s
+      labels:
+        severity: warning
+      annotations:
+        summary: "Longhorn volume {{ $labels.volume }} degraded"
+        description: "Volume {{ $labels.volume }} robustness is {{ $labels.robustness }}."
+        
+    - alert: LonghornVolumeFlapping
+      expr: changes(longhorn_volume_robustness{robustness!="healthy"}[10m]) >= 4
+      for: 0m
+      labels:
+        severity: info
+      annotations:
+        summary: "Longhorn volume {{ $labels.volume }} is flapping"
+        description: "Robustness changed ≥4 times in 10m (often noisy network or throttled disk)."

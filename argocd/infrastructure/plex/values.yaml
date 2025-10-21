@@ -37,6 +37,13 @@ service:
       http:
         port: 32400
 
+metrics:
+  serviceMonitor:
+    enabled: true
+    # if you use kube-prometheus-stack, add its selector
+    additionalLabels:
+      release: kube-prometheus-stack
+
 ingress:
   app:
     enabled: true

@@ -26,7 +26,11 @@ spec:
         releaseName: monitoring
         valueFiles:
           - $values/argocd/infrastructure/kube-prometheus-stack/values.yaml
+
     # C. Values come from your Git repo
     - repoURL: https://github.com/gregpakes/homelab
       targetRevision: main
       ref: values
+      path: argocd/infrastructure/kube-prometheus-stack
+      directory:
+        recurse: true  
