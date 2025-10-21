@@ -24,15 +24,6 @@ spec:
       directory:
         recurse: true  
 
-    # 3) Apply EVERYTHING in the folder as raw manifests
-    - repoURL: https://github.com/gregpakes/homelab 
-      targetRevision: main
-      path: argocd/infrastructure/servarr/bazarr
-      directory:
-        recurse: true               # go through subfolders too
-        include: "*.yaml"           # include all YAMLs…
-        exclude: "values.yaml"      # …except the Helm values file
-
   syncPolicy:
     automated:
       selfHeal: true
