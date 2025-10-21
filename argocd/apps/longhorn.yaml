@@ -38,6 +38,10 @@ spec:
 
   # reduce noise from rotating webhook certs
   ignoreDifferences:
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      jqPathExpressions:
+        - .spec.preserveUnknownFields
     - group: admissionregistration.k8s.io
       kind: ValidatingWebhookConfiguration
       name: longhorn-webhook-validator
