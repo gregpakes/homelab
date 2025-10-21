@@ -24,7 +24,7 @@ spec:
       ref: values
 
     # 3) Apply EVERYTHING in the folder as raw manifests
-    - repoURL: https://github.com/<you>/<your-repo>.git
+    - repoURL: https://github.com/gregpakes/homelab 
       targetRevision: main
       path: /argocd/infrastructure/longhorn
       directory:
