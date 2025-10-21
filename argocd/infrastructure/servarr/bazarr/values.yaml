@@ -45,7 +45,7 @@ ingress:
 persistence:
   config:
     enabled: true
-    type: pvc
+    type: persistentVolumeClaim
     existingClaim: bazarr-config
 
   downloads:
