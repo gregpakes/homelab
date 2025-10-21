@@ -26,7 +26,7 @@ spec:
     # 3) Apply EVERYTHING in the folder as raw manifests
     - repoURL: https://github.com/gregpakes/homelab 
       targetRevision: main
-      path: /argocd/infrastructure/longhorn
+      path: argocd/infrastructure/longhorn
       directory:
         recurse: true               # go through subfolders too
         include: "*.yaml"           # include all YAMLs…
