@@ -38,6 +38,9 @@ spec:
       - CreateNamespace=true
       - ServerSideApply=true
       - PruneLast=true
+      # Safer CRD handling during upgrades
+      - RespectIgnoreDifferences=true
+      - ApplyOutOfSyncOnly=true
     retry:
       limit: 3
       backoff:

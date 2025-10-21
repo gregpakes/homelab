@@ -24,6 +24,10 @@ longhornManager:
       operator: Equal
       value: longhorn
       effect: NoSchedule
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
 
 longhornDriver:
   nodeSelector:
@@ -37,6 +41,10 @@ longhornDriver:
 csi:
   kubeletRootDir: /var/lib/kubelet
   attacher:
+    updateStrategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 1
     nodeSelector: { longhorn: "true" }
     tolerations:
       - key: dedicated
@@ -44,6 +52,10 @@ csi:
         value: longhorn
         effect: NoSchedule
   provisioner:
+    updateStrategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 1
     nodeSelector: { longhorn: "true" }
     tolerations:
       - key: dedicated
@@ -51,6 +63,10 @@ csi:
         value: longhorn
         effect: NoSchedule
   resizer:
+    updateStrategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 1
     nodeSelector: { longhorn: "true" }
     tolerations:
       - key: dedicated
@@ -58,12 +74,19 @@ csi:
         value: longhorn
         effect: NoSchedule
   snapshotter:
+    updateStrategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 1
     nodeSelector: { longhorn: "true" }
     tolerations:
       - key: dedicated
         operator: Equal
         value: longhorn
         effect: NoSchedule
+
+# Reserve a bit of CPU so engines never starve during upgrades
+guaranteedEngineCPU: 0.25
 
 defaultSettings:
   defaultDataPath: /var/lib/longhorn
@@ -72,7 +95,8 @@ defaultSettings:
   taintToleration: dedicated=longhorn:NoSchedule
   systemManagedComponentsNodeSelector: 'longhorn:true'
   defaultLonghornStaticStorageClass: longhorn
-
+  backupTarget: cifs://172.16.250.191/Backups
+  backupTargetCredentialSecret: longhorn-user-smb-backup-secret
 
 persistence:
   reclaimPolicy: Retain
