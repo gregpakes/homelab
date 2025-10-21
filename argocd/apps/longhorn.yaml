@@ -13,7 +13,7 @@ spec:
   sources:
     - repoURL: https://charts.longhorn.io
       chart: longhorn
-      targetRevision: 1.7.3         # exact patch (matches your Flux pin intent)
+      targetRevision: 1.7.3         # exact patch
       helm:
         releaseName: longhorn       # same Helm release name you use today
         valueFiles:
