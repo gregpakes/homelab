@@ -80,4 +80,6 @@ persistence:
 
 metrics:
   serviceMonitor:
-    enabled: false
+    enabled: true
+    additionalLabels:
+      release: kube-prometheus-stack
