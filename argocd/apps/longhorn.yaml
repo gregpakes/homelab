@@ -38,7 +38,6 @@ spec:
       - CreateNamespace=true
       - ServerSideApply=true
       - PruneLast=true
-      - Replace=true
     retry:
       limit: 3
       backoff:
