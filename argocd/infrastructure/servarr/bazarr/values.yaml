@@ -45,10 +45,7 @@ ingress:
 persistence:
   config:
     enabled: true
-    type: persistentVolumeClaim
-    accessMode: ReadWriteOnce
-    size: 5Gi
-    storageClass: longhorn
+    type: pvc
     existingClaim: bazarr-config
 
   downloads:
