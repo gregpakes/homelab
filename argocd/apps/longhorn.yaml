@@ -18,9 +18,19 @@ spec:
         releaseName: longhorn       # same Helm release name you use today
         valueFiles:
           - $values/argocd/infrastructure/longhorn/values.yaml
+
     - repoURL: https://github.com/gregpakes/homelab 
       targetRevision: main
       ref: values
+
+    # 3) Apply EVERYTHING in the folder as raw manifests
+    - repoURL: https://github.com/<you>/<your-repo>.git
+      targetRevision: main
+      path: /argocd/infrastructure/longhorn
+      directory:
+        recurse: true               # go through subfolders too
+        include: "*.yaml"           # include all YAMLs…
+        exclude: "values.yaml"      # …except the Helm values file
 
   syncPolicy:
     # keep manual syncs for Longhorn upgrades; turn on automated later if you insist

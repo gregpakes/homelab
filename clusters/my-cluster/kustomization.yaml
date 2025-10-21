@@ -3,6 +3,4 @@ kind: Kustomization
 resources:
   - ./flux-system                  # keep Flux bootstrap bits
   - ./flux-kustomizations/rancher-stack.yaml
-  - ./flux-kustomizations/longhorn.yaml
-  - ./flux-kustomizations/longhorn-settings.yaml
   - ./flux-kustomizations/pihole.yaml              # pihole
