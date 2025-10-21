@@ -1,0 +1,82 @@
+global:
+  nodeSelector:
+    longhorn: "true"
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: longhorn
+      effect: NoSchedule
+
+engine:
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: longhorn
+      effect: NoSchedule
+  nodeSelector:
+    longhorn: "true"
+
+longhornManager:
+  nodeSelector:
+    longhorn: "true"
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: longhorn
+      effect: NoSchedule
+
+longhornDriver:
+  nodeSelector:
+    longhorn: "true"
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: longhorn
+      effect: NoSchedule
+
+csi:
+  kubeletRootDir: /var/lib/kubelet
+  attacher:
+    nodeSelector: { longhorn: "true" }
+    tolerations:
+      - key: dedicated
+        operator: Equal
+        value: longhorn
+        effect: NoSchedule
+  provisioner:
+    nodeSelector: { longhorn: "true" }
+    tolerations:
+      - key: dedicated
+        operator: Equal
+        value: longhorn
+        effect: NoSchedule
+  resizer:
+    nodeSelector: { longhorn: "true" }
+    tolerations:
+      - key: dedicated
+        operator: Equal
+        value: longhorn
+        effect: NoSchedule
+  snapshotter:
+    nodeSelector: { longhorn: "true" }
+    tolerations:
+      - key: dedicated
+        operator: Equal
+        value: longhorn
+        effect: NoSchedule
+
+defaultSettings:
+  defaultDataPath: /var/lib/longhorn
+  defaultReplicaCount: 3
+  defaultDataLocality: best-effort
+  taintToleration: dedicated=longhorn:NoSchedule
+  systemManagedComponentsNodeSelector: 'longhorn:true'
+  defaultLonghornStaticStorageClass: longhorn
+
+persistence:
+  reclaimPolicy: Retain
+  volumeBindingMode: WaitForFirstConsumer
+
+metrics:
+  serviceMonitor:
+    enabled: false

@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: longhorn
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: longhorn-system
+
+  # Multi-source: Longhorn chart + your values.yaml from your repo
+  sources:
+    - repoURL: https://charts.longhorn.io
+      chart: longhorn
+      targetRevision: 1.7.3         # exact patch (matches your Flux pin intent)
+      helm:
+        releaseName: longhorn       # same Helm release name you use today
+        valueFiles:
+          - $values/argocd/infrastructure/longhorn/values.yaml
+    - repoURL: https://github.com/gregpakes/homelab 
+      targetRevision: main
+      ref: values
+
+  syncPolicy:
+    # keep manual syncs for Longhorn upgrades; turn on automated later if you insist
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - PruneLast=true
+      - Replace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 10m
+
+  # reduce noise from rotating webhook certs
+  ignoreDifferences:
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      name: longhorn-webhook-validator
+      jsonPointers:
+        - /webhooks/0/clientConfig/caBundle
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+      name: longhorn-webhook-mutator
+      jsonPointers:
+        - /webhooks/0/clientConfig/caBundle
