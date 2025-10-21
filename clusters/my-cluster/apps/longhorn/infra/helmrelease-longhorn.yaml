@@ -22,6 +22,10 @@ spec:
         kind: HelmRepository
         name: longhorn
         namespace: flux-system
+      install:
+        crds: Create
+      upgrade:
+        crds: Create
   values:
     global:
       nodeSelector:
