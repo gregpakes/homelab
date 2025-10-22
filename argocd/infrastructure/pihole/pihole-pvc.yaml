@@ -4,10 +4,9 @@ metadata:
   name: pihole
   namespace: pihole
 spec:
-  accessModes:
-    - ReadWriteOnce
+  accessModes: ["ReadWriteOnce"]
   storageClassName: longhorn
   resources:
     requests:
       storage: 3Gi
-  volumeName: pvc-7c65d2e0-f3c2-463d-8d3c-41054ed7366c   # <-- bind to the existing PV with your data
+  volumeName: pvc-7c65d2e0-f3c2-463d-8d3c-41054ed7366c
