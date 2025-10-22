@@ -7,7 +7,7 @@ metadata:
   name: pihole
   namespace: pihole
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       app: pihole
@@ -103,4 +103,4 @@ spec:
       volumes:
         - name: pihole
           persistentVolumeClaim:
-            claimName: pihole
+            claimName: pvc-fa3fdedd-457f-4af0-a565-1c22139590fc
