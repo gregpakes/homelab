@@ -3,12 +3,11 @@ kind: PersistentVolumeClaim
 metadata:
   name: pihole
   namespace: pihole
-  annotations:
-    argocd.argoproj.io/sync-options: Replace=true   # 👈 tell Argo to delete+recreate instead of patch
 spec:
   accessModes: ["ReadWriteOnce"]
   storageClassName: longhorn
   resources:
     requests:
       storage: 3Gi
-  volumeName: pvc-7c65d2e0-f3c2-463d-8d3c-41054ed7366c   # 👈 the old PV with your data
+  # IMPORTANT: this must match the currently bound PV
+  volumeName: pvc-7c65d2e0-f3c2-463d-8d3c-41054ed7366c
