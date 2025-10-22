@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: pihole
+    app.kubernetes.io/instance: pihole
+  name: pihole
+  namespace: pihole
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pihole
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: pihole
+    spec:
+      nodeSelector:
+        worker: "true"
+      containers:
+        # Removed NextDns container as can point to UNIFI instead and still get local name resolution
+        # --- NextDNS sidecar (replaces cloudflared) ---
+        # - name: nextdns
+        #   image: nextdns/nextdns:latest
+        #   command: ["/bin/sh","-c"]
+        #   args:
+        #     - >
+        #       nextdns run
+        #       -listen=127.0.0.1:5054
+        #       -profile="$NEXTDNS_PROFILE"
+        #       -report-client-info
+        #       -cache-size=10MB
+        #       -timeout=5s
+        #       -discovery-dns=off
+        #   env:
+        #     - name: NEXTDNS_PROFILE  # a secret in k3s
+        #       valueFrom:
+        #         secretKeyRef:
+        #           name: nextdns-config
+        #           key: CONFIG_ID
+        #   securityContext:
+        #     allowPrivilegeEscalation: false
+        #     readOnlyRootFilesystem: true
+        #     runAsNonRoot: true
+        #     runAsUser: 65532
+        #     capabilities:
+        #       drop: ["ALL"]
+        #   resources:
+        #     requests:
+        #       cpu: 50m
+        #       memory: 64Mi
+        #     limits:
+        #       cpu: 200m
+        #       memory: 128Mi
+
+        # --- Pi-hole container (unchanged) ---
+        - name: pihole
+          image: pihole/pihole:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              # no cpu limit as recommended to avoid throttling jitter
+              memory: 512Mi
+          env:
+            - name: TZ
+              value: "Europe/London"
+            - name: WEBPASSWORD
+              value: password # change this!
+            - name: FTLCONF_REPLY_ADDR4
+              value: pihole
+            - name: PIHOLE_DNS_1
+              value: 172.16.51.1
+          ports:
+            - containerPort: 80
+              name: pihole-http
+              protocol: TCP
+            - containerPort: 53
+              name: dns
+              protocol: TCP
+            - containerPort: 53
+              name: dns-udp
+              protocol: UDP
+            - containerPort: 443
+              name: pihole-ssl
+              protocol: TCP
+            - containerPort: 67
+              name: client-udp
+              protocol: UDP
+          volumeMounts:
+            - mountPath: /etc/pihole
+              name: pihole
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+      restartPolicy: Always
+      volumes:
+        - name: pihole
+          persistentVolumeClaim:
+            claimName: pihole

@@ -1,0 +1,15 @@
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pihole
+  namespace: pihole
+  annotations:
+    longhorn.io/volume-name: pihole-config
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn        # Longhorn’s default StorageClass
+  resources:
+    requests:
+      storage: 3Gi                   # adjust to your needs
