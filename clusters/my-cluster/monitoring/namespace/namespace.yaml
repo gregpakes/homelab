@@ -1,5 +1,0 @@
-# clusters/my-cluster/monitoring/bootstrap/ns-cattle-monitoring.yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: cattle-monitoring-system

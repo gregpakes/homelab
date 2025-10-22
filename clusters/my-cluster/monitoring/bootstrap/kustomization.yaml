@@ -1,9 +1,0 @@
-# clusters/my-cluster/monitoring/bootstrap/kustomization.yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - helmrepository-rancher-charts.yaml
-  - helmrelease-rancher-monitoring-crd.yaml
-  - helmrelease-rancher-monitoring.yaml
-  - helmrepo-prometheus-community.yaml
-  - helmrelease-blackbox-exporter.yaml  
