@@ -7,14 +7,19 @@ spec:
   project: default
   destination:
     server: https://kubernetes.default.svc
+    namespace: kube-system          # CRDs are cluster-scoped, but safe default
   source:
     repoURL: https://github.com/kubernetes-csi/external-snapshotter
     targetRevision: v7.0.2
     path: client/config/crd
     directory:
       recurse: true
+      exclude: kustomization.yaml   # 👈 prevent Argo from submitting this file itself
   syncPolicy:
-    automated: {}
+    automated:
+      prune: false                  # never prune CRDs automatically
+      selfHeal: true
     syncOptions:
       - ApplyOutOfSyncOnly=true
       - PrunePropagationPolicy=background
+      - CreateNamespace=true
