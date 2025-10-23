@@ -23,9 +23,9 @@ spec:
             cattle:
               psp:
                 enabled: false
-    - repoURL: https://github.com/<your-org>/<your-repo>   # ← your infra repo
+    - repoURL: https://github.com/gregpakes/homelab   # ← your infra repo
       targetRevision: main
-      path: argocd/infrastructure/rancher/ingress          # ← folder with file below
+      path: argocd/infrastructure/rancher          # ← folder with file below
   syncPolicy:
     automated: {}
     syncOptions:
