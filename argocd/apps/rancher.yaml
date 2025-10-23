@@ -8,21 +8,24 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: cattle-system
-  source:
-    repoURL: https://releases.rancher.com/server-charts/stable
-    chart: rancher
-    targetRevision: 2.12.x            # pin a version you want
-    helm:
-      values: |
-        hostname: rancher.gregpakes.co.uk
-        replicas: 2
-        ingress:
-          ingressClassName: traefik
-        global:
-          cattle:
-            psp:
-              enabled: false
-        # bootstrapPassword: "TEMP-PASSWORD"   # optional
+  sources:
+    - repoURL: https://releases.rancher.com/server-charts/stable
+      chart: rancher
+      targetRevision: 2.12.x
+      helm:
+        values: |
+          hostname: rancher.gregpakes.co.uk
+          replicas: 3
+          ingress:
+            enabled: false              # <— turn off chart’s Ingress
+            ingressClassName: traefik
+          global:
+            cattle:
+              psp:
+                enabled: false
+    - repoURL: https://github.com/<your-org>/<your-repo>   # ← your infra repo
+      targetRevision: main
+      path: argocd/infrastructure/rancher/ingress          # ← folder with file below
   syncPolicy:
     automated: {}
     syncOptions:
