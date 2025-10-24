@@ -20,16 +20,31 @@ controllers:
           liveness:
             enabled: true
             type: HTTP
+            path: /health
             port: 11011
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+
           readiness:
             enabled: true
             type: HTTP
+            path: /health
             port: 11011
-          health:
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+            
+          startup:
             enabled: true
             type: HTTP
-            port: 11011
             path: /health
+            port: 11011
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 30
 
 service:
   main:
