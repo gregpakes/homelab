@@ -1,0 +1,70 @@
+controllers:
+  main:
+    pod:
+      securityContext:
+        fsGroup: 988
+        fsGroupChangePolicy: OnRootMismatch
+    replicas: 1
+    containers:
+      bazarr:
+        image:
+          repository: ghcr.io/cleanuparr/cleanuparr
+          tag: latest
+        env:
+          TZ: Europe/London
+          PUID: "1000"
+          PGID: "988"
+          UMASK: "002"
+          PORT: "11011"
+        probes:
+          liveness:
+            enabled: true
+            type: HTTP
+            port: 11011
+          readiness:
+            enabled: true
+            type: HTTP
+            port: 11011
+          health:
+            enabled: true
+            type: HTTP
+            port: 11011
+            path: /health
+
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 11011
+        targetPort: 11011
+        protocol: TCP
+
+ingress:
+  main:
+    enabled: true
+    className: traefik
+    hosts:
+      - host: cleanuparr.gregpakes.co.uk
+        paths:
+          - path: /
+            service:
+              identifier: main
+              port: http
+    # tls:   # optional if your wildcard cert already covers it
+
+persistence:
+  config:
+    enabled: true
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    size: 3Gi
+    storageClass: longhorn
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
