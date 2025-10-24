@@ -17,35 +17,9 @@ controllers:
           UMASK: "002"
           PORT: "11011"
         probes:
-          liveness:
-            enabled: true
-            type: HTTP
-            path: /health
-            port: 11011
-            initialDelaySeconds: 30
-            periodSeconds: 30
-            timeoutSeconds: 10
-            failureThreshold: 3
-
-          readiness:
-            enabled: true
-            type: HTTP
-            path: /health
-            port: 11011
-            initialDelaySeconds: 30
-            periodSeconds: 30
-            timeoutSeconds: 10
-            failureThreshold: 3
-            
-          startup:
-            enabled: true
-            type: HTTP
-            path: /health
-            port: 11011
-            periodSeconds: 30
-            timeoutSeconds: 10
-            failureThreshold: 30
-
+          liveness:  { enabled: true, type: HTTP, path: /health, port: 11011 }
+          readiness: { enabled: true, type: HTTP, path: /health, port: 11011 }
+          startup:   { enabled: true, type: HTTP, path: /health, port: 11011 }
 service:
   main:
     controller: main
