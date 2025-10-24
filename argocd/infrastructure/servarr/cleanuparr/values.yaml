@@ -6,7 +6,7 @@ controllers:
         fsGroupChangePolicy: OnRootMismatch
     replicas: 1
     containers:
-      bazarr:
+      cleanuparr:
         image:
           repository: ghcr.io/cleanuparr/cleanuparr
           tag: latest
