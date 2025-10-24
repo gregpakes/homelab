@@ -90,8 +90,8 @@ guaranteedEngineCPU: 0.25
 
 defaultSettings:
   defaultDataPath: /var/lib/longhorn
-  defaultReplicaCount: 3
-  defaultDataLocality: disabled
+  defaultReplicaCount: 2
+  defaultDataLocality: best-effort
   taintToleration: dedicated=longhorn:NoSchedule
   systemManagedComponentsNodeSelector: 'longhorn:true'
   defaultLonghornStaticStorageClass: longhorn
