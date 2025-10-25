@@ -32,10 +32,28 @@ service:
   app:
     controller: plex
     type: LoadBalancer
-    externalTrafficPolicy: Cluster
+    externalTrafficPolicy: Local
+    loadBalancerIP: 172.16.51.70  # <-- your reserved IP for Plex
     ports:
       http:
-        port: 32400
+        port: 32400          # TCP 32400 (main)
+      gdm1:
+        port: 32410
+        protocol: UDP        # GDM discovery
+      gdm2:
+        port: 32412
+        protocol: UDP
+      gdm3:
+        port: 32413
+        protocol: UDP
+      gdm4:
+        port: 32414
+        protocol: UDP
+      upnp-dlna:
+        port: 1900
+        protocol: UDP        # DLNA SSDP (optional)
+      companion:
+        port: 8324 
 
 metrics:
   serviceMonitor:
