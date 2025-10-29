@@ -28,7 +28,7 @@ controllers:
 
           # Optional: hint libva (not strictly required on Ubuntu)
           LIBVA_DRIVER_NAME: "iHD"
-          VAAPI_DEVICE: "/dev/dri/renderD128"
+          VAAPI_DEVICE: "/dev/dri/renderD128" 
 
         envFrom:
           - secretRef:
