@@ -1,6 +1,25 @@
 controllers:
   plex:
     replicas: 1
+
+    initContainers:
+      fetch-vaapi:
+        image: ubuntu:24.04
+        securityContext:
+          allowPrivilegeEscalation: false
+        command:
+          - bash
+          - -lc
+          - |
+            set -euo pipefail
+            apt-get update
+            apt-get download intel-media-va-driver-non-free libigdgmm12 libva2 libva-drm2
+            mkdir -p /vaapi/lib /vaapi/dri /tmp/extract
+            for f in ./*.deb; do dpkg -x "$f" /tmp/extract; done
+            cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/dri/* /vaapi/dri/ || true
+            cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libva* /vaapi/lib/ || true
+            cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libigdgmm*.so* /vaapi/lib/ || true
+            ls -l /vaapi/dri | grep iHD
     
     containers:
       app:
@@ -36,41 +55,12 @@ controllers:
             memory: 4Gi
         securityContext:
           allowPrivilegeEscalation: false
-        volumeMounts:
-          - name: vaapi-bundle         # 👈 mount the bundle into the app
-            mountPath: /opt/vaapi
-
-    volumes:
-      vaapi-bundle:                   # 👈 volumes is a MAP keyed by name
-        type: emptyDir
 
     pod:
       securityContext:
         fsGroup: 1000
         # Match these to your host GIDs for video/render
         supplementalGroups: [44, 992]
-
-      initContainers:
-        fetch-vaapi:
-          image: ubuntu:24.04
-          securityContext:
-            allowPrivilegeEscalation: false
-          command:
-            - bash
-            - -lc
-            - |
-              set -euo pipefail
-              apt-get update
-              apt-get download intel-media-va-driver-non-free libigdgmm12 libva2 libva-drm2
-              mkdir -p /vaapi/lib /vaapi/dri /tmp/extract
-              for f in ./*.deb; do dpkg -x "$f" /tmp/extract; done
-              cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/dri/* /vaapi/dri/ || true
-              cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libva* /vaapi/lib/ || true
-              cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libigdgmm*.so* /vaapi/lib/ || true
-              ls -l /vaapi/dri | grep iHD
-          volumeMounts:
-            - name: vaapi-bundle
-              mountPath: /vaapi
 
 service:
   app:
@@ -155,3 +145,10 @@ persistence:
     hostPath: /dev/dri
     globalMounts:
       - path: /dev/dri
+
+  # ✅ EmptyDir that both initContainer and app use at /opt/vaapi
+  vaapi-bundle:
+    enabled: true
+    type: emptyDir
+    globalMounts:
+      - path: /opt/vaapi
