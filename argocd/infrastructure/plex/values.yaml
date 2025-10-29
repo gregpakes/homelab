@@ -5,37 +5,29 @@ controllers:
     initContainers:
       fetch-vaapi:
         image:
-          repository: ubuntu
-          tag: "24.04"
+          repository: alpine
+          tag: "3.20"
           pullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
         command:
-          - bash
+          - sh
           - -lc
           - |
             set -euo pipefail
-            apt-get update
-            apt-get download \
-              intel-media-va-driver-non-free \
-              libigdgmm12 \
-              libva2 \
-              libva-drm2
+            # Use edge for intel-media-driver if not in your base repo
+            echo "https://dl-cdn.alpinelinux.org/alpine/edge/main"      >> /etc/apk/repositories
+            echo "https://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
+            apk add --no-cache libva libva-utils intel-media-driver
 
-            mkdir -p /opt/vaapi/dri /opt/vaapi/lib /tmp/extract
-            for f in *.deb; do dpkg -x "$f" /tmp/extract; done
+            # Stage ONLY the VAAPI bits into the shared bundle
+            mkdir -p /opt/vaapi/dri /opt/vaapi/lib
+            cp -a /usr/lib/dri/iHD_drv_video.so /opt/vaapi/dri/
+            cp -a /usr/lib/libva.so.* /opt/vaapi/lib/ || true
+            cp -a /usr/lib/libva-drm.so.* /opt/vaapi/lib/ || true
 
-            # -- ONLY the VAAPI pieces --
-            cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so /opt/vaapi/dri/
-
-            # core VA libs + igdgmm, but nothing else
-            cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libva.so.* /opt/vaapi/lib/ || true
-            cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libva-drm.so.* /opt/vaapi/lib/ || true
-            cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libigdgmm.so.* /opt/vaapi/lib/ || true
-
-            # sanity
-            echo "== staged files =="; ls -l /opt/vaapi/dri /opt/vaapi/lib
-            echo "== ldd on iHD ==";  ldd /opt/vaapi/dri/iHD_drv_video.so || true
+            echo "== staged files =="
+            ls -l /opt/vaapi/dri /opt/vaapi/lib
   
     containers:
       app:
