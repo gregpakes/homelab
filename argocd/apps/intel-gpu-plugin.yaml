@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: intel-gpu-plugin
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  source:
+    repoURL: https://intel.github.io/helm-charts
+    chart: intel-device-plugins-gpu
+    targetRevision: "*"   # pin to a version later if you prefer
+    helm:
+      values: |
+        # Run on all nodes; it will only expose resources where GPUs exist.
+        # If you want to limit to the GPU VM only, uncomment:
+        # nodeSelector:
+        #   kubernetes.io/hostname: k3s-06
+
+        # Example: advertise full GPUs (default behaviour)
+        # You generally don't need extra values here.
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
