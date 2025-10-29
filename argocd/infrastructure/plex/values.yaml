@@ -1,39 +1,7 @@
 controllers:
   plex:
     replicas: 1
-    initContainers:
-
-        - name: fetch-vaapi
-          # Ubuntu userspace to fetch .debs (no effect on main image)
-          image: ubuntu:24.04
-          securityContext:
-            allowPrivilegeEscalation: false
-          command:
-            - bash
-            - -lc
-            - |
-              set -euo pipefail
-              apt-get update
-              # download but don't install
-              apt-get download \
-                intel-media-va-driver-non-free \
-                libigdgmm12 \
-                libva2 libva-drm2
-              mkdir -p /vaapi/lib /vaapi/dri
-              # extract all .debs into /tmp/extract then copy needed bits
-              mkdir -p /tmp/extract
-              for f in ./*.deb; do dpkg -x "$f" /tmp/extract; done
-              # copy driver + libs to our bundle
-              cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/dri/* /vaapi/dri/ || true
-              cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libva* /vaapi/lib/ || true
-              cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libigdgmm*.so* /vaapi/lib/ || true
-              # sanity
-              ls -l /vaapi/dri | grep iHD || { echo "iHD driver missing"; exit 1; }
-              ldconfig -v -n /vaapi/lib || true
-          volumeMounts:
-            - name: vaapi-bundle
-              mountPath: /vaapi
-
+    
     containers:
       app:
         image:
@@ -53,8 +21,9 @@ controllers:
           PLEX_TRANSCODE_TMPDIR: "/transcode"
 
           LIBVA_DRIVER_NAME: "iHD"
-          LIBVA_DRIVERS_PATH: "/usr/lib/x86_64-linux-gnu/dri"
+          LIBVA_DRIVERS_PATH: "/opt/vaapi/dri"
           VAAPI_DEVICE: "/dev/dri/renderD128"
+          LD_LIBRARY_PATH: "/opt/vaapi/lib:/usr/lib/x86_64-linux-gnu:/usr/lib:/lib"
 
         envFrom:
           - secretRef:
@@ -67,15 +36,41 @@ controllers:
             memory: 4Gi
         securityContext:
           allowPrivilegeEscalation: false
+        volumeMounts:
+          - name: vaapi-bundle         # 👈 mount the bundle into the app
+            mountPath: /opt/vaapi
+
+    volumes:
+      vaapi-bundle:                   # 👈 volumes is a MAP keyed by name
+        type: emptyDir
 
     pod:
       securityContext:
         fsGroup: 1000
         # Match these to your host GIDs for video/render
         supplementalGroups: [44, 992]
-  volumes:
-      - name: vaapi-bundle
-        emptyDir: {}
+
+      initContainers:
+        fetch-vaapi:
+          image: ubuntu:24.04
+          securityContext:
+            allowPrivilegeEscalation: false
+          command:
+            - bash
+            - -lc
+            - |
+              set -euo pipefail
+              apt-get update
+              apt-get download intel-media-va-driver-non-free libigdgmm12 libva2 libva-drm2
+              mkdir -p /vaapi/lib /vaapi/dri /tmp/extract
+              for f in ./*.deb; do dpkg -x "$f" /tmp/extract; done
+              cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/dri/* /vaapi/dri/ || true
+              cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libva* /vaapi/lib/ || true
+              cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libigdgmm*.so* /vaapi/lib/ || true
+              ls -l /vaapi/dri | grep iHD
+          volumeMounts:
+            - name: vaapi-bundle
+              mountPath: /vaapi
 
 service:
   app:
