@@ -42,6 +42,8 @@ controllers:
     pod:
       securityContext:
         fsGroup: 1000
+        runAsUser: 1000
+        runAsGroup: 1000
         # Match these to your host GIDs for video/render
         supplementalGroups: [44, 992]
 
