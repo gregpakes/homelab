@@ -4,9 +4,6 @@ controllers:
   
     containers:
       app:
-        securityContext:
-          privileged: true
-          allowPrivilegeEscalation: true
         image:
           repository: lscr.io/linuxserver/plex
           tag: latest
@@ -40,7 +37,8 @@ controllers:
             cpu: 2000m
             memory: 4Gi
         securityContext:
-          allowPrivilegeEscalation: false
+          allowPrivilegeEscalation: true
+          privileged: true
 
     pod:
       securityContext:
