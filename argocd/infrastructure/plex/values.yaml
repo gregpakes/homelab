@@ -126,7 +126,7 @@ persistence:
       - path: /dev/dri
 
   # 5️⃣ 💡 Mount the host VA-API drivers into the container (persistent)
-  vaapiDrivers:
+  vaapi-drivers:
     enabled: true
     type: hostPath
     hostPath: /usr/lib/x86_64-linux-gnu/dri
