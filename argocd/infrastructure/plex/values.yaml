@@ -4,6 +4,9 @@ controllers:
   
     containers:
       app:
+        securityContext:
+          privileged: true
+          allowPrivilegeEscalation: true
         image:
           repository: lscr.io/linuxserver/plex
           tag: latest
