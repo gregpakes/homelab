@@ -16,14 +16,27 @@ controllers:
           - |
             set -euo pipefail
             apt-get update
-            apt-get download intel-media-va-driver-non-free libigdgmm12 libva2 libva-drm2
-            mkdir -p /vaapi/lib /vaapi/dri /tmp/extract
-            for f in ./*.deb; do dpkg -x "$f" /tmp/extract; done
-            cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/dri/* /vaapi/dri/ || true
-            cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libva* /vaapi/lib/ || true
-            cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libigdgmm*.so* /vaapi/lib/ || true
-            ls -l /vaapi/dri | grep iHD
-    
+            apt-get download \
+              intel-media-va-driver-non-free \
+              libigdgmm12 \
+              libva2 \
+              libva-drm2
+
+            mkdir -p /opt/vaapi/dri /opt/vaapi/lib /tmp/extract
+            for f in *.deb; do dpkg -x "$f" /tmp/extract; done
+
+            # -- ONLY the VAAPI pieces --
+            cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so /opt/vaapi/dri/
+
+            # core VA libs + igdgmm, but nothing else
+            cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libva.so.* /opt/vaapi/lib/ || true
+            cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libva-drm.so.* /opt/vaapi/lib/ || true
+            cp -a /tmp/extract/usr/lib/x86_64-linux-gnu/libigdgmm.so.* /opt/vaapi/lib/ || true
+
+            # sanity
+            echo "== staged files =="; ls -l /opt/vaapi/dri /opt/vaapi/lib
+            echo "== ldd on iHD ==";  ldd /opt/vaapi/dri/iHD_drv_video.so || true
+  
     containers:
       app:
         image:
@@ -45,7 +58,7 @@ controllers:
           LIBVA_DRIVER_NAME: "iHD"
           LIBVA_DRIVERS_PATH: "/opt/vaapi/dri"
           VAAPI_DEVICE: "/dev/dri/renderD128"
-          LD_LIBRARY_PATH: "/opt/vaapi/lib:/usr/lib/x86_64-linux-gnu:/usr/lib:/lib"
+          LD_LIBRARY_PATH: "/opt/vaapi/lib"
 
         envFrom:
           - secretRef:
