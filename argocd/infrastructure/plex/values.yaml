@@ -37,8 +37,8 @@ controllers:
             cpu: 2000m
             memory: 4Gi
         securityContext:
-          allowPrivilegeEscalation: true
-          privileged: true
+          allowPrivilegeEscalation: false
+          #privileged: true
 
     pod:
       securityContext:
@@ -122,10 +122,11 @@ persistence:
     globalMounts:
       - path: /transcode
 
-  # 4️⃣ Intel Arc A310 (VAAPI)
-  dri:
-    enabled: true
-    type: hostPath
-    hostPath: /dev/dri
-    globalMounts:
-      - path: /dev/dri
+ # removed because we use the intel Intel GPU Device Plugin Helm Chart
+  # # 4️⃣ Intel Arc A310 (VAAPI)
+  # dri:
+  #   enabled: true
+  #   type: hostPath
+  #   hostPath: /dev/dri
+  #   globalMounts:
+  #     - path: /dev/dri
