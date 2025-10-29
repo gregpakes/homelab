@@ -4,7 +4,10 @@ controllers:
 
     initContainers:
       fetch-vaapi:
-        image: ubuntu:24.04
+        image:
+          repository: ubuntu
+          tag: "24.04"
+          pullPolicy: IfNotPresen
         securityContext:
           allowPrivilegeEscalation: false
         command:
