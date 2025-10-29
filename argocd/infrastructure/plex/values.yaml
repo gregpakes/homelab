@@ -19,17 +19,14 @@ controllers:
           # 👇 Ensure the fast scratch path is used
           PLEX_TRANSCODE_TMPDIR: "/transcode"
 
-          LIBVA_DRIVER_NAME: "iHD"
-          LIBVA_DRIVERS_PATH: "/usr/lib/x86_64-linux-gnu/dri"
-          VAAPI_DEVICE: "/dev/dri/renderD128"
         envFrom:
           - secretRef:
               name: plex-env
         resources:
           requests:
-            cpu: 200m
-            memory: 512Mi
+            cpu: 1000m
           limits:
+            cpu: 2000m
             memory: 4Gi
         securityContext:
           allowPrivilegeEscalation: false
