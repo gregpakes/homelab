@@ -24,7 +24,7 @@ controllers:
           INSTALL_PACKAGES: "intel-media-va-driver-non-free libigdgmm12 libva2 libva-drm2 libdrm2 vainfo"
 
           # Optional: hint libva (not strictly required on Ubuntu)
-          LIBVA_DRIVER_NAME: "iHD"
+          #LIBVA_DRIVER_NAME: "iHD"
           VAAPI_DEVICE: "/dev/dri/renderD128" 
 
         envFrom:
