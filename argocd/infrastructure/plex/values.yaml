@@ -1,41 +1,6 @@
 controllers:
   plex:
     replicas: 1
-
-    initContainers:
-      fetch-vaapi:
-        image:
-          repository: alpine
-          tag: "3.20"
-          pullPolicy: IfNotPresent
-        securityContext:
-          allowPrivilegeEscalation: false
-        command:
-          - sh
-          - -lc
-          - |
-            set -euo pipefail
-            # Add edge repos for newest intel-media-driver if needed
-            printf '%s\n' \
-              'https://dl-cdn.alpinelinux.org/alpine/v3.20/main' \
-              'https://dl-cdn.alpinelinux.org/alpine/v3.20/community' \
-              'https://dl-cdn.alpinelinux.org/alpine/edge/main' \
-              'https://dl-cdn.alpinelinux.org/alpine/edge/community' \
-              > /etc/apk/repositories
-
-            # Prepare isolated root at /opt/vaapi-root
-            ROOT=/opt/vaapi-root
-            mkdir -p "$ROOT/etc/apk" "$ROOT/var/cache/apk"
-            cp /etc/apk/repositories "$ROOT/etc/apk/"
-
-            # Install musl-compatible VA stack INTO that root
-            apk --root "$ROOT" --repositories-file "$ROOT/etc/apk/repositories" \
-                --keys-dir /etc/apk/keys --initdb add --no-cache \
-                libva libva-utils intel-media-driver libdrm
-
-            # Sanity check: driver + libs exist in the rootfs
-            ls -l "$ROOT/usr/lib/dri/iHD_drv_video.so"
-            ls -l "$ROOT/usr/lib/libva.so".* "$ROOT/usr/lib/libva-drm.so".* "$ROOT/usr/lib/libdrm.so".*
   
     containers:
       app:
@@ -55,10 +20,8 @@ controllers:
           # 👇 Ensure the fast scratch path is used
           PLEX_TRANSCODE_TMPDIR: "/transcode"
 
-          LIBVA_DRIVER_NAME: "iHD"
-          LIBVA_DRIVERS_PATH: "/opt/vaapi/dri"
-          VAAPI_DEVICE: "/dev/dri/renderD128"
-          LD_LIBRARY_PATH: "/opt/vaapi-root/usr/lib"
+          DOCKER_MODS: "linuxserver/mods:universal-package-install"
+          INSTALL_PACKAGES: "libva libva-utils intel-media-driver"
 
         envFrom:
           - secretRef:
@@ -161,10 +124,3 @@ persistence:
     hostPath: /dev/dri
     globalMounts:
       - path: /dev/dri
-
-  # ✅ EmptyDir that both initContainer and app use at /opt/vaapi
-  vaapi-root:
-    enabled: true
-    type: emptyDir
-    globalMounts:
-      - path: /opt/vaapi-root
