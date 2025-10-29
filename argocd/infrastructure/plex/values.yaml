@@ -7,7 +7,7 @@ controllers:
         image:
           repository: ubuntu
           tag: "24.04"
-          pullPolicy: IfNotPresen
+          pullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
         command:
