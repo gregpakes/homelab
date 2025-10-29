@@ -14,6 +14,7 @@ spec:
     targetRevision: "*"   # pin to a version later if you prefer
     helm:
       values: |
+        nodeFeatureRule: false   # 👈 disables the NFD NodeFeatureRule object
         # Run on all nodes; it will only expose resources where GPUs exist.
         # If you want to limit to the GPU VM only, uncomment:
         # nodeSelector:
@@ -25,3 +26,5 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
