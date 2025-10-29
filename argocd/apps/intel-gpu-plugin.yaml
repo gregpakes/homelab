@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: intel-gpu-plugin
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   project: default
   destination:
@@ -11,7 +13,7 @@ spec:
   source:
     repoURL: https://intel.github.io/helm-charts
     chart: intel-device-plugins-gpu
-    targetRevision: "*"   # pin to a version later if you prefer
+    targetRevision: "0.34.0"   # pin to a version later if you prefer
     helm:
       values: |
         nodeFeatureRule: false   # 👈 disables the NFD NodeFeatureRule object
