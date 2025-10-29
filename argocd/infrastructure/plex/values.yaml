@@ -10,6 +10,18 @@ controllers:
           PUID: "1000"
           PGID: "1000"
           TZ: "Europe/London"
+          # 👇 Tell Plex what to advertise to clients/plex.tv
+          ADVERTISE_IP: "http://172.16.51.70:32400/,https://plex.gregpakes.co.uk"
+
+          # 👇 Make both your LAN and the K3s pod CIDR count as local
+          ALLOWED_NETWORKS: "172.16.0.0/16,10.42.0.0/16"
+
+          # 👇 Ensure the fast scratch path is used
+          PLEX_TRANSCODE_TMPDIR: "/transcode"
+
+          LIBVA_DRIVER_NAME: "iHD"
+          LIBVA_DRIVERS_PATH: "/usr/lib/x86_64-linux-gnu/dri"
+          VAAPI_DEVICE: "/dev/dri/renderD128"
         envFrom:
           - secretRef:
               name: plex-env
