@@ -33,9 +33,11 @@ controllers:
         resources:
           requests:
             cpu: 1000m
+            gpu.intel.com/xe: 1 
           limits:
             cpu: 2000m
             memory: 4Gi
+            gpu.intel.com/xe: 1 
         securityContext:
           allowPrivilegeEscalation: false
           #privileged: true
