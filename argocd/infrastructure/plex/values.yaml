@@ -20,13 +20,7 @@ controllers:
           # 👇 Ensure the fast scratch path is used
           PLEX_TRANSCODE_TMPDIR: "/transcode"
 
-          DOCKER_MODS: |
-            linuxserver/mods:universal-package-install|
-            linuxserver/mods:universal-fetch
-          # fetch latest prebuilt iHD from Intel’s linux-firmware/driver releases mirror (example path)
-          FETCH_URLS: |
-            https://github.com/intel/media-driver/releases/download/intel-media-24.4.0/ubuntu24.04/x86_64/iHD_drv_video.so:/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
-            
+          DOCKER_MODS: "linuxserver/mods:universal-package-install"
           INSTALL_PACKAGES: "intel-media-va-driver-non-free libigdgmm12 libva2 libva-drm2 libdrm2 vainfo"
 
           # Optional: hint libva (not strictly required on Ubuntu)
