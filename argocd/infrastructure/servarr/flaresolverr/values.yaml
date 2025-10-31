@@ -27,23 +27,23 @@ service:
       http:
         port: 8191
 
-ingress:
-  app:
-    enabled: false
-    # If you want to expose via Traefik, set to true and configure like this:
-    # className: "traefik"
-    # hosts:
-    #   - host: flaresolverr.local.yourdomain.com
-    #     paths:
-    #       - path: /
-    #         service:
-    #           name: app
-    #           port: http
+# Don’t declare ingress at all unless you really want it.
+# If you DO want it, uncomment and fill in hosts.
+# ingress:
+#   app:
+#     enabled: true
+#     className: "traefik"
+#     hosts:
+#       - host: flaresolverr.yourdomain.local
+#         paths:
+#           - path: /
+#             service:
+#               name: app
+#               port: http
 
-persistence:
-  # Flaresolverr doesn’t need persistent storage, but this block keeps Helm happy
-  data:
-    enabled: false
+# app-template v3 is picky about persistence, so we just don't define any.
+# Flaresolverr is stateless, so this is fine.
+persistence: {}
 
 # Optionally, add probes if you want to use Aspire or Argo health checks
 defaultProbes:
