@@ -21,11 +21,11 @@ persistence:
     size: 1Gi
     storageClassName: longhorn
 
-# --- Service ---
-service:
-  enabled: true
-  type: ClusterIP
-  port: 7575
+# # --- Service ---
+# service:
+#   enabled: true
+#   type: ClusterIP
+#   port: 7575
 
 # --- Ingress (Traefik) ---
 ingress:
