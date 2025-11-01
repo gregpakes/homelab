@@ -56,8 +56,8 @@ resources:
     memory: 512Mi
 
 # --- Probes (optional) ---
-probes:
-  liveness:
-    enabled: true
-  readiness:
-    enabled: true
+# probes:
+#   liveness:
+#     enabled: true
+#   readiness:
+#     enabled: true
