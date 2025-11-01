@@ -1,0 +1,63 @@
+# --- Homarr Helm Values ---
+# Chart source: https://homarr.dev/docs/getting-started/installation/helm
+# Repo: https://homarr-labs.github.io/charts
+
+fullnameOverride: homarr
+
+# --- Environment ---
+env:
+  TZ: "Europe/London"
+
+# --- Secret for database encryption ---
+# We don't define it here — it's created by ExternalSecrets as `db-encryption`
+# Chart automatically detects and mounts it when present.
+existingSecret: db-encryption
+
+# --- Persistence for internal database ---
+persistence:
+  homarrDatabase:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    storageClassName: longhorn
+
+# --- Service ---
+service:
+  enabled: true
+  type: ClusterIP
+  port: 7575
+
+# --- Ingress (Traefik) ---
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  annotations:
+    # Add cert-manager if you use it
+    # cert-manager.io/cluster-issuer: letsencrypt-production
+  hosts:
+    - host: homarr.gregpakes.co.uk   # <-- change to your real domain
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  # Example for TLS:
+  # tls:
+  #   - hosts:
+  #       - homarr.k3s.home.arpa
+  #     secretName: homarr-tls
+
+# --- Resources ---
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# --- Probes (optional) ---
+probes:
+  liveness:
+    enabled: true
+  readiness:
+    enabled: true
