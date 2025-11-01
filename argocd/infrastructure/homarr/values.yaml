@@ -2,16 +2,9 @@
 # Chart source: https://homarr.dev/docs/getting-started/installation/helm
 # Repo: https://homarr-labs.github.io/charts
 
-fullnameOverride: homarr
-
 # --- Environment ---
 env:
   TZ: "Europe/London"
-
-# --- Secret for database encryption ---
-# We don't define it here — it's created by ExternalSecrets as `db-encryption`
-# Chart automatically detects and mounts it when present.
-existingSecret: homarr-db-encryption
 
 # --- Persistence for internal database ---
 persistence:
