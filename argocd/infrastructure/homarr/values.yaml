@@ -11,7 +11,7 @@ env:
 # --- Secret for database encryption ---
 # We don't define it here — it's created by ExternalSecrets as `db-encryption`
 # Chart automatically detects and mounts it when present.
-existingSecret: db-encryption
+existingSecret: homarr-db-encryption
 
 # --- Persistence for internal database ---
 persistence:
