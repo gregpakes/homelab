@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: qbit
+  name: download-clients
   namespace: argocd
 spec:
   project: default
@@ -19,13 +19,13 @@ spec:
       helm:
         # Pull values.yaml from the Git source below via its "ref" ($values)
         valueFiles:
-          - $values/argocd/infrastructure/servarr/qbit/values.yaml
+          - $values/argocd/infrastructure/servarr/downloadclients/values.yaml
 
     # 2) Your Git repo containing values.yaml (and optional extra manifests like the Secret)
     - repoURL: https://github.com/gregpakes/homelab
       targetRevision: main
       ref: values
-      path: argocd/infrastructure/servarr/qbit
+      path: argocd/infrastructure/servarr/downloadclients
       directory:
         recurse: true                                              # name this ref "values"
 

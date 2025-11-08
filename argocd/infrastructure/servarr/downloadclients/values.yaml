@@ -94,6 +94,18 @@ controllers:
             type: TCP
             port: 8080
 
+      nzbget:
+        image:
+          repository: ghcr.io/linuxserver/nzbget
+          tag: latest
+        env:
+          TZ: Europe/London
+          PUID: "1000"
+          PGID: "988"
+        ports:
+          - name: nzbgetui
+            containerPort: 6789
+            protocol: TCP
 service:
   webui:
     controller: main
@@ -103,6 +115,16 @@ service:
         port: 8080
         targetPort: http
         protocol: TCP
+
+  nzbgetui:
+    controller: main
+    type: ClusterIP
+    ports:
+      http:
+        port: 6789
+        targetPort: http
+        protocol: TCP
+      
   bittorrent:
     controller: main
     type: ClusterIP
@@ -143,6 +165,13 @@ persistence:
     size: 5Gi
     storageClass: longhorn
 
+  nzb-config:
+    enabled: true
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    storageClass: longhorn
+
   downloads:
     enabled: true
     type: nfs
@@ -156,6 +185,11 @@ advancedMounts:
         path: /dev/net/tun
     qbittorrent:
       - name: config
+        path: /config
+      - name: downloads
+        path: /downloads
+    nzbget:
+      - name: nzb-config
         path: /config
       - name: downloads
         path: /downloads
