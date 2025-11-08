@@ -1,0 +1,12 @@
+# bazarr-config-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qbit-config
+  namespace: servarr
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: longhorn
