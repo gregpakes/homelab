@@ -103,7 +103,7 @@ controllers:
           PUID: "1000"
           PGID: "988"
         ports:
-          - name: http
+          - name: nzbhttp
             containerPort: 6789
             protocol: TCP
 service:
@@ -122,7 +122,7 @@ service:
     ports:
       http:
         port: 6789
-        targetPort: http
+        targetPort: nzbhttp
         protocol: TCP
       
   bittorrent:
