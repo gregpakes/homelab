@@ -168,8 +168,7 @@ persistence:
     hostPath: /dev/net/tun
     hostPathType: CharDevice
 
-  config:
-    name: qbit-config
+  qbit-config:
     enabled: true
     type: persistentVolumeClaim
     existingClaim: qbit-config
@@ -193,7 +192,7 @@ advancedMounts:
       - name: dev-tun
         path: /dev/net/tun
     qbittorrent:
-      - name: config
+      - name: qbit-config
         path: /config
       - name: downloads
         path: /downloads

@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: qbit-config
+  name: download-clients-qbit-config
   namespace: servarr
 spec:
   accessModes: [ "ReadWriteOnce" ]
