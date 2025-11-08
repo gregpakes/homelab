@@ -117,7 +117,7 @@ service:
         protocol: TCP
 
   nzbgetui:
-    controller: nzbget
+    controller: main
     type: ClusterIP
     ports:
       http:
