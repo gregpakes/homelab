@@ -149,7 +149,7 @@ ingress:
             service:
               identifier: webui
               port: http
-  nzgbetui:
+  nzbgetui:
     enabled: true
     className: traefik
     hosts:
