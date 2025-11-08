@@ -58,8 +58,7 @@ spec:
 
         # --- Pi-hole container (unchanged) ---
         - name: pihole
-          image: pihole/pihole
-          tag: 2025.10.3 # remember pihole2 needs to be updated at the same time
+          image: pihole/pihole:2025.10.3 # remember pihole2 needs to be updated at the same time
           imagePullPolicy: IfNotPresent
           resources:
             requests:
