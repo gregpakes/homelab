@@ -122,7 +122,7 @@ service:
     ports:
       http:
         port: 6789
-        targetPort: 6789
+        targetPort: httpnzb
         protocol: TCP
       
   bittorrent:
