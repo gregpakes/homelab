@@ -171,7 +171,7 @@ persistence:
   qbit-config:
     enabled: true
     type: persistentVolumeClaim
-    existingClaim: qbit-config
+    existingClaim: download-clients-qbit-config
 
   nzb-config:
     enabled: true
