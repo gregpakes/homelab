@@ -149,6 +149,16 @@ ingress:
             service:
               identifier: webui
               port: http
+  nzgbetui:
+    enabled: true
+    className: traefik
+    hosts:
+      - host: nzbget.gregpakes.co.uk
+        paths:
+          - path: /
+            service:
+              identifier: nzbgetui
+              port: http
     # tls: [...]   # optional
 
 persistence:
