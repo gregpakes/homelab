@@ -103,7 +103,7 @@ controllers:
           PUID: "1000"
           PGID: "988"
         ports:
-          - name: nzbgetui
+          - name: http
             containerPort: 6789
             protocol: TCP
 service:
