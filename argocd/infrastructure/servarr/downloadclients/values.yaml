@@ -35,7 +35,7 @@ controllers:
             valueFrom: { secretKeyRef: { name: gluetun-secrets, key: WIREGUARD_ADDRESSES } }
 
           # Health & firewall
-          FIREWALL: "on"
+          FIREWALL: "off"
           HEALTH_TARGET_ADDRESS: "1.1.1.1:53"
           FIREWALL_VPN_INPUT_PORTS:
             valueFrom: { secretKeyRef: { name: gluetun-secrets, key: FIREWALL_VPN_INPUT_PORTS } }
