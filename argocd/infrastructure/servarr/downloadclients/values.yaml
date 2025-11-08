@@ -169,11 +169,10 @@ persistence:
     hostPathType: CharDevice
 
   config:
+    name: qbit-config
     enabled: true
     type: persistentVolumeClaim
-    accessMode: ReadWriteOnce
-    size: 5Gi
-    storageClass: longhorn
+    existingClaim: qbit-config
 
   nzb-config:
     enabled: true
