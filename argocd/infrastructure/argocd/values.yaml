@@ -21,3 +21,7 @@ configs:
         - /metadata
         - /endpoints
         - /ports
+
+    # 👇 add this: either override old exclusions or define none
+    resource.exclusions: |
+      []
