@@ -13,7 +13,7 @@ spec:
     # 1) Upstream Homarr chart (non-OCI so it behaves like your bjw-s stuff)
     - repoURL: https://homarr-labs.github.io/charts
       chart: homarr
-      targetRevision: 8.2.1
+      targetRevision: 8.2.2
       helm:
         valueFiles:
           - $values/argocd/infrastructure/homarr/values.yaml
