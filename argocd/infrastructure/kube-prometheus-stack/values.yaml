@@ -18,7 +18,7 @@ prometheus:
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
-              storage: 30Gi
+              storage: 50Gi
 
     # Scrape ANY ServiceMonitor/PodMonitor in ANY namespace
     serviceMonitorSelector: {}
@@ -79,8 +79,23 @@ grafana:
 
 # K3s specifics — keep etcd off unless you wire certs/endpoint
 kubeEtcd:
-  enabled: false
+  enabled: true
+  endpoints:
+    - 172.16.51.201
+    - 172.16.51.202
+    - 172.16.51.203
+  service:
+    enabled: true
+    port: 2381
+    targetPort: 2381
+
 kubeControllerManager:
   enabled: true
+  endpoints:
+    - 172.16.51.201
+    - 172.16.51.202
+    - 172.16.51.203
 kubeScheduler:
+  enabled: false # not needed in k3s
+kubeApiServer:
   enabled: true
