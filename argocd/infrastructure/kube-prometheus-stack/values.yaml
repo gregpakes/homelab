@@ -36,6 +36,16 @@ alertmanager:
   alertmanagerSpec:
     secrets:
       - alert-manager-pushover
+  
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 2Gi
+
   config:
     global:
       resolve_timeout: 5m
@@ -48,15 +58,6 @@ alertmanager:
             token: /etc/alertmanager/secrets/alert-manager-pushover/token
             title: "{{ .CommonLabels.alertname }}"
             message: "{{ .CommonAnnotations.summary }}"
-
-    storage:
-      volumeClaimTemplate:
-        spec:
-          storageClassName: longhorn
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 2Gi
 
 # Grafana
 grafana:
