@@ -54,10 +54,10 @@ alertmanager:
     receivers:
       - name: pushover
         pushover_configs:
-          - user_key: /etc/alertmanager/secrets/alert-manager-pushover/user_key
-            token: /etc/alertmanager/secrets/alert-manager-pushover/token
-            title: "{{ .CommonLabels.alertname }}"
-            message: "{{ .CommonAnnotations.summary }}"
+          - user_key_file: /etc/alertmanager/secrets/alert-manager-pushover/user_key
+            token_file: /etc/alertmanager/secrets/alert-manager-pushover/token
+            title: '{{ .CommonLabels.alertname }}'
+            message: '{{ .CommonAnnotations.summary }}'
 
 # Grafana
 grafana:
