@@ -36,18 +36,18 @@ alertmanager:
   alertmanagerSpec:
     secrets:
       - alert-manager-pushover
-    config:
-      global:
-        resolve_timeout: 5m
-      route:
-        receiver: pushover
-      receivers:
-        - name: pushover
-          pushover_configs:
-            - user_key: /etc/alertmanager/secrets/alert-manager-pushover/user_key
-              token: /etc/alertmanager/secrets/alert-manager-pushover/token
-              title: "{{ .CommonLabels.alertname }}"
-              message: "{{ .CommonAnnotations.summary }}"
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      receiver: pushover
+    receivers:
+      - name: pushover
+        pushover_configs:
+          - user_key: /etc/alertmanager/secrets/alert-manager-pushover/user_key
+            token: /etc/alertmanager/secrets/alert-manager-pushover/token
+            title: "{{ .CommonLabels.alertname }}"
+            message: "{{ .CommonAnnotations.summary }}"
 
     storage:
       volumeClaimTemplate:
