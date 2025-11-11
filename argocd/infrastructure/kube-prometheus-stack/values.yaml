@@ -52,6 +52,8 @@ alertmanager:
     route:
       receiver: pushover
     receivers:
+      - name: "null"
+      
       - name: pushover
         pushover_configs:
           - user_key_file: /etc/alertmanager/secrets/alert-manager-pushover/user_key
