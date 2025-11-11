@@ -35,7 +35,7 @@ prometheus:
 alertmanager:
   alertmanagerSpec:
     secrets:
-      - alertmanager-pushover-secret
+      - alert-manager-pushover
     config:
       global:
         resolve_timeout: 5m
@@ -48,7 +48,7 @@ alertmanager:
               token: "{{ (index .Secrets \"alertmanager-pushover\" \"user_key\") }}"
               title: "{{ .CommonLabels.alertname }}"
               message: "{{ .CommonAnnotations.summary }}"
-              
+
     storage:
       volumeClaimTemplate:
         spec:
