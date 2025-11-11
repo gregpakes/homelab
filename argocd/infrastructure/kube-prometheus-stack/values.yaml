@@ -40,12 +40,12 @@ alertmanager:
       global:
         resolve_timeout: 5m
       route:
-        receivers: pushover
+        receiver: pushover
       receivers:
         - name: pushover
           pushover_configs:
-            - user_key: "{{ (index .Secrets \"alertmanager-pushover\" \"token\") }}"
-              token: "{{ (index .Secrets \"alertmanager-pushover\" \"user_key\") }}"
+            - user_key: /etc/alertmanager/secrets/alert-manager-pushover/user_key
+              token: /etc/alertmanager/secrets/alert-manager-pushover/token
               title: "{{ .CommonLabels.alertname }}"
               message: "{{ .CommonAnnotations.summary }}"
 
