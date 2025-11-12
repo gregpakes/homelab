@@ -59,10 +59,10 @@ persistence:
     server: 172.16.250.191
     path: /var/nfs/shared/Media
 
-resources:
-  requests:
-    cpu: 500m
-    memory: 256Mi
-  limits:
-    cpu: 500m
-    memory: 512Mi
+# resources:
+#   requests:
+#     cpu: 500m
+#     memory: 256Mi
+#   limits:
+#     cpu: 500m
+#     memory: 512Mi
