@@ -3,6 +3,8 @@ controllers:
   main:
     replicas: 1
     pod:
+      nodeSelector:
+        kubernetes.io/hostname: k3s-05 # Pin to 05 because we download to local path due to perf issues when downloading directly to the NFS drive
       dnsPolicy: None
       dnsConfig:
         nameservers:
@@ -186,6 +188,12 @@ persistence:
     server: 172.16.250.191
     path: /var/nfs/shared/Media
 
+  local-downloads:
+    enabled: true
+    type: hostPath
+    hostPath: /mnt/local-downloads
+    hostPathType: DirectoryOrCreate
+
 advancedMounts:
   main:
     gluetun:
@@ -196,8 +204,12 @@ advancedMounts:
         path: /config
       - name: downloads
         path: /downloads
+      - name: local-downloads
+        path: /local-downloads
     nzbget:
       - name: nzb-config
         path: /config
       - name: downloads
         path: /downloads
+      - name: local-downloads
+        path: /local-downloads
