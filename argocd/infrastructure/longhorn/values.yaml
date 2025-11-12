@@ -30,8 +30,13 @@ longhornManager:
       maxUnavailable: 1
 
 longhornDriver:
-  nodeSelector: {}
-  tolerations: []
+  nodeSelector:
+    longhorn: "true"
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: longhorn
+      effect: NoSchedule
 
 csi:
   kubeletRootDir: /var/lib/kubelet
