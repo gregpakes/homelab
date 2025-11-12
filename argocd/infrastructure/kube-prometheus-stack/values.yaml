@@ -108,7 +108,7 @@ kubeEtcd:
     targetPort: 2381
 
 kubeControllerManager:
-  enabled: true
+  enabled: false
   endpoints:
     - 172.16.51.201
     - 172.16.51.202
@@ -116,4 +116,4 @@ kubeControllerManager:
 kubeScheduler:
   enabled: false # not needed in k3s
 kubeApiServer:
-  enabled: true
+  enabled: false
