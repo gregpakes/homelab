@@ -117,3 +117,5 @@ kubeScheduler:
   enabled: false # not needed in k3s
 kubeApiServer:
   enabled: false
+kubeProxy:
+  enabled: false
