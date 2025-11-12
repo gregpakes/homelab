@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pvc-f0311832-cedf-4fe6-af93-c70f04935ba6    # MUST match your PVC.spec.volumeName
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  persistentVolumeReclaimPolicy: Retain
+  csi:
+    driver: driver.longhorn.io
+    volumeHandle: pvc-f0311832-cedf-4fe6-af93-c70f04935ba6  # the Longhorn volume name/handle
+    fsType: ext4
