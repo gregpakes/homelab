@@ -76,6 +76,10 @@ spec:
               value: pihole
             - name: PIHOLE_DNS_1
               value: 172.16.51.1
+            - name: FTLCONF_dns_reply_host_IPv4
+              value: "172.16.51.67"  # whatever IP you want this instance to answer as
+            - name: FTLCONF_dns_reply_host_force4
+              value: "true"
           ports:
             - containerPort: 80
               name: pihole-http
