@@ -1,0 +1,49 @@
+controllers:
+  termix:
+    replicas: 1
+  
+    containers:
+      app:
+        image:
+          repository: ghcr.io/lukegus/termix
+          tag: 1.9.0
+        env:
+          PORT: 8080
+        ports:
+          - name: http
+            containerPort: 8080
+
+service:
+  main:
+    controller: termix
+    ports:
+      http:
+        port: 8080
+        targetPort: 8080
+        protocol: TCP
+
+ingress:
+  main:
+    enabled: true
+    className: traefik
+    hosts:
+      - host: termix.gregpakes.co.uk
+        paths:
+          - path: /
+            service:
+              identifier: main
+              port: http
+
+metrics:
+  serviceMonitor:
+    enabled: true
+    # if you use kube-prometheus-stack, add its selector
+    additionalLabels:
+      release: kube-prometheus-stack
+
+persistence:
+  data:
+    enabled: true
+    existingClaim: termix-data
+    globalMounts:
+      - path: /app/data

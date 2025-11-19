@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: termix
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: termix
+
+  # --- Multiple sources: 1) Helm chart, 2) Your GitOps repo with values & extra manifests
+  sources:
+    # 1) Upstream Helm chart (bjw-s/app-template)
+    - repoURL: https://bjw-s-labs.github.io/helm-charts/
+      chart: app-template
+      targetRevision: 4.4.0
+      helm:
+        # Pull values.yaml from the Git source below via its "ref" ($values)
+        valueFiles:
+          - $values/argocd/infrastructure/termix/values.yaml
+
+    # 2) Your Git repo containing values.yaml (and optional extra manifests like the Secret)
+    - repoURL: https://github.com/gregpakes/homelab
+      targetRevision: main
+      ref: values
+      path: argocd/infrastructure/termix
+      directory:
+        recurse: true
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
