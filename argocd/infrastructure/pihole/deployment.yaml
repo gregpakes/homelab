@@ -62,8 +62,8 @@ spec:
           imagePullPolicy: IfNotPresent
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
+              cpu: 250m
+              memory: 512Mi
             limits:
               # no cpu limit as recommended to avoid throttling jitter
               memory: 512Mi
