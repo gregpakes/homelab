@@ -32,7 +32,7 @@ data:
   SYNC_GRAVITY_CLIENT_BY_GROUP: "true"
 
   # This setting is unique per Pi-hole instance, to avoid IP conflicts
-  SYNC_CONFIG_DNS_EXCLUDE: "dns.reply.host.IPv4"
+  SYNC_CONFIG_DNS_EXCLUDE: "reply.host.IPv4"
 
   # If you disable FULL_SYNC above, you can selectively turn on pieces, e.g.:
   # SYNC_GRAVITY_AD_LIST: "true"
