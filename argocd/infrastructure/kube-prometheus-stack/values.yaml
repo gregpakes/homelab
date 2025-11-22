@@ -18,7 +18,7 @@ prometheus:
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
-              storage: 50Gi
+              storage: 75Gi
 
     # Scrape ANY ServiceMonitor/PodMonitor in ANY namespace
     serviceMonitorSelector: {}
