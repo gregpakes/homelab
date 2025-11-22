@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: huntarr-config
+  namespace: huntarr
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+    longhorn.io/volume-name: huntarr-config
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: longhorn

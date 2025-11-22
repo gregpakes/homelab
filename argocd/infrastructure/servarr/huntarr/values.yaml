@@ -1,0 +1,52 @@
+controllers:
+  huntarr:
+    replicas: 1
+  
+    containers:
+      app:
+        image:
+          repository: huntarr/huntarr
+          tag: 8.2.10
+        env:
+          TZ: Europe/London
+        ports:
+          - name: http
+            containerPort: 9705
+        probes:
+          liveness:  { enabled: true,  type: TCP, port: 9705 }
+          readiness: { enabled: true,  type: TCP, port: 9705 }
+
+service:
+  main:
+    controller: huntarr
+    ports:
+      http:
+        port: 9705
+        targetPort: 9705
+        protocol: TCP
+
+ingress:
+  main:
+    enabled: true
+    className: traefik
+    hosts:
+      - host: huntarr.gregpakes.co.uk
+        paths:
+          - path: /
+            service:
+              identifier: main
+              port: http
+
+metrics:
+  serviceMonitor:
+    enabled: true
+    # if you use kube-prometheus-stack, add its selector
+    additionalLabels:
+      release: kube-prometheus-stack
+
+persistence:
+  data:
+    enabled: true
+    existingClaim: huntarr-config
+    globalMounts:
+      - path: /config
