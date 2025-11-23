@@ -62,7 +62,7 @@ controllers:
       qbittorrent:
         image:
           repository: ghcr.io/linuxserver/qbittorrent
-          tag: latest
+          tag: libtorrentv1 # We use libtorrentv1 tag due to memory leak in libtorrent v2 (latest tag)
         env:
           TZ: Europe/London
           PUID: "1000"
