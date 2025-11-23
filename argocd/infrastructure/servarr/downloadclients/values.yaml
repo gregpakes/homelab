@@ -20,7 +20,7 @@ controllers:
       gluetun:
         image:
           repository: qmcgaw/gluetun
-          tag: latest
+          tag: v3.40.2
         env:
           TZ: Europe/London
 
@@ -38,7 +38,7 @@ controllers:
 
           # Health & firewall
           FIREWALL: "off"
-          HEALTH_TARGET_ADDRESS: "1.1.1.1:53"
+          HEALTH_TARGET_ADDRESSES: "1.1.1.1:53"
           FIREWALL_VPN_INPUT_PORTS:
             valueFrom: { secretKeyRef: { name: gluetun-secrets, key: FIREWALL_VPN_INPUT_PORTS } }
 
@@ -49,7 +49,7 @@ controllers:
           FIREWALL_OUTBOUND_SUBNETS: "10.42.0.0/16,10.43.0.0/16,172.16.51.0/24,172.16.250.191/32"
 
           # this dns config tells gluetun to start using plaintext dns, then switch over to DoT when ready
-          DOT: "on"
+          DNS_SERVER: "on"
           DNS_OVER_TLS: "cloudflare"
           DNS_ADDRESS: "127.0.0.1" 
 
@@ -62,7 +62,7 @@ controllers:
       qbittorrent:
         image:
           repository: ghcr.io/linuxserver/qbittorrent
-          tag: libtorrentv1 # We use libtorrentv1 tag due to memory leak in libtorrent v2 (latest tag)
+          tag: 5.1.4-libtorrentv1 # We use libtorrentv1 tag due to memory leak in libtorrent v2 (latest tag)
         env:
           TZ: Europe/London
           PUID: "1000"
@@ -99,7 +99,7 @@ controllers:
       nzbget:
         image:
           repository: ghcr.io/linuxserver/nzbget
-          tag: latest
+          tag: version-v25.4
         env:
           TZ: Europe/London
           PUID: "1000"
