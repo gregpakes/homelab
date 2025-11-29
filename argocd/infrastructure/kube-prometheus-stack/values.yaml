@@ -5,6 +5,7 @@ crds:
 
 # Prometheus (Operator) config
 prometheus:
+  enabled: false
   prometheusSpec:
     retention: 15d
     scrapeInterval: 30s
@@ -33,6 +34,7 @@ prometheus:
 
 # Alertmanager (optional persistence)
 alertmanager:
+  enabled: true
   alertmanagerSpec:
     secrets:
       - alert-manager-pushover
@@ -63,6 +65,7 @@ alertmanager:
 
 # Grafana
 grafana:
+  enabled: true
   adminUser: admin
   adminPassword: "changeme"  # (recommend moving to External Secrets later)
   persistence:
