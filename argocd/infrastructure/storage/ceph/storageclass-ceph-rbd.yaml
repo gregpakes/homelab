@@ -2,7 +2,7 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: ceph-rbd
-provisioner: kubernetes.io/rbd   # or csi if you’re using ceph-csi
+provisioner: rbd.csi.ceph.com   # or csi if you’re using ceph-csi
 parameters:
   monitors: "172.16.250.10:6789,172.16.250.11:6789,172.16.250.12:6789"
   pool: rbd
