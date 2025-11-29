@@ -5,7 +5,7 @@ crds:
 
 # Prometheus (Operator) config
 prometheus:
-  enabled: false
+  enabled: true
   prometheusSpec:
     retention: 15d
     scrapeInterval: 30s
@@ -15,6 +15,7 @@ prometheus:
     storageSpec:
       volumeClaimTemplate:
         spec:
+          existingClaim: prometheus-ceph
           storageClassName: longhorn
           accessModes: ["ReadWriteOnce"]
           resources:
