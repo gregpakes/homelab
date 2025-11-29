@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/gregpakes/homelab
     targetRevision: main
-    path: infrastructure/storage/ceph
+    path: argocd/infrastructure/storage/ceph
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
