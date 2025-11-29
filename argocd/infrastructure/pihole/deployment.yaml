@@ -7,7 +7,7 @@ metadata:
   name: pihole
   namespace: pihole
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       app: pihole
@@ -107,4 +107,4 @@ spec:
       volumes:
         - name: pihole
           persistentVolumeClaim:
-            claimName: pihole
+            claimName: pihole-ceph
