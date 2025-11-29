@@ -11,3 +11,16 @@ spec:
       storage: 3Gi
   # IMPORTANT: this must match the currently bound PV
   volumeName: pvc-7c65d2e0-f3c2-463d-8d3c-41054ed7366c
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pihole-ceph
+  namespace: servarr
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ceph-rbd       # <-- your new Ceph StorageClass
+  resources:
+    requests:
+      storage: 5Gi
