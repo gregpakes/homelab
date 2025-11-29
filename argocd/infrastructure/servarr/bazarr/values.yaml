@@ -17,13 +17,11 @@ controllers:
           PGID: "988"
         probes:
           liveness:
-            initialDelaySeconds: 120
-            enabled: true
+            enabled: false
             type: HTTP
             port: 6767
           readiness:
-            initialDelaySeconds: 120
-            enabled: true
+            enabled: false
             type: HTTP
             port: 6767
 
