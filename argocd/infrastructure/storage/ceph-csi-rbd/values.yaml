@@ -1,0 +1,25 @@
+csiConfig:
+  - clusterID: "d90b0848-9994-451f-b850-04aadfe27951"   # your fsid
+    monitors:
+      - "172.16.250.10:6789"
+      - "172.16.250.11:6789"
+      - "172.16.250.12:6789"
+
+secret:
+  create: false
+  userID: admin
+  userKey: ""
+
+storageClass:
+  create: true
+  name: ceph-rbd
+  pool: kubernetes     # the pool you just created
+  clusterID: "d90b0848-9994-451f-b850-04aadfe27951"
+  annotations: {}
+  # This wires Ceph-CSI to your existing secret:
+  provisionerSecretName: csi-rbd-secret
+  provisionerSecretNamespace: kube-system
+  controllerExpandSecretName: csi-rbd-secret
+  controllerExpandSecretNamespace: kube-system
+  nodeStageSecretName: csi-rbd-secret
+  nodeStageSecretNamespace: kube-system

@@ -1,0 +1,8 @@
+apiVersion: v2
+name: ceph-csi-rbd-wrapper
+version: 0.1.0
+
+dependencies:
+  - name: ceph-csi-rbd
+    version: 3.11.0
+    repository: https://ceph.github.io/csi-charts
