@@ -5,7 +5,7 @@ controllers:
       securityContext:
         fsGroup: 988
         fsGroupChangePolicy: OnRootMismatch
-    replicas: 0
+    replicas: 1
     containers:
       bazarr:
         image:
@@ -51,7 +51,7 @@ persistence:
   config:
     enabled: true
     type: persistentVolumeClaim
-    existingClaim: bazarr-config
+    existingClaim: bazarr-config-ceph
 
   downloads:
     enabled: true
