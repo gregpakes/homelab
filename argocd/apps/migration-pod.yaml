@@ -29,3 +29,21 @@
 #     - name: new-config
 #       persistentVolumeClaim:
 #         claimName: prometheus-monitoring-kube-prometheus-prometheus-db-prometheus-monitoring-kube-prometheus-prometheus-0      # Ceph PVC
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prometheus-debug
+  namespace: monitoring
+spec:
+  containers:
+    - name: shell
+      image: alpine:3.20
+      command: ["/bin/sh", "-c", "sleep 36000"]
+      volumeMounts:
+        - name: data
+          mountPath: /prom
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: prometheus-monitoring-kube-prometheus-prometheus-db-prometheus-monitoring-kube-prometheus-prometheus-0
