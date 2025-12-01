@@ -34,10 +34,12 @@ spec:
         exclude: "values.yaml"
 
   syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
       - PruneLast=true
       - RespectIgnoreDifferences=true
       - ApplyOutOfSyncOnly=true
-      - Replace=true
