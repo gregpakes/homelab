@@ -4,17 +4,17 @@ metadata:
   name: velero-minio
   namespace: minio-tenant
 spec:
-  # Root credentials for the tenant – must match your Secret
-  credsSecret:
-    name: velero-minio-creds
+  # New-style root credentials
+  configuration:
+    name: velero-minio-config
 
-  # Don’t auto-generate certs; we’ll just use HTTP inside the cluster
+  # You can keep this or delete it; on newer operators it's not used for root creds
+  # credsSecret:
+  #   name: velero-minio-creds
+
   requestAutoCert: false
-
-  # Where PVCs get mounted inside the container
   mountPath: /export
 
-  # Single-pool, single-server tenant on your NAS-backed StorageClass
   pools:
     - name: pool-0
       servers: 1
@@ -23,16 +23,13 @@ spec:
         metadata:
           name: data
         spec:
-          storageClassName: nfs-rwx      # 👈 your NAS/NFS StorageClass
+          storageClassName: nfs-rwx
           accessModes:
             - ReadWriteOnce
           resources:
             requests:
-              storage: 2Ti               # adjust as you like
+              storage: 2Ti
 
-  # Optional – you can omit this block entirely if you want defaults.
-  # With these booleans, operator creates services and (in cloud envs)
-  # may make them LoadBalancer. On-prem it’ll just be normal Services.
   exposeServices:
-    minio: true      # create a Service for the S3 endpoint
+    minio: true
     console: true
