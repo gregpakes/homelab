@@ -1,6 +1,7 @@
 {{- $root := . -}}
 {{- range .Values.restic.pvcBackups }}
 {{- $backupName := default .name .backupName | trunc 40 | trimSuffix "-" }}
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -14,15 +15,7 @@ spec:
   resources:
     requests:
       storage: {{ $root.Values.restic.repoSize }}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: restic-credentials-{{ $backupName }}
-  namespace: {{ .namespace }}
-type: Opaque
-stringData:
-  RESTIC_PASSWORD: {{ $root.Values.restic.password | quote }}
+
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -49,7 +42,7 @@ spec:
                 - name: RESTIC_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: restic-credentials-{{ $backupName }}
+                      name: {{ $root.Values.restic.resticPasswordSecretName }}
                       key: RESTIC_PASSWORD
               volumeMounts:
                 - name: repo
