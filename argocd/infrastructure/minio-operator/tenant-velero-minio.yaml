@@ -1,0 +1,26 @@
+apiVersion: minio.min.io/v2
+kind: Tenant
+metadata:
+  name: velero-minio
+  namespace: minio-tenant
+spec:
+  credsSecret:
+    name: velero-minio-creds
+
+  requestAutoCert: false
+
+  pools:
+    - name: pool-0
+      servers: 1
+      volumesPerServer: 1
+      size: 2Ti
+      storageClassName: nas-nfs
+
+  buckets:
+    - name: velero
+
+  exposeServices:
+    minio:
+      type: ClusterIP
+    console:
+      type: ClusterIP

@@ -1,0 +1,20 @@
+configuration:
+  provider: aws
+  backupStorageLocation:
+    - name: default
+      bucket: velero
+      config:
+        region: minio
+        s3ForcePathStyle: "true"
+        s3Url: http://velero-minio-hl.minio-tenant.svc.cluster.local:9000
+
+credentials:
+  existingSecret: velero-credentials
+
+snapshotsEnabled: false
+
+deployNodeAgent: true
+defaultVolumesToFsBackup: true
+
+nodeAgent:
+  podVolumePath: /var/velero

@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: velero
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: velero
+
+  sources:
+    # 1) Velero Helm chart
+    - repoURL: https://vmware-tanzu.github.io/helm-charts
+      chart: velero
+      targetRevision: 11.2.0        # check current
+      helm:
+        releaseName: velero
+        valueFiles:
+          - $values/argocd/infrastructure/velero/values.yaml
+
+    # 2) Your repo as values source
+    - repoURL: https://github.com/gregpakes/homelab
+      targetRevision: main
+      ref: values
+
+    # 3) Extra manifests: namespace, creds, schedules, etc.
+    - repoURL: https://github.com/gregpakes/homelab
+      targetRevision: main
+      path: argocd/infrastructure/velero
+      directory:
+        recurse: true
+        include: "*.yaml"
+        exclude: "values.yaml"
+
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - PruneLast=true
+      - RespectIgnoreDifferences=true
+      - ApplyOutOfSyncOnly=true
+      - Replace=true
