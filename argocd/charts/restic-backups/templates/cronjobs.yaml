@@ -1,0 +1,78 @@
+{{- range .Values.restic.pvcBackups }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: smb-backup-repo-{{ .name }}
+  namespace: {{ .namespace }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: {{ $.Values.restic.repoStorageClass }}
+  resources:
+    requests:
+      storage: {{ $.Values.restic.repoSize }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: restic-backup-{{ .name }}
+  namespace: {{ .namespace }}
+spec:
+  schedule: {{ $.Values.restic.schedule | quote }}
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: restic
+              image: {{ $.Values.restic.image }}
+              env:
+                - name: RESTIC_REPOSITORY
+                  value: "{{ $.Values.restic.repoBasePath }}/{{ .namespace }}-{{ .name }}"
+                - name: RESTIC_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ $.Values.restic.resticPasswordSecretName }}
+                      key: RESTIC_PASSWORD
+              volumeMounts:
+                - name: repo
+                  mountPath: {{ $.Values.restic.repoBasePath }}
+                - name: data
+                  mountPath: /data
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  echo "Restic backup starting for {{ .namespace }}/{{ .name }}"
+
+                  if ! restic snapshots > /dev/null 2>&1; then
+                    echo "Initialising restic repo..."
+                    restic init
+                  fi
+
+                  restic backup /data \
+                    --tag {{ .namespace }}-{{ .name }} \
+                    --host k3s-cluster \
+                    --iexclude '**/.cache/**'
+
+                  restic forget \
+                    --keep-daily {{ $.Values.restic.retention.keepDaily }} \
+                    --keep-weekly {{ $.Values.restic.retention.keepWeekly }} \
+                    --keep-monthly {{ $.Values.restic.retention.keepMonthly }} \
+                    --prune
+
+                  echo "Restic backup finished."
+          volumes:
+            - name: repo
+              persistentVolumeClaim:
+                claimName: smb-backup-repo-{{ .name }}
+            - name: data
+              persistentVolumeClaim:
+                claimName: {{ .name }}
+{{- end }}

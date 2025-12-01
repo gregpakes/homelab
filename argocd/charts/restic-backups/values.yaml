@@ -1,0 +1,23 @@
+# argocd/infrastructure/restic-backups/values.yaml
+
+restic:
+  image: restic/restic:0.16.4
+  repoStorageClass: smb-backup
+  repoBasePath: /repo
+  retention:
+    keepDaily: 7
+    keepWeekly: 4
+    keepMonthly: 6
+  repoSize: 2Ti
+
+  # this is the only bit you maintain
+  pvcBackups:
+    - name: pihole-ceph
+      namespace: pihole
+    - name: bazarr-config-ceph
+      namespace: servarr
+    - name: prometheus-monitoring-kube-prometheus-prometheus-db-prometheus-monitoring-kube-prometheus-prometheus-0
+      namespace: monitoring
+
+  resticPasswordSecretName: restic-master-password
+  schedule: "0 2 * * *"   # daily at 02:00
