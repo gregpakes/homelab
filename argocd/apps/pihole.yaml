@@ -1,31 +1,31 @@
-# apiVersion: argoproj.io/v1alpha1
-# kind: Application
-# metadata:
-#   name: pihole
-#   namespace: argocd
-# spec:
-#   project: default
-#   destination:
-#     server: https://kubernetes.default.svc
-#     namespace: pihole
-#   source:
-#     repoURL: https://github.com/gregpakes/homelab
-#     targetRevision: main
-#     path: argocd/infrastructure/pihole
-#   syncPolicy:
-#     automated:
-#       prune: false          # keep false to protect your PVC; enable later if you like
-#       selfHeal: true
-#     syncOptions:
-#       - CreateNamespace=true
-#       - PrunePropagationPolicy=background
-#       - ApplyOutOfSyncOnly=true
-#       # ignore LB status drift
-#       - RespectIgnoreDifferences=true
-#   ignoreDifferences:
-#     - group: ""
-#       kind: Service
-#       name: pihole
-#       namespace: pihole
-#       jsonPointers:
-#         - /status
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pihole
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: pihole
+  source:
+    repoURL: https://github.com/gregpakes/homelab
+    targetRevision: main
+    path: argocd/infrastructure/pihole
+  syncPolicy:
+    automated:
+      prune: false          # keep false to protect your PVC; enable later if you like
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=background
+      - ApplyOutOfSyncOnly=true
+      # ignore LB status drift
+      - RespectIgnoreDifferences=true
+  ignoreDifferences:
+    - group: ""
+      kind: Service
+      name: pihole
+      namespace: pihole
+      jsonPointers:
+        - /status
