@@ -1,0 +1,6 @@
+controller:
+  runOnMaster: true
+  
+node:
+  tolerations:
+    - operator: "Exists"
