@@ -1,15 +1,15 @@
-configuration:
-  backupStorageLocation:
-    - name: default
-      provider: aws
-      bucket: velero
-      config:
-        region: minio
-        s3ForcePathStyle: "true"
-        s3Url: http://velero-minio-hl.minio-tenant.svc.cluster.local:9000
+# configuration:
+#   backupStorageLocation:
+#     - name: default
+#       provider: aws
+#       bucket: velero
+#       config:
+#         region: minio
+#         s3ForcePathStyle: "true"
+#         s3Url: http://velero-minio-hl.minio-tenant.svc.cluster.local:9000
 
-credentials:
-  existingSecret: velero-minio-creds
+# credentials:
+#   existingSecret: velero-minio-creds
 
 snapshotsEnabled: false
 
