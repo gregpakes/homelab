@@ -20,7 +20,7 @@ spec:
           reclaimPolicy: Retain        # keep data when PVC is deleted
           archiveOnDelete: true
           mountOptions:
-            - nfsvers=4.1
+            - nfsvers=3
             - rsize=1048576
             - wsize=1048576
   destination:
