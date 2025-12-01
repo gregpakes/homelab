@@ -13,7 +13,7 @@ spec:
       values: |
         nfs:
           server: 172.16.250.191        # <-- NAS IP
-          path: /var/nfs/shared/Media   # <-- exported path on NAS
+          path: /var/nfs/shared/Backups  # <-- exported path on NAS
         storageClass:
           name: nfs-rwx
           defaultClass: false          # set true if you want it cluster-default
