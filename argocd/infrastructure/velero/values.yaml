@@ -17,4 +17,4 @@ deployNodeAgent: true
 defaultVolumesToFsBackup: true
 
 nodeAgent:
-  podVolumePath: /var/velero
+  podVolumePath: /var/lib/rancher/k3s/agent/kubelet/pods
