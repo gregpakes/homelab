@@ -13,11 +13,11 @@ spec:
     # 1) MinIO Operator Helm chart
     - repoURL: https://operator.min.io/         # <- adjust if needed
       chart: operator
-      targetRevision: 5.0.15                    # example, pin exact
+      targetRevision: 5.0.18                    # example, pin exact
       helm:
         releaseName: minio-operator
         valueFiles:
-          - $values/argocd/infrastructure/minio/values.yaml
+          - $values/argocd/infrastructure/minio-operator/values.yaml
 
     # 2) Your repo as values source
     - repoURL: https://github.com/gregpakes/homelab
@@ -27,7 +27,7 @@ spec:
     # 3) Your extra manifests: tenant + secrets + namespaces
     - repoURL: https://github.com/gregpakes/homelab
       targetRevision: main
-      path: argocd/infrastructure/minio
+      path: argocd/infrastructure/minio-operator
       directory:
         recurse: true
         include: "*.yaml"
