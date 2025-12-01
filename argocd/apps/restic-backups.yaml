@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://github.com/gregpakes/homelab
     targetRevision: main
-    path: charts/restic-backups
+    path: argocd/charts/restic-backups
     helm:
       valueFiles:
         - values.yaml
