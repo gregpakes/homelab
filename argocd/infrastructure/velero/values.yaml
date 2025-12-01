@@ -9,7 +9,7 @@ configuration:
         s3Url: http://velero-minio-hl.minio-tenant.svc.cluster.local:9000
 
 credentials:
-  existingSecret: velero-credentials
+  existingSecret: velero-minio-creds
 
 snapshotsEnabled: false
 
