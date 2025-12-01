@@ -18,6 +18,7 @@ restic:
       namespace: servarr
     - name: prometheus-monitoring-kube-prometheus-prometheus-db-prometheus-monitoring-kube-prometheus-prometheus-0
       namespace: monitoring
+      backupName: prometheus-ceph
 
   resticPasswordSecretName: restic-master-password
   schedule: "0 2 * * *"   # daily at 02:00

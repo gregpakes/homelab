@@ -1,25 +1,36 @@
+{{- $root := . -}}
 {{- range .Values.restic.pvcBackups }}
+{{- $backupName := default .name .backupName | trunc 40 | trimSuffix "-" }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: smb-backup-repo-{{ .name }}
+  name: smb-backup-repo-{{ $backupName }}
   namespace: {{ .namespace }}
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: {{ $.Values.restic.repoStorageClass }}
+  storageClassName: {{ $root.Values.restic.repoStorageClass }}
   resources:
     requests:
-      storage: {{ $.Values.restic.repoSize }}
+      storage: {{ $root.Values.restic.repoSize }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: restic-credentials-{{ $backupName }}
+  namespace: {{ .namespace }}
+type: Opaque
+stringData:
+  RESTIC_PASSWORD: {{ $root.Values.restic.password | quote }}
 ---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: restic-backup-{{ .name }}
+  name: restic-backup-{{ $backupName }}
   namespace: {{ .namespace }}
 spec:
-  schedule: {{ $.Values.restic.schedule | quote }}
+  schedule: {{ $root.Values.restic.schedule | quote }}
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
   jobTemplate:
@@ -30,18 +41,19 @@ spec:
           restartPolicy: Never
           containers:
             - name: restic
-              image: {{ $.Values.restic.image }}
+              image: {{ $root.Values.restic.image }}
+              imagePullPolicy: IfNotPresent
               env:
                 - name: RESTIC_REPOSITORY
-                  value: "{{ $.Values.restic.repoBasePath }}/{{ .namespace }}-{{ .name }}"
+                  value: "{{ $root.Values.restic.repoBasePath }}/{{ .namespace }}-{{ $backupName }}"
                 - name: RESTIC_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: {{ $.Values.restic.resticPasswordSecretName }}
+                      name: restic-credentials-{{ $backupName }}
                       key: RESTIC_PASSWORD
               volumeMounts:
                 - name: repo
-                  mountPath: {{ $.Values.restic.repoBasePath }}
+                  mountPath: {{ $root.Values.restic.repoBasePath }}
                 - name: data
                   mountPath: /data
               command:
@@ -49,7 +61,7 @@ spec:
                 - -c
                 - |
                   set -e
-                  echo "Restic backup starting for {{ .namespace }}/{{ .name }}"
+                  echo "Restic backup starting for {{ .namespace }}/{{ .name }} (backup name {{ $backupName }})"
 
                   if ! restic snapshots > /dev/null 2>&1; then
                     echo "Initialising restic repo..."
@@ -57,21 +69,21 @@ spec:
                   fi
 
                   restic backup /data \
-                    --tag {{ .namespace }}-{{ .name }} \
+                    --tag {{ .namespace }}-{{ $backupName }} \
                     --host k3s-cluster \
                     --iexclude '**/.cache/**'
 
                   restic forget \
-                    --keep-daily {{ $.Values.restic.retention.keepDaily }} \
-                    --keep-weekly {{ $.Values.restic.retention.keepWeekly }} \
-                    --keep-monthly {{ $.Values.restic.retention.keepMonthly }} \
+                    --keep-daily {{ $root.Values.restic.retention.keepDaily }} \
+                    --keep-weekly {{ $root.Values.restic.retention.keepWeekly }} \
+                    --keep-monthly {{ $root.Values.restic.retention.keepMonthly }} \
                     --prune
 
                   echo "Restic backup finished."
           volumes:
             - name: repo
               persistentVolumeClaim:
-                claimName: smb-backup-repo-{{ .name }}
+                claimName: smb-backup-repo-{{ $backupName }}
             - name: data
               persistentVolumeClaim:
                 claimName: {{ .name }}
