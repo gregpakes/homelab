@@ -12,6 +12,7 @@ spec:
   restic:
     repository: {{ $.Values.restic.repositorySecretName }}   # 👈 Secret name
     cacheCapacity: {{ $.Values.restic.cacheCapacity }}
+    copyMethod: Direct
     retain:
       daily: {{ $.Values.restic.retain.daily }}
       weekly: {{ $.Values.restic.retain.weekly }}
