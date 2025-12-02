@@ -26,7 +26,10 @@ spec:
     repository: {{ $.Values.restic.repositorySecretName }}   # 👈 Secret name
     cacheCapacity: {{ $.Values.restic.cacheCapacity }}
     copyMethod: {{ $.Values.restic.copyMethod }}
-    moverSecurityContext: {{- toYaml $.Values.restic.moverSecurityContext | nindent 4 }}
+    moverSecurityContext:
+      runAsUser: {{ $.Values.restic.moverSecurityContext.runAsUser }}
+      runAsGroup: {{ $.Values.restic.moverSecurityContext.runAsGroup }}
+      fsGroup: {{ $.Values.restic.moverSecurityContext.fsGroup }}
     retain:
       daily: {{ $.Values.restic.retain.daily }}
       weekly: {{ $.Values.restic.retain.weekly }}
@@ -48,7 +51,10 @@ spec:
     repository: {{ $.Values.restic.repositorySecretName }}
     copyMethod: {{ $.Values.restic.copyMethod }}
     cacheCapacity: {{ $.Values.restic.cacheCapacity }}
-    moverSecurityContext: {{- toYaml $.Values.restic.moverSecurityContext | nindent 4 }}
+    moverSecurityContext:
+      runAsUser: {{ $.Values.restic.moverSecurityContext.runAsUser }}
+      runAsGroup: {{ $.Values.restic.moverSecurityContext.runAsGroup }}
+      fsGroup: {{ $.Values.restic.moverSecurityContext.fsGroup }}
     moverVolumes:
       - mountPath: repo
         volumeSource:
