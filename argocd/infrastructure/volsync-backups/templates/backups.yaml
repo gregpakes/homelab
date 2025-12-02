@@ -1,5 +1,18 @@
 {{- range .Values.pvcs }}
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .backupName }}-backup-repo
+  namespace: {{ .namespace }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: smb-backup       # 👈 SMB-backed SC
+  resources:
+    requests:
+      storage: {{ default $.Values.restic.repoDefaultSize .repoSize }}
+---
 apiVersion: volsync.backube/v1alpha1
 kind: ReplicationSource
 metadata:
@@ -12,11 +25,16 @@ spec:
   restic:
     repository: {{ $.Values.restic.repositorySecretName }}   # 👈 Secret name
     cacheCapacity: {{ $.Values.restic.cacheCapacity }}
-    copyMethod: Direct
+    copyMethod: {{ $.Values.restic.copyMethod }}
     retain:
       daily: {{ $.Values.restic.retain.daily }}
       weekly: {{ $.Values.restic.retain.weekly }}
       monthly: {{ $.Values.restic.retain.monthly }}
+    moverVolumes:
+      - mountPath: repo                 # -> mounted at /mnt/repo in mover pod
+        volumeSource:
+          persistentVolumeClaim:
+            claimName: {{ .backupName }}-backup-repo
 ---
 apiVersion: volsync.backube/v1alpha1
 kind: ReplicationDestination
@@ -27,5 +45,11 @@ spec:
   # No trigger.manual here - we patch it when we want to restore
   restic:
     repository: {{ $.Values.restic.repositorySecretName }}
+    copyMethod: {{ $.Values.restic.copyMethod }}
     cacheCapacity: {{ $.Values.restic.cacheCapacity }}
+    moverVolumes:
+      - mountPath: repo
+        volumeSource:
+          persistentVolumeClaim:
+            claimName: {{ .backupName }}-backup-repo
 {{- end }}
