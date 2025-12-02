@@ -12,6 +12,11 @@ restic:
     weekly: 4
     monthly: 3
 
+  moverSecurityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    fsGroup: 0
+
 pvcs:
   - name: bazarr-config-ceph
     namespace: servarr
