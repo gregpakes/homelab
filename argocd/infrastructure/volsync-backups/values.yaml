@@ -27,3 +27,8 @@ pvcs:
     namespace: pihole
     backupName: pihole
     schedule: "0 2 * * *"   # optional override
+
+  - name: prometheus-monitoring-kube-prometheus-prometheus-db-prometheus-monitoring-kube-prometheus-prometheus-0
+    namespace: monitoring
+    backupName: prometheus
+    schedule: "0 1 * * *"   # optional override
