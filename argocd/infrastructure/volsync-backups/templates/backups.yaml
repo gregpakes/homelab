@@ -1,18 +1,5 @@
 {{- range .Values.pvcs }}
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: {{ .backupName }}-backup-repo
-  namespace: {{ .namespace }}
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: {{ $.Values.restic.repoStorageClass }}
-  resources:
-    requests:
-      storage: {{ default $.Values.restic.repoDefaultSize .repoSize }}
----
 apiVersion: volsync.backube/v1alpha1
 kind: ReplicationSource
 metadata:
@@ -23,9 +10,7 @@ spec:
   trigger:
     schedule: {{ quote (default $.Values.restic.schedule .schedule) }}
   restic:
-    repositoryPVC: {{ .backupName }}-backup-repo
-    passwordSecretRef:
-      name: {{ $.Values.restic.passwordSecretName }}
+    repository: {{ $.Values.restic.repositorySecretName }}   # 👈 Secret name
     cacheCapacity: {{ $.Values.restic.cacheCapacity }}
     retain:
       daily: {{ $.Values.restic.retain.daily }}
@@ -38,11 +23,8 @@ metadata:
   name: {{ .backupName }}-restore
   namespace: {{ .namespace }}
 spec:
-  trigger:
-    manual: true
+  # No trigger.manual here - we patch it when we want to restore
   restic:
-    repositoryPVC: {{ .backupName }}-backup-repo
-    passwordSecretRef:
-      name: {{ $.Values.restic.passwordSecretName }}
+    repository: {{ $.Values.restic.repositorySecretName }}
     cacheCapacity: {{ $.Values.restic.cacheCapacity }}
 {{- end }}
