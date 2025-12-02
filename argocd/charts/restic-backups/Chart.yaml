@@ -1,7 +1,0 @@
-apiVersion: v2
-name: restic-backups
-description: "Restic-based PVC backups to SMB"
-type: application
-
-version: 0.1.0        # <-- chart version (your own versioning)
-appVersion: "0.18.1"  # <-- the version of the app (restic) you're packaging
