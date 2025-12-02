@@ -1,0 +1,20 @@
+# argocd/infrastructure/volsync-restic-password/values.yaml
+
+secretName: volsync-restic-password
+
+externalSecret:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: homelab           # <- your existing ClusterSecretStore
+
+  # Where in your external store the password lives
+  # Example: an item named "volsync-restic" with a field "restic_password"
+  remoteKey: volsync-restic
+  remoteProperty: restic_password
+
+namespaces:
+  - servarr
+  - pihole
+  - monitoring
+  # add any namespace that needs to use VolSync backups
