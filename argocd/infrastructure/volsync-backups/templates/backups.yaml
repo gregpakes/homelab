@@ -1,0 +1,48 @@
+{{- range .Values.pvcs }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .backupName }}-backup-repo
+  namespace: {{ .namespace }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: {{ $.Values.restic.repoStorageClass }}
+  resources:
+    requests:
+      storage: {{ default $.Values.restic.repoDefaultSize .repoSize }}
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: {{ .backupName }}-src
+  namespace: {{ .namespace }}
+spec:
+  sourcePVC: {{ .name }}
+  trigger:
+    schedule: {{ quote (default $.Values.restic.schedule .schedule) }}
+  restic:
+    repositoryPVC: {{ .backupName }}-backup-repo
+    passwordSecretRef:
+      name: {{ $.Values.restic.passwordSecretName }}
+    cacheCapacity: {{ $.Values.restic.cacheCapacity }}
+    retain:
+      daily: {{ $.Values.restic.retain.daily }}
+      weekly: {{ $.Values.restic.retain.weekly }}
+      monthly: {{ $.Values.restic.retain.monthly }}
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationDestination
+metadata:
+  name: {{ .backupName }}-restore
+  namespace: {{ .namespace }}
+spec:
+  trigger:
+    manual: true
+  restic:
+    repositoryPVC: {{ .backupName }}-backup-repo
+    passwordSecretRef:
+      name: {{ $.Values.restic.passwordSecretName }}
+    cacheCapacity: {{ $.Values.restic.cacheCapacity }}
+{{- end }}
