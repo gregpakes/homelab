@@ -32,4 +32,3 @@ spec:
               Last successful VolSync backup for {{ $labels.obj_name }} in namespace {{ $labels.obj_namespace }}
               is older than 6 hours.
               Volume: {{ $labels.volume }}
-              Last successful backup age: {{ printf "%.1f" ( (time() - volsync_replicasource_last_sync_time_seconds) / 3600 ) }} hours.
