@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: volsync
+  namespace: argocd
+spec:
+  project: default
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: volsync-system
+
+  sources:
+    # 1) VolSync Helm chart
+    - repoURL: https://backube.github.io/helm-charts
+      chart: volsync
+      # 🔴 Pick a specific version once you’ve done `helm search repo volsync`
+      targetRevision: 0.14.0
+      helm:
+        releaseName: volsync
+        valueFiles:
+          - $values/argocd/infrastructure/volsync/values.yaml
+
+    # 2) Your repo, only used to provide values.yaml via the `$values` ref above
+    - repoURL: https://github.com/gregpakes/homelab
+      targetRevision: main
+      ref: values
+
+    # 3) Optional: a folder in your repo with VolSync policies (ReplicationSource/Destination)
+    - repoURL: https://github.com/gregpakes/homelab
+      targetRevision: main
+      path: argocd/infrastructure/volsync
+      directory:
+        recurse: true
+        include: "*.yaml"
+        exclude: "values.yaml"
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - ApplyOutOfSyncOnly=true
+      - RespectIgnoreDifferences=true
