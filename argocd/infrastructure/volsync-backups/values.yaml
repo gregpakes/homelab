@@ -23,7 +23,7 @@ pvcs:
     backupName: bazarr-config
     schedule: "0 3 * * *"   # optional override
 
-  # - name: pihole-ceph
-  #   namespace: pihole
-  #   backupName: pihole
-  #   repoSize: 100Gi
+  - name: pihole-ceph
+    namespace: pihole
+    backupName: pihole
+    schedule: "0 2 * * *"   # optional override
