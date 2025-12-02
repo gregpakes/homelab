@@ -1,0 +1,35 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: volsync-backup-alerts
+  namespace: monitoring
+spec:
+  groups:
+    - name: volsync-backups
+      rules:
+        - alert: VolsyncBackupFailedRecently
+          expr: |
+            increase(volsync_replicasource_errors_total[15m]) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: "VolSync backup failed ({{ $labels.obj_namespace }}/{{ $labels.obj_name }})"
+            description: |
+              VolSync backup for {{ $labels.obj_name }} in namespace {{ $labels.obj_namespace }}
+              has recorded at least one sync error in the last 15 minutes.
+              Volume: {{ $labels.volume }}
+              Reason (if present): {{ $labels.reason }}
+
+        - alert: VolsyncBackupTooOld
+          expr: |
+            time() - volsync_replicasource_last_sync_time_seconds > 6 * 3600
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "VolSync backup is stale ({{ $labels.obj_namespace }}/{{ $labels.obj_name }})"
+            description: |
+              Last successful VolSync backup for {{ $labels.obj_name }} in namespace {{ $labels.obj_namespace }}
+              is older than 6 hours.
+              Volume: {{ $labels.volume }}
+              Last successful backup age: {{ printf "%.1f" ( (time() - volsync_replicasource_last_sync_time_seconds) / 3600 ) }} hours.
