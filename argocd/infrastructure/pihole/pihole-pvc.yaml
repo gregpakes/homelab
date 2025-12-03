@@ -6,7 +6,8 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: longhorn       # <-- your new Ceph StorageClass
+  storageClassName: longhorn
   resources:
     requests:
-      storage: 5Gi
+      storage: 3Gi                       # <= must match / be <= PV capacity
+  volumeName: pvc-7c65d2e0-f3c2-463d-8d3c-41054ed7366c   # <= pin PV
