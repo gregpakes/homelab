@@ -1,13 +1,13 @@
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: prometheus-monitoring-kube-prometheus-prometheus-db-prometheus-monitoring-kube-prometheus-prometheus-0
-  namespace: monitoring
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: longhorn
-  resources:
-    requests:
-      storage: XGi         # e.g. 10Gi; <= PV capacity
-  volumeName: pvc-269d9577-279c-40da-ae53-43c22af28811
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: prometheus-monitoring-kube-prometheus-prometheus-db-prometheus-monitoring-kube-prometheus-prometheus-0
+#   namespace: monitoring
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   storageClassName: longhorn
+#   resources:
+#     requests:
+#       storage: 75Gi         # e.g. 10Gi; <= PV capacity
+#   volumeName: pvc-269d9577-279c-40da-ae53-43c22af28811
