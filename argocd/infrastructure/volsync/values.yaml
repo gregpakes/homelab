@@ -1,19 +1,19 @@
-# argocd/infrastructure/volsync/values.yaml
-# For Helm chart 0.14.0
+# # argocd/infrastructure/volsync/values.yaml
+# # For Helm chart 0.14.0
 
-replicaCount: 1
+# replicaCount: 1
 
-metrics:
-  disableAuth: true       # allows Prometheus / KPS to scrape without RBAC headaches
+# metrics:
+#   disableAuth: true       # allows Prometheus / KPS to scrape without RBAC headaches
 
-resources:
-  limits:
-    memory: 1Gi
-  requests:
-    cpu: 100m
-    memory: 64Mi
+# resources:
+#   limits:
+#     memory: 1Gi
+#   requests:
+#     cpu: 100m
+#     memory: 64Mi
 
-# Optional: tolerations/nodeSelectors if you want VolSync pinned somewhere
-nodeSelector: {}
-tolerations: []
-affinity: {}
+# # Optional: tolerations/nodeSelectors if you want VolSync pinned somewhere
+# nodeSelector: {}
+# tolerations: []
+# affinity: {}

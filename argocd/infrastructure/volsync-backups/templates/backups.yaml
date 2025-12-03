@@ -1,63 +1,63 @@
-{{- range .Values.pvcs }}
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: {{ .backupName }}-backup-repo
-  namespace: {{ .namespace }}
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: smb-backup       # 👈 SMB-backed SC
-  resources:
-    requests:
-      storage: {{ default $.Values.restic.repoDefaultSize .repoSize }}
----
-apiVersion: volsync.backube/v1alpha1
-kind: ReplicationSource
-metadata:
-  name: {{ .backupName }}-src
-  namespace: {{ .namespace }}
-spec:
-  sourcePVC: {{ .name }}
-  trigger:
-    schedule: {{ quote (default $.Values.restic.schedule .schedule) }}
-  restic:
-    repository: {{ $.Values.restic.repositorySecretName }}   # 👈 Secret name
-    cacheCapacity: {{ $.Values.restic.cacheCapacity }}
-    copyMethod: {{ $.Values.restic.copyMethod }}
-    moverSecurityContext:
-      runAsUser: {{ $.Values.restic.moverSecurityContext.runAsUser }}
-      runAsGroup: {{ $.Values.restic.moverSecurityContext.runAsGroup }}
-      fsGroup: {{ $.Values.restic.moverSecurityContext.fsGroup }}
-    retain:
-      daily: {{ $.Values.restic.retain.daily }}
-      weekly: {{ $.Values.restic.retain.weekly }}
-      monthly: {{ $.Values.restic.retain.monthly }}
-    moverVolumes:
-      - mountPath: repo                 # -> mounted at /mnt/repo in mover pod
-        volumeSource:
-          persistentVolumeClaim:
-            claimName: {{ .backupName }}-backup-repo
----
-apiVersion: volsync.backube/v1alpha1
-kind: ReplicationDestination
-metadata:
-  name: {{ .backupName }}-restore
-  namespace: {{ .namespace }}
-spec:
-  # No trigger.manual here - we patch it when we want to restore
-  restic:
-    repository: {{ $.Values.restic.repositorySecretName }}
-    copyMethod: {{ $.Values.restic.copyMethod }}
-    cacheCapacity: {{ $.Values.restic.cacheCapacity }}
-    moverSecurityContext:
-      runAsUser: {{ $.Values.restic.moverSecurityContext.runAsUser }}
-      runAsGroup: {{ $.Values.restic.moverSecurityContext.runAsGroup }}
-      fsGroup: {{ $.Values.restic.moverSecurityContext.fsGroup }}
-    moverVolumes:
-      - mountPath: repo
-        volumeSource:
-          persistentVolumeClaim:
-            claimName: {{ .backupName }}-backup-repo
-{{- end }}
+# {{- range .Values.pvcs }}
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: {{ .backupName }}-backup-repo
+#   namespace: {{ .namespace }}
+# spec:
+#   accessModes:
+#     - ReadWriteMany
+#   storageClassName: smb-backup       # 👈 SMB-backed SC
+#   resources:
+#     requests:
+#       storage: {{ default $.Values.restic.repoDefaultSize .repoSize }}
+# ---
+# apiVersion: volsync.backube/v1alpha1
+# kind: ReplicationSource
+# metadata:
+#   name: {{ .backupName }}-src
+#   namespace: {{ .namespace }}
+# spec:
+#   sourcePVC: {{ .name }}
+#   trigger:
+#     schedule: {{ quote (default $.Values.restic.schedule .schedule) }}
+#   restic:
+#     repository: {{ $.Values.restic.repositorySecretName }}   # 👈 Secret name
+#     cacheCapacity: {{ $.Values.restic.cacheCapacity }}
+#     copyMethod: {{ $.Values.restic.copyMethod }}
+#     moverSecurityContext:
+#       runAsUser: {{ $.Values.restic.moverSecurityContext.runAsUser }}
+#       runAsGroup: {{ $.Values.restic.moverSecurityContext.runAsGroup }}
+#       fsGroup: {{ $.Values.restic.moverSecurityContext.fsGroup }}
+#     retain:
+#       daily: {{ $.Values.restic.retain.daily }}
+#       weekly: {{ $.Values.restic.retain.weekly }}
+#       monthly: {{ $.Values.restic.retain.monthly }}
+#     moverVolumes:
+#       - mountPath: repo                 # -> mounted at /mnt/repo in mover pod
+#         volumeSource:
+#           persistentVolumeClaim:
+#             claimName: {{ .backupName }}-backup-repo
+# ---
+# apiVersion: volsync.backube/v1alpha1
+# kind: ReplicationDestination
+# metadata:
+#   name: {{ .backupName }}-restore
+#   namespace: {{ .namespace }}
+# spec:
+#   # No trigger.manual here - we patch it when we want to restore
+#   restic:
+#     repository: {{ $.Values.restic.repositorySecretName }}
+#     copyMethod: {{ $.Values.restic.copyMethod }}
+#     cacheCapacity: {{ $.Values.restic.cacheCapacity }}
+#     moverSecurityContext:
+#       runAsUser: {{ $.Values.restic.moverSecurityContext.runAsUser }}
+#       runAsGroup: {{ $.Values.restic.moverSecurityContext.runAsGroup }}
+#       fsGroup: {{ $.Values.restic.moverSecurityContext.fsGroup }}
+#     moverVolumes:
+#       - mountPath: repo
+#         volumeSource:
+#           persistentVolumeClaim:
+#             claimName: {{ .backupName }}-backup-repo
+# {{- end }}

@@ -1,18 +1,18 @@
-secretName: volsync-restic-repo          # 👈 NEW name used by VolSync `restic.repository`
+# secretName: volsync-restic-repo          # 👈 NEW name used by VolSync `restic.repository`
 
-externalSecret:
-  refreshInterval: 1h
-  secretStoreRef:
-    kind: ClusterSecretStore
-    name: homelab
+# externalSecret:
+#   refreshInterval: 1h
+#   secretStoreRef:
+#     kind: ClusterSecretStore
+#     name: homelab
 
-  # 1Password (or whatever) item that holds BOTH the password and repo URL/path
-  remoteKey: volsync-restic
-  remotePasswordProperty: restic_password      # field with the password
-  remoteRepoProperty: restic_repository        # field with the repo URL/path (you create this)
+#   # 1Password (or whatever) item that holds BOTH the password and repo URL/path
+#   remoteKey: volsync-restic
+#   remotePasswordProperty: restic_password      # field with the password
+#   remoteRepoProperty: restic_repository        # field with the repo URL/path (you create this)
 
-namespaces:
-  - servarr
-  - pihole
-  - monitoring
-  # add others as needed
+# namespaces:
+#   - servarr
+#   - pihole
+#   - monitoring
+#   # add others as needed

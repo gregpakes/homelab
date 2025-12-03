@@ -1,18 +1,18 @@
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: volsync
-  namespace: monitoring           # or whatever namespace your PromOperator watches
-  labels:
-    release: kube-prometheus-stack  # match your Prometheus instance
-spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: volsync
-  namespaceSelector:
-    matchNames:
-      - volsync-system
-  endpoints:
-    - port: metrics
-      interval: 30s
-      honorLabels: true
+# apiVersion: monitoring.coreos.com/v1
+# kind: ServiceMonitor
+# metadata:
+#   name: volsync
+#   namespace: monitoring           # or whatever namespace your PromOperator watches
+#   labels:
+#     release: kube-prometheus-stack  # match your Prometheus instance
+# spec:
+#   selector:
+#     matchLabels:
+#       app.kubernetes.io/name: volsync
+#   namespaceSelector:
+#     matchNames:
+#       - volsync-system
+#   endpoints:
+#     - port: metrics
+#       interval: 30s
+#       honorLabels: true
