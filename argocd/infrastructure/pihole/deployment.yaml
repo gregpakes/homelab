@@ -107,4 +107,4 @@ spec:
       volumes:
         - name: pihole
           persistentVolumeClaim:
-            claimName: pihole-ceph
+            claimName: pihole
