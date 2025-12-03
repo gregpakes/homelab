@@ -51,7 +51,7 @@ persistence:
   config:
     enabled: true
     type: persistentVolumeClaim
-    existingClaim: bazarr-config-ceph
+    existingClaim: bazarr-config
 
   downloads:
     enabled: true
