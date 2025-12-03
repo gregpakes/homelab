@@ -5,7 +5,7 @@ controllers:
       securityContext:
         fsGroup: 988
         fsGroupChangePolicy: OnRootMismatch
-    replicas: 1
+    replicas: 0
     containers:
       bazarr:
         image:
