@@ -1,6 +1,10 @@
 crds:
   install: true
 
+global:
+  # This becomes the default hostname for the server ingress
+  domain: argocd.gregpakes.co.uk
+
 server:
   service:
     type: ClusterIP
@@ -8,17 +12,20 @@ server:
   ingress:
     enabled: true
     ingressClassName: traefik
-    hosts:
-      - argocd.gregpakes.co.uk
-    paths:
-      - /
+
+    # New-style keys:
+    hostname: argocd.gregpakes.co.uk
+    path: /
     pathType: Prefix
 
+    # If you're *not* doing TLS at Traefik yet:
+    tls: true   # you can omit, but spelling it out is clearer
 
 configs:
   cm:
-    url: https://argocd.gregpakes.co.uk
-    # Keep narrowly-scoped ignores only
+    # Match how you're actually accessing it – if no TLS yet, use http:
+    url: http://argocd.gregpakes.co.uk
+
     resource.customizations.ignoreResourceUpdates.ConfigMap: |
       jqPathExpressions:
         - '.metadata.annotations."cluster-autoscaler.kubernetes.io/last-updated"'
@@ -29,6 +36,5 @@ configs:
         - /endpoints
         - /ports
 
-    # 👇 add this: either override old exclusions or define none
     resource.exclusions: |
       []
