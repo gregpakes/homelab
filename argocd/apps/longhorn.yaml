@@ -13,7 +13,7 @@ spec:
   sources:
     - repoURL: https://charts.longhorn.io
       chart: longhorn
-      targetRevision: 1.9.2         # exact patch
+      targetRevision: 1.10.1        # exact patch
       helm:
         releaseName: longhorn       # same Helm release name you use today
         valueFiles:
