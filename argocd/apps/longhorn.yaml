@@ -41,7 +41,7 @@ spec:
       # Safer CRD handling during upgrades
       - RespectIgnoreDifferences=true
       - ApplyOutOfSyncOnly=true
-      - Replace=true
+      - Replace=false
     retry:
       limit: 3
       backoff:

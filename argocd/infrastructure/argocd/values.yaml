@@ -3,14 +3,21 @@ crds:
 
 server:
   service:
-    type: LoadBalancer
-    loadBalancerIP: 172.16.51.61
-    annotations:
-      metallb.universe.tf/address-pool: first-pool
-    externalTrafficPolicy: Cluster
+    type: ClusterIP
+
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - argocd.gregpakes.co.uk
+    paths:
+      - /
+    pathType: Prefix
+
 
 configs:
   cm:
+    url: https://argocd.gregpakes.co.uk
     # Keep narrowly-scoped ignores only
     resource.customizations.ignoreResourceUpdates.ConfigMap: |
       jqPathExpressions:
