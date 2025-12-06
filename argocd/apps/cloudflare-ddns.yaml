@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cloudflare-ddns
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cloudflare-ddns
+
+  # --- Multiple sources: 1) Helm chart, 2) Your GitOps repo with values & extra manifests
+  sources:
+    # 1) Upstream Helm chart (bjw-s/app-template)
+    - repoURL: https://bjw-s-labs.github.io/helm-charts/
+      chart: app-template
+      targetRevision: 4.4.0
+      helm:
+        # Pull values.yaml from the Git source below via its "ref" ($values)
+        valueFiles:
+          - $values/argocd/infrastructure/cloudflare-ddns/values.yaml
+
+    # 2) Your Git repo containing values.yaml (and optional extra manifests like the Secret)
+    - repoURL: https://github.com/gregpakes/homelab              # <-- your repo
+      targetRevision: main                                       # branch/tag/commit
+      ref: values                                                # name this ref "values"
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

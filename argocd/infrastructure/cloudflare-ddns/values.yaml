@@ -1,0 +1,42 @@
+# argocd/infrastructure/cloudflare-ddns/values.yaml
+
+controllers:
+  cloudflare-ddns:
+    type: deployment
+    replicas: 1
+    containers:
+      app:
+        image:
+          repository: oznu/cloudflare-ddns
+          tag: latest
+          pullPolicy: IfNotPresent
+
+        env:
+          TZ: Europe/London
+          PUID: "1000"      # tweak if you care; not critical for this container
+          PGID: "1000"
+          ZONE: "gregpakes.co.uk"
+          SUBDOMAIN: "plex"
+          PROXIED: "false"  # MUST be false for Plex, so Cloudflare is DNS-only
+
+        # Pull API_TOKEN from a Secret
+        envFrom:
+          - secretRef:
+              name: cloudflare-ddns-secret
+
+defaultPodOptions:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+
+service:
+  main:
+    enabled: false  # no need for any Service – this pod just calls Cloudflare API
+
+ingress:
+  main:
+    enabled: false  # nothing to expose
+
+persistence: {}
