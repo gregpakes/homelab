@@ -30,7 +30,7 @@ service:
 ingress:
   web:
     enabled: true
-    className: traefik
+    className: traefik-internal
     hosts:
       - host: radarr.gregpakes.co.uk
         paths:
