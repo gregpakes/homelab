@@ -83,7 +83,7 @@ metrics:
 ingress:
   app:
     enabled: true
-    className: traefik
+    className: traefik-internal
     hosts:
       - host: plex.gregpakes.co.uk
         paths:
