@@ -6,6 +6,7 @@ global:
   domain: argocd.gregpakes.co.uk
 
 server:
+  insecure: true
   service:
     type: ClusterIP
 
