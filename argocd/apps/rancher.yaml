@@ -18,7 +18,7 @@ spec:
           replicas: 3
           ingress:
             enabled: false              # <— turn off chart’s Ingress
-            ingressClassName: traefik
+            ingressClassName: traefik-internal
           global:
             cattle:
               psp:
