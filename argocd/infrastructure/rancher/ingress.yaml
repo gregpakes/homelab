@@ -20,4 +20,3 @@ spec:
             name: rancher
             port:
               number: 443              # <— hit the Service’s 443 (targets 444 in pod)
-  tls: {}

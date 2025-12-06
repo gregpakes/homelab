@@ -17,6 +17,7 @@ spec:
         releaseName: traefik-internal
         values: |
           additionalArguments:
+          - --serversTransport.insecureSkipVerify=true
           - --log.level=INFO
           - --api.dashboard=true
           - --api.insecure=false
