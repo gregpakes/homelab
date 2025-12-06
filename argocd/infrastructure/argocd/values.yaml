@@ -10,7 +10,7 @@ server:
     type: ClusterIP
 
   ingress:
-    enabled: false
+    enabled: true
     ingressClassName: traefik-internal
 
     # New-style keys:
