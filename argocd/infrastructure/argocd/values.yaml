@@ -10,17 +10,16 @@ server:
     type: ClusterIP
 
   ingress:
-    enabled: true
+    enabled: false
     ingressClassName: traefik-internal
 
-    # # New-style keys:
-    # hostname: argocd.gregpakes.co.uk
-    # path: /
-    # pathType: Prefix
+    # New-style keys:
+    hostname: argocd.gregpakes.co.uk
+    path: /
+    pathType: Prefix
 
-    extraTls:
-      - hosts:
-          - argocd.gregpakes.co.uk
+    # If you're *not* doing TLS at Traefik yet:
+    tls: true   # you can omit, but spelling it out is clearer
 
 configs:
   cm:
