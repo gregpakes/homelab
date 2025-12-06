@@ -55,6 +55,7 @@ spec:
             kubernetesIngress:
               allowExternalNameServices: true
               ingressClass: traefik-external
+              ingressClassByName: true
               enabled: true
               publishedService:
                 enabled: true
