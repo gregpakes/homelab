@@ -1,0 +1,62 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik-internal
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik
+
+  sources:
+    - repoURL: https://traefik.github.io/charts
+      chart: traefik
+      targetRevision: 37.1.2
+      helm:
+        releaseName: traefik-internal
+        values: |
+          additionalArguments:
+          - --log.level=INFO
+          - --api.dashboard=true
+          - --api.insecure=false
+
+          deployment:
+            enabled: true
+            replicas: 1
+
+          globalArguments:
+          - --global.sendanonymoususage=false
+          - --global.checknewversion=false
+
+          ingressRoute:
+            dashboard:
+              enabled: false  # or true with an internal-only host + TLS later
+
+          nodeSelector:
+            worker: "true"
+
+          ports:
+            web:
+              redirectTo: websecure
+            websecure:
+              tls:
+                enabled: true
+
+          providers:
+            kubernetesCRD:
+              enabled: true
+              ingressClass: traefik-internal
+            kubernetesIngress:
+              enabled: true
+              ingressClass: traefik-internal
+              publishedService:
+                enabled: false   # no need for LB status here
+
+          rbac:
+            enabled: true
+
+          service:
+            type: LoadBalancer
+            spec:
+              loadBalancerIP: 172.16.51.66
