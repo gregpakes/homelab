@@ -37,7 +37,7 @@ service:
 ingress:
   main:
     enabled: true
-    className: traefik
+    className: traefik-internal
     hosts:
       - host: bazarr.gregpakes.co.uk
         paths:

@@ -44,7 +44,7 @@ service:
 ingress:
   web:
     enabled: true
-    className: traefik
+    className: traefik-internal
     hosts:
       - host: prowlarr.gregpakes.co.uk
         paths:
