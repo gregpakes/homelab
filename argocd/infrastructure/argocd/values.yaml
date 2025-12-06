@@ -23,6 +23,8 @@ server:
     #tls: true   # you can omit, but spelling it out is clearer
 
 configs:
+  params:
+    server.insecure: "true"   # 👈 this is what becomes --insecure
   cm:
     # Match how you're actually accessing it – if no TLS yet, use http:
     url: http://argocd.gregpakes.co.uk
