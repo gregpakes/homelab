@@ -28,7 +28,7 @@ service:
 ingress:
   main:
     enabled: true
-    className: traefik
+    className: traefik-internal
     hosts:
       - host: huntarr.gregpakes.co.uk
         paths:
