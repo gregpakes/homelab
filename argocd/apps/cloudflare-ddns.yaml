@@ -24,6 +24,9 @@ spec:
     - repoURL: https://github.com/gregpakes/homelab              # <-- your repo
       targetRevision: main                                       # branch/tag/commit
       ref: values                                                # name this ref "values"
+      path: argocd/infrastructure/cloudflare-ddns
+      directory:
+        recurse: true
 
   syncPolicy:
     automated:
