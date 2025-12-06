@@ -16,9 +16,15 @@ spec:
         releaseName: argocd
         valueFiles:
           - $values/argocd/infrastructure/argocd/values.yaml   # <-- from your repo
+
     - repoURL: https://github.com/gregpakes/homelab
       targetRevision: main
       ref: values
+      path: argocd/infrastructure/argocd
+      directory:
+        recurse: true
+
+
   syncPolicy:
     automated:
       selfHeal: true
