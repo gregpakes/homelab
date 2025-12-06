@@ -25,7 +25,7 @@ server:
 configs:
   cm:
     # Match how you're actually accessing it – if no TLS yet, use http:
-    url: https://argocd.gregpakes.co.uk
+    url: http://argocd.gregpakes.co.uk
 
     resource.customizations.ignoreResourceUpdates.ConfigMap: |
       jqPathExpressions:
