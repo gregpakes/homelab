@@ -21,7 +21,6 @@ server:
     extraTls:
       - hosts:
           - argocd.gregpakes.co.uk
-        secretName: wildcard-gregpakes-co-uk
 
 configs:
   cm:
