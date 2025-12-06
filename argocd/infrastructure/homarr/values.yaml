@@ -23,7 +23,7 @@ persistence:
 # --- Ingress (Traefik) ---
 ingress:
   enabled: true
-  ingressClassName: traefik
+  ingressClassName: traefik-internal
   annotations:
     # Add cert-manager if you use it
     # cert-manager.io/cluster-issuer: letsencrypt-production

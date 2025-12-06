@@ -25,7 +25,7 @@ service:
 ingress:
   main:
     enabled: true
-    className: traefik
+    className: traefik-internal
     hosts:
       - host: termix.gregpakes.co.uk
         paths:

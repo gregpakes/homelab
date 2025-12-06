@@ -91,7 +91,7 @@ grafana:
       cookie_secure: true
   ingress:
     enabled: true
-    ingressClassName: traefik
+    ingressClassName: traefik-internal
     hosts:
       - grafana.gregpakes.co.uk
     annotations:

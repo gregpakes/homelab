@@ -11,7 +11,7 @@ server:
 
   ingress:
     enabled: true
-    ingressClassName: traefik
+    ingressClassName: traefik-internal
 
     # New-style keys:
     hostname: argocd.gregpakes.co.uk

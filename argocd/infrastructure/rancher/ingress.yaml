@@ -8,7 +8,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/service.serversscheme: https
 spec:
-  ingressClassName: traefik
+  ingressClassName: traefik-internal
   rules:
   - host: rancher.gregpakes.co.uk
     http:
