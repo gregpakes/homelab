@@ -6,12 +6,20 @@ global:
   domain: argocd.gregpakes.co.uk
 
 server:
-  insecure: true
   service:
     type: ClusterIP
 
   ingress:
     enabled: false
+    ingressClassName: traefik-internal
+
+    # New-style keys:
+    hostname: argocd.gregpakes.co.uk
+    path: /
+    pathType: Prefix
+
+    # If you're *not* doing TLS at Traefik yet:
+    tls: true   # you can omit, but spelling it out is clearer
 
 configs:
   cm:
