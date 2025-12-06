@@ -20,7 +20,7 @@ server:
     pathType: Prefix
 
     # If you're *not* doing TLS at Traefik yet:
-    tls: true   # you can omit, but spelling it out is clearer
+    #tls: true   # you can omit, but spelling it out is clearer
 
 configs:
   cm:
