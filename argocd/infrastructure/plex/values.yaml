@@ -94,6 +94,9 @@ ingress:
             service:
               identifier: app
               port: http
+    tls:
+      - hosts:
+          - plex.gregpakes.co.uk
 
 persistence:
   # 1️⃣ CONFIG on Longhorn (RWO)
