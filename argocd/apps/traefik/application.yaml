@@ -79,9 +79,9 @@ spec:
 
     - repoURL: https://github.com/gregpakes/homelab
       targetRevision: main
-      path: argocd/infrastructure/traefik/certs
+      path: argocd/infrastructure/traefik
       directory:
-        recurse: false   # top-level files only
+        recurse: true   # top-level files only
 
   syncPolicy:
     automated:
