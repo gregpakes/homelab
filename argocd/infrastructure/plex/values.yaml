@@ -83,7 +83,7 @@ metrics:
 ingress:
   app:
     annotations:
-      #traefik.ingress.kubernetes.io/router.middlewares: "plex-headers@kubernetescrd"
+      traefik.ingress.kubernetes.io/router.middlewares: "plex-plex-headers@kubernetescrd"
     enabled: true
     className: traefik-external
     hosts:
