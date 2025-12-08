@@ -1,0 +1,10 @@
+# argocd/infrastructure/traefik/plex-middleware.yaml
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: plex-headers
+  namespace: plex
+spec:
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Proto: "https"
