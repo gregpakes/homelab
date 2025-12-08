@@ -19,9 +19,15 @@ spec:
         values: |
           additionalArguments:
           - --serversTransport.insecureSkipVerify=true
-          - --log.level=INFO
           - --api.dashboard=true
           - --api.insecure=false
+          
+          logs:
+            general:
+              level: DEBUG
+            access:
+              enabled: true
+
           deployment:
             additionalContainers: []
             annotations: {}
