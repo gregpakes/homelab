@@ -1,36 +1,36 @@
-# Replace with CSI NFS
+# # Replace with CSI NFS
 
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: nfs-provisioner
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
-    chart: nfs-subdir-external-provisioner
-    targetRevision: 4.0.18
-    helm:
-      values: |
-        nfs:
-          server: 172.16.250.191        # <-- NAS IP
-          path: /var/nfs/shared/Backups  # <-- exported path on NAS
-        storageClass:
-          name: nfs-rwx
-          defaultClass: false          # set true if you want it cluster-default
-          reclaimPolicy: Retain        # keep data when PVC is deleted
-          archiveOnDelete: true
-          mountOptions:
-            - nfsvers=3
-            - rsize=1048576
-            - wsize=1048576
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: storage-system
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: nfs-provisioner
+#   namespace: argocd
+# spec:
+#   project: default
+#   source:
+#     repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+#     chart: nfs-subdir-external-provisioner
+#     targetRevision: 4.0.18
+#     helm:
+#       values: |
+#         nfs:
+#           server: 172.16.250.191        # <-- NAS IP
+#           path: /var/nfs/shared/Backups  # <-- exported path on NAS
+#         storageClass:
+#           name: nfs-rwx
+#           defaultClass: false          # set true if you want it cluster-default
+#           reclaimPolicy: Retain        # keep data when PVC is deleted
+#           archiveOnDelete: true
+#           mountOptions:
+#             - nfsvers=3
+#             - rsize=1048576
+#             - wsize=1048576
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: storage-system
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
+#     syncOptions:
+#       - CreateNamespace=true
