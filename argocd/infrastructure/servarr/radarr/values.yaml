@@ -44,9 +44,7 @@ persistence:
   config:
     enabled: true
     type: persistentVolumeClaim
-    accessMode: ReadWriteOnce
-    size: 5Gi
-    storageClass: longhorn
+    existingClaim: radarr-config
 
   downloads:
     enabled: true
