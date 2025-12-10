@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyseer-config
+  namespace: servarr
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 5Gi    # <= must be <= PV capacity (5Gi here)
+  volumeName: pvc-905d3f1e-edd2-4f8d-a8e0-1459c43064d5
