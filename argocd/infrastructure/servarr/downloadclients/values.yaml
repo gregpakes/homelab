@@ -178,9 +178,7 @@ persistence:
   nzb-config:
     enabled: true
     type: persistentVolumeClaim
-    accessMode: ReadWriteOnce
-    size: 1Gi
-    storageClass: longhorn
+    existingClaim: download-clients-nzbget-config
 
   downloads:
     enabled: true
