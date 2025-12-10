@@ -62,7 +62,7 @@ service:
 ingress:
   web:
     enabled: true
-    className: traefik
+    className: traefik-internal
     hosts:
       - host: jellyseerr.gregpakes.co.uk
         paths:
