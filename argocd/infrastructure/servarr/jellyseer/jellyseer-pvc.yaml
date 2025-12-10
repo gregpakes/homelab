@@ -10,4 +10,4 @@ spec:
   resources:
     requests:
       storage: 5Gi    # <= must be <= PV capacity (5Gi here)
-  volumeName: pvc-bfa058fe-a44b-475b-a9bb-077505131843
+  volumeName: pvc-905d3f1e-edd2-4f8d-a8e0-1459c43064d5
