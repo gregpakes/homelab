@@ -47,6 +47,7 @@ ingress:
 persistence:
   config:
     suffix: config
+    existingClaim: profilarr-config
     enabled: true
     type: persistentVolumeClaim
     accessMode: ReadWriteOnce
