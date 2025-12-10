@@ -46,6 +46,7 @@ ingress:
 
 persistence:
   config:
+    suffix: config
     enabled: true
     type: persistentVolumeClaim
     accessMode: ReadWriteOnce
