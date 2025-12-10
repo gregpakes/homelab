@@ -46,9 +46,7 @@ persistence:
   config:
     enabled: true
     type: persistentVolumeClaim
-    accessMode: ReadWriteOnce
-    size: 3Gi
-    storageClass: longhorn
+    existingClaim: cleanuparr-config
 
 resources:
   requests:
