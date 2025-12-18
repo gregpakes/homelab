@@ -1,0 +1,48 @@
+# MinIO (Bitnami) Helm values
+# Chart: https://artifacthub.io/packages/helm/bitnami/minio
+
+mode: standalone
+
+auth:
+  existingSecret: minio-root-credentials
+  rootUserSecretKey: rootUser
+  rootPasswordSecretKey: rootPassword
+
+persistence:
+  enabled: true
+  storageClass: longhorn
+  accessModes:
+    - ReadWriteOnce
+  size: 50Gi
+
+# MinIO S3 API ingress (port 9000)
+ingress:
+  enabled: true
+  ingressClassName: traefik-internal
+  hostname: s3.gregpakes.co.uk   # change to your domain
+  path: /
+  pathType: Prefix
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+  tls: false
+
+# MinIO Console ingress (port 9090)
+console:
+  enabled: true
+  ingress:
+    enabled: true
+    ingressClassName: traefik-internal
+    hostname: minio.gregpakes.co.uk   # change to your domain
+    path: /
+    pathType: Prefix
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.tls: "true"
+    tls: false
+
+# Prometheus metrics (kube-prometheus-stack scrapes ServiceMonitors cluster-wide in this repo)
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
