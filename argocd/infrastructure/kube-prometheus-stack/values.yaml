@@ -68,9 +68,6 @@ grafana:
   enabled: true
   adminUser: admin
   adminPassword: "changeme"  # (recommend moving to External Secrets later)
-  deleteDatasources:
-    - name: Loki
-      orgId: 1
   prune: true
   additionalDataSources:
     - name: Loki
