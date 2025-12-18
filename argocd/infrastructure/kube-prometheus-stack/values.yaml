@@ -95,6 +95,7 @@ grafana:
       label: grafana_datasource
       labelValue: "1"
       searchNamespace: "ALL"
+      initDatasources: true
   grafana.ini:
     server:
       # If you publish Grafana under a subpath in Rancher, use e.g. https://rancher.example/grafana and set serve_from_sub_path: true
