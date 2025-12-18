@@ -61,7 +61,7 @@ spec:
               enabled: true
               ingressClass: traefik-internal
               publishedService:
-                enabled: false   # no need for LB status here
+                enabled: true    # populate Ingress status (helps Argo CD health)
 
           rbac:
             enabled: true
