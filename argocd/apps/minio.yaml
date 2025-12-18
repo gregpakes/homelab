@@ -12,10 +12,10 @@ spec:
     namespace: minio
 
   sources:
-    # 1) Upstream Helm chart (Bitnami MinIO)
-    - repoURL: https://charts.bitnami.com/bitnami
+    # 1) Upstream Helm chart (MinIO official)
+    - repoURL: https://charts.min.io/
       chart: minio
-      targetRevision: 17.0.21
+      targetRevision: 5.4.0
       helm:
         releaseName: minio
         valueFiles:
