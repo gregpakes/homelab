@@ -21,19 +21,12 @@ spec:
         valueFiles:
           - $values/argocd/infrastructure/minio/values.yaml
 
-    # 2) Repo-local values source (referenced by $values above)
     - repoURL: https://github.com/gregpakes/homelab
       targetRevision: main
       ref: values
-
-    # 3) Apply raw manifests from the folder (exclude the Helm values file)
-    - repoURL: https://github.com/gregpakes/homelab
-      targetRevision: main
       path: argocd/infrastructure/minio
       directory:
         recurse: true
-        include: "*.yaml"
-        exclude: "values.yaml"
 
   syncPolicy:
     automated:
