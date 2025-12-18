@@ -51,5 +51,9 @@ loki:
           period: 24h
 
 monitoring:
+  dashboards:
+    enabled: true
   serviceMonitor:
+    enabled: true
+  rules:
     enabled: true
