@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grafana-loki
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "25"
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+
+  sources:
+    # Loki (single-binary, Longhorn-backed)
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: loki
+      targetRevision: 6.49.0
+      helm:
+        releaseName: loki
+        valueFiles:
+          - $values/argocd/infrastructure/grafana-loki/values-loki.yaml
+
+    # Alloy (daemonset log shipper -> Loki)
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: alloy
+      targetRevision: 1.5.1
+      helm:
+        releaseName: alloy
+        valueFiles:
+          - $values/argocd/infrastructure/grafana-loki/values-alloy.yaml
+
+    # Repo-local values ref (for $values/... above)
+    - repoURL: https://github.com/gregpakes/homelab
+      targetRevision: main
+      path: argocd/infrastructure/grafana-loki
+      ref: values
+      directory:
+        recurse: true
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

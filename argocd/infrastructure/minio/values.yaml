@@ -13,6 +13,21 @@ persistence:
   accessMode: ReadWriteOnce
   size: 50Gi
 
+# Provision buckets/users (run as post-install/upgrade jobs)
+buckets:
+  - name: loki-chunks
+    policy: none
+    purge: false
+  - name: loki-ruler
+    policy: none
+    purge: false
+
+users:
+  - accessKey: loki
+    existingSecret: minio-loki-user
+    existingSecretKey: secretKey
+    policy: readwrite
+
 service:
   type: ClusterIP
   port: "9000"
