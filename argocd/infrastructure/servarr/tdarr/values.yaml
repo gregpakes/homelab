@@ -1,0 +1,100 @@
+controllers:
+  server:
+    strategy: Recreate
+    replicas: 1
+    pod:
+      securityContext:
+        fsGroup: 988
+        fsGroupChangePolicy: OnRootMismatch
+    containers:
+      tdarr:
+        image:
+          repository: ghcr.io/linuxserver/tdarr
+          tag: latest
+        env:
+          TZ: Europe/London
+          PUID: "1000"
+          PGID: "988"
+
+  node:
+    strategy: Recreate
+    replicas: 1
+    pod:
+      securityContext:
+        fsGroup: 988
+        fsGroupChangePolicy: OnRootMismatch
+    containers:
+      tdarr-node:
+        image:
+          repository: ghcr.io/linuxserver/tdarr-node
+          tag: latest
+        env:
+          TZ: Europe/London
+          PUID: "1000"
+          PGID: "988"
+          serverIP: tdarr
+          serverPort: "8266"
+          nodeName: tdarr-node
+
+service:
+  web:
+    controller: server
+    type: ClusterIP
+    ports:
+      http:
+        port: 8265
+        protocol: TCP
+
+  server:
+    controller: server
+    type: ClusterIP
+    ports:
+      server:
+        port: 8266
+        protocol: TCP
+
+ingress:
+  web:
+    enabled: true
+    className: traefik-internal
+    hosts:
+      - host: tdarr.gregpakes.co.uk
+        paths:
+          - path: /
+            service:
+              identifier: web
+              port: http
+
+persistence:
+  config:
+    enabled: true
+    type: persistentVolumeClaim
+    existingClaim: tdarr-config
+
+  cache:
+    enabled: true
+    type: hostPath
+    hostPath: /mnt/tdarr-cache
+    hostPathType: DirectoryOrCreate
+
+  media:
+    enabled: true
+    type: nfs
+    server: 172.16.250.191
+    path: /var/nfs/shared/Media
+
+advancedMounts:
+  server:
+    tdarr:
+      - name: config
+        path: /config
+      - name: cache
+        path: /temp
+      - name: media
+        path: /media
+  node:
+    tdarr-node:
+      - name: cache
+        path: /temp
+      - name: media
+        path: /media
