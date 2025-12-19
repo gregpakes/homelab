@@ -9,6 +9,21 @@ controllers:
         supplementalGroups: [44, 992]
       labels:
         app: tdarr-server
+    # initContainers:
+    #   perms:
+    #     image:
+    #       repository: alpine
+    #       tag: "3.20"
+    #     command: ["/bin/sh", "-c"]
+    #     args:
+    #       - |
+    #         mkdir -p /temp &&
+    #         chown -R 1000:988 /temp &&
+    #         chmod -R u+rwX,g+rwX /temp
+    #     securityContext:
+    #       runAsUser: 0
+    #       runAsGroup: 0
+
     containers:
       tdarr:
         image:
@@ -38,6 +53,20 @@ controllers:
               namespaces:
                 - plex
               topologyKey: kubernetes.io/hostname
+    initContainers:
+      perms:
+        image:
+          repository: alpine
+          tag: "3.20"
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            mkdir -p /temp &&
+            chown -R 1000:988 /temp &&
+            chmod -R u+rwX,g+rwX /temp
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
     containers:
       tdarr-node:
         image:
@@ -96,6 +125,8 @@ persistence:
     type: hostPath
     hostPath: /mnt/tdarr-cache
     hostPathType: DirectoryOrCreate
+    globalMounts:
+      - path: /temp
 
   media:
     enabled: true
@@ -108,16 +139,12 @@ advancedMounts:
     tdarr:
       - name: config
         path: /config
-      - name: cache
-        path: /temp
       - name: dri
         path: /dev/dri
       - name: media
         path: /media
   node:
     tdarr-node:
-      - name: cache
-        path: /temp
       - name: dri
         path: /dev/dri
       - name: media
