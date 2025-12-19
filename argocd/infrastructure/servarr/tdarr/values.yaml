@@ -9,20 +9,20 @@ controllers:
         supplementalGroups: [44, 992]
       labels:
         app: tdarr-server
-    # initContainers:
-    #   perms:
-    #     image:
-    #       repository: alpine
-    #       tag: "3.20"
-    #     command: ["/bin/sh", "-c"]
-    #     args:
-    #       - |
-    #         mkdir -p /temp &&
-    #         chown -R 1000:988 /temp &&
-    #         chmod -R u+rwX,g+rwX /temp
-    #     securityContext:
-    #       runAsUser: 0
-    #       runAsGroup: 0
+    initContainers:
+      perms:
+        image:
+          repository: alpine
+          tag: "3.20"
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            mkdir -p /temp /app/server /app/configs &&
+            chown -R 1000:988 /temp /app/server /app/configs &&
+            chmod -R u+rwX,g+rwX /temp /app/server /app/configs
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
 
     containers:
       tdarr:
@@ -61,9 +61,9 @@ controllers:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            mkdir -p /temp /app/server /app/configs &&
-            chown -R 1000:988 /temp /app/server /app/configs &&
-            chmod -R u+rwX,g+rwX /temp /app/server /app/configs
+            mkdir -p /temp &&
+            chown -R 1000:988 /temp &&
+            chmod -R u+rwX,g+rwX /temp
         securityContext:
           runAsUser: 0
           runAsGroup: 0
@@ -112,6 +112,9 @@ persistence:
     enabled: true
     type: persistentVolumeClaim
     existingClaim: tdarr-config
+    globalMounts:
+      - path: /app/server
+      - path: /app/configs
 
   # GPU passthrough 
   dri:
@@ -133,21 +136,15 @@ persistence:
     type: nfs
     server: 172.16.250.191
     path: /var/nfs/shared/Media
+    globalMounts:
+      - path: /media
 
 advancedMounts:
   server:
     tdarr:
-      - name: config
-        path: /app/server
-      - name: config
-        path: /app/configs
       - name: dri
         path: /dev/dri
-      - name: media
-        path: /media
   node:
     tdarr-node:
       - name: dri
         path: /dev/dri
-      - name: media
-        path: /media
