@@ -9,7 +9,7 @@ controllers:
     containers:
       tdarr:
         image:
-          repository: lscr.io/linuxserver/tdarr
+          repository: docker.io/haveagitgat/tdarr
           tag: latest
         env:
           TZ: Europe/London
@@ -26,15 +26,13 @@ controllers:
     containers:
       tdarr-node:
         image:
-          repository: lscr.io/linuxserver/tdarr-node
+          repository: docker.io/haveagitgat/tdarr_node
           tag: latest
         env:
           TZ: Europe/London
-          PUID: "1000"
-          PGID: "988"
           serverIP: tdarr
           serverPort: "8266"
-          nodeName: tdarr-node
+          nodeID: tdarr-node
 
 service:
   web:
