@@ -13,7 +13,7 @@ controllers:
       perms:
         image:
           repository: alpine
-          tag: "3.20"
+          tag: "3.23"
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -57,7 +57,7 @@ controllers:
       perms:
         image:
           repository: alpine
-          tag: "3.20"
+          tag: "3.23"
         command: ["/bin/sh", "-c"]
         args:
           - |
