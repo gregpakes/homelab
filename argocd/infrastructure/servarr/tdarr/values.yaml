@@ -6,6 +6,9 @@ controllers:
       securityContext:
         fsGroup: 988
         fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups: [44, 992]
+      labels:
+        app: tdarr-server
     containers:
       tdarr:
         image:
@@ -23,6 +26,18 @@ controllers:
       securityContext:
         fsGroup: 988
         fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups: [44, 992]
+      labels:
+        app: tdarr-node
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: plex
+              namespaces:
+                - plex
+              topologyKey: kubernetes.io/hostname
     containers:
       tdarr-node:
         image:
@@ -69,6 +84,13 @@ persistence:
     type: persistentVolumeClaim
     existingClaim: tdarr-config
 
+  # GPU passthrough 
+  dri:
+    enabled: true
+    type: hostPath
+    hostPath: /dev/dri
+    hostPathType: Directory
+
   cache:
     enabled: true
     type: hostPath
@@ -88,11 +110,15 @@ advancedMounts:
         path: /config
       - name: cache
         path: /temp
+      - name: dri
+        path: /dev/dri
       - name: media
         path: /media
   node:
     tdarr-node:
       - name: cache
         path: /temp
+      - name: dri
+        path: /dev/dri
       - name: media
         path: /media

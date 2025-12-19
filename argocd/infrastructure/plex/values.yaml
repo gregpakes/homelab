@@ -45,6 +45,17 @@ controllers:
         fsGroup: 0
         # Match these to your host GIDs for video/render
         supplementalGroups: [44, 992]
+      labels:
+        app: plex
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: tdarr-node
+              namespaces:
+                - servarr
+              topologyKey: kubernetes.io/hostname
 
 service:
   app:
