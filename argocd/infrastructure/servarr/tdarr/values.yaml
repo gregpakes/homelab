@@ -9,7 +9,7 @@ controllers:
     containers:
       tdarr:
         image:
-          repository: ghcr.io/linuxserver/tdarr
+          repository: lscr.io/linuxserver/tdarr
           tag: latest
         env:
           TZ: Europe/London
@@ -26,7 +26,7 @@ controllers:
     containers:
       tdarr-node:
         image:
-          repository: ghcr.io/linuxserver/tdarr-node
+          repository: lscr.io/linuxserver/tdarr-node
           tag: latest
         env:
           TZ: Europe/London
