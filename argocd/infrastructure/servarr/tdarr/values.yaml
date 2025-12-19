@@ -45,7 +45,7 @@ controllers:
           tag: latest
         env:
           TZ: Europe/London
-          serverIP: tdarr
+          serverIP: tdarr-server
           serverPort: "8266"
           nodeID: tdarr-node
 
