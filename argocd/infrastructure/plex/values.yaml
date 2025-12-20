@@ -8,8 +8,8 @@ controllers:
           repository: lscr.io/linuxserver/plex
           tag: latest
         env:
-          PUID: "0"
-          PGID: "0"
+          PUID: "1000"
+          PGID: "988"
           TZ: "Europe/London"
           # 👇 Tell Plex what to advertise to clients/plex.tv
           ADVERTISE_IP: "http://172.16.51.70:32400,https://plex.gregpakes.co.uk:443"
@@ -35,12 +35,12 @@ controllers:
             cpu: 1000m
             memory: 4Gi
         securityContext:
-          allowPrivilegeEscalation: true
-          privileged: true
+          allowPrivilegeEscalation: false
+          privileged: false
 
     pod:
       securityContext:
-        fsGroup: 0
+        fsGroup: 988
         # Match these to your host GIDs for video/render
         supplementalGroups: [44, 992]
       labels:
