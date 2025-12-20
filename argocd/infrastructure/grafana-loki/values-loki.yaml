@@ -5,6 +5,11 @@ deploymentMode: SingleBinary
 
 singleBinary:
   replicas: 2
+  extraArgs:
+    - -config.expand-env=true
+  extraEnvFrom:
+    - secretRef:
+        name: loki-s3-credentials
   persistence:
     enabled: true
     storageClass: longhorn
@@ -17,13 +22,6 @@ read:
   replicas: 0
 backend:
   replicas: 0
-
-global:
-  extraArgs:
-    - -config.expand-env=true
-  extraEnvFrom:
-    - secretRef:
-        name: loki-s3-credentials
 
 loki:
   auth_enabled: false
