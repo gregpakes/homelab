@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: home-assistant
+  namespace: traefik
+spec:
+  ports:
+    - name: http
+      port: 8123
+      targetPort: 8123
+  # No selector; endpoints are managed explicitly below.
+  selector: {}
+
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: home-assistant
+  namespace: traefik
+subsets:
+  - addresses:
+      - ip: 172.16.30.124
+    ports:
+      - name: http
+        port: 8123
+        protocol: TCP
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: home-assistant
+  namespace: traefik
+  annotations:
+    kubernetes.io/ingress.class: traefik-internal
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`ha.gregpakes.co.uk`)
+      kind: Rule
+      services:
+        - name: home-assistant
+          port: 8123
+  # Uses Traefik's default TLSStore/certificate (your *.gregpakes.co.uk wildcard).
+  tls: {}
