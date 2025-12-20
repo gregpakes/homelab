@@ -27,6 +27,8 @@ loki:
   auth_enabled: false
   commonConfig:
     replication_factor: 2
+  limits_config:
+    retention_period: 168h # 7d
   storage:
     type: s3
     bucketNames:
@@ -38,6 +40,14 @@ loki:
       secretAccessKey: ${LOKI_S3_SECRET_ACCESS_KEY}
       s3ForcePathStyle: true
       insecure: true
+  compactor:
+    # Enables retention deletion; runs within the single-binary pods.
+    working_directory: /var/loki/compactor
+    compaction_interval: 10m
+    retention_enabled: true
+    retention_delete_delay: 2h
+    retention_delete_worker_count: 50
+    delete_request_store: filesystem
   schemaConfig:
     configs:
       - from: 2024-04-01
