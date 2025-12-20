@@ -60,7 +60,8 @@ loki:
     retention_enabled: true
     retention_delete_delay: 2h
     retention_delete_worker_count: 150
-    delete_request_store: s3
+    # Keep delete requests local; avoids extra object-store auth just to bootstrap.
+    delete_request_store: filesystem
 
 monitoring:
   dashboards:
