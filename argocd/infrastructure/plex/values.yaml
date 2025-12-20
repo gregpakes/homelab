@@ -42,7 +42,7 @@ controllers:
       securityContext:
         fsGroup: 988
         # Match these to your host GIDs for video/render
-        supplementalGroups: [44, 992]
+        supplementalGroups: [44, 109, 992]
       labels:
         app: plex
       affinity:
