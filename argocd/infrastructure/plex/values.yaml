@@ -34,6 +34,9 @@ controllers:
           requests:
             cpu: 1000m
             memory: 4Gi
+            intel.com/gpu: 1
+          limits:
+            intel.com/gpu: 1
         securityContext:
           allowPrivilegeEscalation: false
           privileged: false
