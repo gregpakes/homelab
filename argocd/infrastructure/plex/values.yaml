@@ -33,8 +33,6 @@ controllers:
         resources:
           requests:
             cpu: 1000m
-          limits:
-            cpu: 2000m
             memory: 4Gi
         securityContext:
           allowPrivilegeEscalation: true

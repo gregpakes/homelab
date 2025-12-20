@@ -1,3 +1,5 @@
+# At the moment this goes into the traefik (external) application, rather than the internal one.  Just needs a little tidying.
+
 apiVersion: v1
 kind: Service
 metadata:
