@@ -36,7 +36,7 @@ controllers:
             memory: 4Gi
         securityContext:
           allowPrivilegeEscalation: false
-          privileged: false
+          privileged: true
 
     pod:
       securityContext:
