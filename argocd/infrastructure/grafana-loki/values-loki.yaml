@@ -29,9 +29,6 @@ loki:
   auth_enabled: false
   commonConfig:
     replication_factor: 2
-  limits_config:
-    # Global retention for all tenants (Go duration format). Adjust as desired.
-    retention_period: 720h # 30d
   storage:
     type: s3
     bucketNames:
@@ -52,14 +49,6 @@ loki:
         index:
           prefix: index_
           period: 24h
-  compactor:
-    # Required for retention to actually delete data from object storage.
-    working_directory: /var/loki/compactor
-    compaction_interval: 10m
-    retention_enabled: true
-    retention_delete_delay: 2h
-    retention_delete_worker_count: 150
-    delete_request_store: s3
 
 monitoring:
   dashboards:
