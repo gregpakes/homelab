@@ -88,15 +88,36 @@ controllers:
         args:
           - |
             mkdir -p /temp/scripts && \
-            cp /opt/ffsubsync/ffsubsync.sh /temp/scripts/ffsubsync.sh && \
+            cat > /temp/scripts/ffsubsync.sh <<'EOF'
+            #!/usr/bin/env bash
+            set -euo pipefail
+
+            VIDEO="${1}"
+            DIR="$(dirname "$VIDEO")"
+            BASE="$(basename "$VIDEO")"
+            NAME="${BASE%.*}"
+
+            MARKER="Synced by ffsubsync"
+
+            shopt -s nullglob
+            for SRT in "$DIR/$NAME"*.srt; do
+              # skip already processed to prevent loops
+              if head -c 4000 "$SRT" | grep -q "$MARKER"; then
+                continue
+              fi
+
+              TMP="${SRT}.synced"
+              /pytools/bin/ffsubsync "$VIDEO" -i "$SRT" -o "$TMP"
+
+              { printf "1\n00:00:00,000 --> 00:00:00,001\n%s\n\n" "$MARKER"; cat "$TMP"; } > "$TMP.marked"
+              mv "$TMP.marked" "$SRT"
+              rm -f "$TMP"
+            done
+            EOF
             chmod +x /temp/scripts/ffsubsync.sh
         securityContext:
           runAsUser: 0
           runAsGroup: 0
-        volumeMounts:
-          - name: ffsubsync-scripts
-            mountPath: /opt/ffsubsync
-            readOnly: true
       
     containers:
       tdarr-node:
@@ -177,10 +198,6 @@ persistence:
     enabled: true
     type: emptyDir
 
-  ffsubsync-scripts:
-    enabled: true
-    type: configMap
-    name: tdarr-ffsubsync-scripts
 
 advancedMounts:
   server:
@@ -193,7 +210,4 @@ advancedMounts:
         path: /dev/dri
       - name: pytools
         path: /pytools
-      - name: ffsubsync-scripts
-        path: /opt/ffsubsync
-        readOnly: true
 
