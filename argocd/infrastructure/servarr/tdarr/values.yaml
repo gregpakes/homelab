@@ -71,11 +71,13 @@ controllers:
       ffsubsync:
         image:
           repository: python
-          tag: "3.10-slim"
+          tag: "3.11-slim"
         command: ["/bin/sh", "-c"]
         args:
           - |
-            pip install --no-cache-dir --target=/pytools ffsubsync
+            apt-get update && apt-get install -y --no-install-recommends gcc g++ make \
+            && rm -rf /var/lib/apt/lists/* \
+            && pip install --no-cache-dir --target=/pytools ffsubsync
       
     containers:
       tdarr-node:
