@@ -93,6 +93,10 @@ controllers:
         securityContext:
           runAsUser: 0
           runAsGroup: 0
+        volumeMounts:
+          - name: ffsubsync-scripts
+            mountPath: /opt/ffsubsync
+            readOnly: true
       
     containers:
       tdarr-node:
