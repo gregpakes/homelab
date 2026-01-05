@@ -77,7 +77,8 @@ controllers:
           - |
             apt-get update && apt-get install -y --no-install-recommends gcc g++ make \
             && rm -rf /var/lib/apt/lists/* \
-            && pip install --no-cache-dir --target=/pytools ffsubsync
+            && pip install --no-cache-dir --target=/pytools ffsubsync \
+            && sed -i '1s|^#!.*$|#!/usr/bin/env python3|' /pytools/bin/ffsubsync
       
     containers:
       tdarr-node:
