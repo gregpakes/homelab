@@ -67,6 +67,16 @@ controllers:
         securityContext:
           runAsUser: 0
           runAsGroup: 0
+
+      ffsubsync:
+        image:
+          repository: python
+          tag: "3.11-slim"
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            pip install --no-cache-dir --target=/pytools ffsubsync
+      
     containers:
       tdarr-node:
         image:
@@ -77,6 +87,9 @@ controllers:
           serverIP: tdarr-server
           serverPort: "8266"
           nodeID: tdarr-node
+
+          PYTHONPATH: /pytools
+          PATH: /pytools/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 service:
   web:
@@ -138,6 +151,10 @@ persistence:
     path: /var/nfs/shared/Media
     globalMounts:
       - path: /media
+  
+  pytools:
+    enabled: true
+    type: emptyDir
 
 advancedMounts:
   server:
@@ -148,3 +165,6 @@ advancedMounts:
     tdarr-node:
       - name: dri
         path: /dev/dri
+      - name: pytools
+        path: /pytools
+
