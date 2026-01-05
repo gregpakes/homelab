@@ -79,6 +79,20 @@ controllers:
             && rm -rf /var/lib/apt/lists/* \
             && pip install --no-cache-dir --target=/pytools ffsubsync \
             && sed -i '1s|^#!.*$|#!/usr/bin/env python3|' /pytools/bin/ffsubsync
+
+      ffsubsync-script:
+        image:
+          repository: alpine
+          tag: "3.20"
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            mkdir -p /temp/scripts && \
+            cp /opt/ffsubsync/ffsubsync.sh /temp/scripts/ffsubsync.sh && \
+            chmod +x /temp/scripts/ffsubsync.sh
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
       
     containers:
       tdarr-node:
@@ -159,6 +173,11 @@ persistence:
     enabled: true
     type: emptyDir
 
+  ffsubsync-scripts:
+    enabled: true
+    type: configMap
+    name: tdarr-ffsubsync-scripts
+
 advancedMounts:
   server:
     tdarr:
@@ -170,4 +189,7 @@ advancedMounts:
         path: /dev/dri
       - name: pytools
         path: /pytools
+      - name: ffsubsync-scripts
+        path: /opt/ffsubsync
+        readOnly: true
 
