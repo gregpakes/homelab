@@ -71,7 +71,7 @@ controllers:
       ffsubsync:
         image:
           repository: python
-          tag: "3.11-slim"
+          tag: "3.12-slim"
         command: ["/bin/sh", "-c"]
         args:
           - |
