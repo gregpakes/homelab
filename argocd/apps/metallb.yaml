@@ -15,7 +15,7 @@ spec:
     # 1) MetalLB controller (match your live version)
     - repoURL: https://metallb.github.io/metallb
       chart: metallb
-      targetRevision: 0.15.2
+      targetRevision: 0.15.3
       helm:
         releaseName: metallb
         values: |
