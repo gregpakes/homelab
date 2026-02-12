@@ -10,7 +10,7 @@ spec:
     namespace: kube-system
   source:
     repoURL: https://github.com/kubernetes-csi/external-snapshotter
-    targetRevision: v7.0.2
+    targetRevision: v8.5.0
     path: deploy/kubernetes/snapshot-controller
   syncPolicy:
     automated: {}
