@@ -6,7 +6,7 @@ controllers:
       app:
         image:
           repository: huntarr/huntarr
-          tag: 8.2.10
+          tag: 8.2.25
         env:
           TZ: Europe/London
         ports:
