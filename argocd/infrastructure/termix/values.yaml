@@ -6,7 +6,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/lukegus/termix
-          tag: release-1.9.0
+          tag: release-1.11.1
         env:
           PORT: 8080
         ports:
