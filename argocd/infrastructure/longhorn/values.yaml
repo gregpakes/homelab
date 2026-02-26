@@ -7,6 +7,14 @@ global:
       value: longhorn
       effect: NoSchedule
 
+# overrides for the v1.11.0 regression - remove when we upgrade to a fixed release
+image:
+  longhorn:
+    manager:
+      tag: v1.11.0-hotfix-1
+    instanceManager:
+      tag: v1.11.0-hotfix-1
+
 engine:
   tolerations:
     - key: dedicated
