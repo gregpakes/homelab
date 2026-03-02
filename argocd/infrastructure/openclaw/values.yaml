@@ -1,4 +1,6 @@
 app-template:
+  configMode: overwrite
+
   controllers:
     main:
       containers:
