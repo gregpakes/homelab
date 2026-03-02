@@ -1,0 +1,90 @@
+app-template:
+  controllers:
+    main:
+      containers:
+        main:
+          envFrom:
+            - secretRef:
+                name: openclaw-secrets
+
+  configMaps:
+    config:
+      data:
+        openclaw.json: |
+          {
+            "gateway": {
+              "port": 18789,
+              "mode": "local",
+              "trustedProxies": ["172.16.51.66"]
+            },
+            "browser": {
+              "enabled": true,
+              "defaultProfile": "default",
+              "profiles": {
+                "default": {
+                  "cdpUrl": "http://localhost:9222",
+                  "color": "#4285F4"
+                }
+              }
+            },
+            "agents": {
+              "defaults": {
+                "workspace": "/home/node/.openclaw/workspace",
+                "model": {
+                  "primary": "anthropic/claude-opus-4-6"
+                },
+                "userTimezone": "Europe/London",
+                "timeoutSeconds": 600,
+                "maxConcurrent": 1
+              },
+              "list": [
+                {
+                  "id": "main",
+                  "default": true,
+                  "identity": {
+                    "name": "OpenClaw",
+                    "emoji": "🦞"
+                  }
+                }
+              ]
+            },
+            "session": {
+              "scope": "per-sender",
+              "store": "/home/node/.openclaw/sessions",
+              "reset": {
+                "mode": "idle",
+                "idleMinutes": 60
+              }
+            },
+            "logging": {
+              "level": "info",
+              "consoleLevel": "info",
+              "consoleStyle": "compact",
+              "redactSensitive": "tools"
+            },
+            "tools": {
+              "profile": "full",
+              "web": {
+                "search": { "enabled": false },
+                "fetch": { "enabled": true }
+              }
+            },
+            "channels": {
+              "slack": {
+                "botToken": "${SLACK_BOT_TOKEN}",
+                "appToken": "${SLACK_APP_TOKEN}"
+              }
+            }
+          }
+
+  ingress:
+    main:
+      enabled: true
+      className: traefik-internal
+      hosts:
+        - host: openclaw.gregpakes.co.uk
+          paths:
+            - path: /
+              service:
+                identifier: main
+                port: http

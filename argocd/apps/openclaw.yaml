@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openclaw
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openclaw
+
+  sources:
+    # 1) OpenClaw Helm chart (wraps bjw-s app-template)
+    - repoURL: https://serhanekicii.github.io/openclaw-helm
+      chart: openclaw
+      targetRevision: 1.4.1
+      helm:
+        releaseName: openclaw
+        valueFiles:
+          - $values/argocd/infrastructure/openclaw/values.yaml
+
+    # 2) Git repo — provides values ref AND deploys extra manifests (ExternalSecret)
+    - repoURL: https://github.com/gregpakes/homelab
+      targetRevision: main
+      ref: values
+      path: argocd/infrastructure/openclaw
+      directory:
+        recurse: true
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
