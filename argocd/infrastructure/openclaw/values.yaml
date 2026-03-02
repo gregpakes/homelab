@@ -7,9 +7,67 @@ app-template:
             - secretRef:
                 name: openclaw-secrets
 
+      initContainers:
+        init-agents:
+          dependsOn:
+            - init-config
+            - init-skills
+          image:
+            repository: ghcr.io/openclaw/openclaw
+            tag: "2026.3.1"
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /home/node/.openclaw/workspace-main
+              mkdir -p /home/node/.openclaw/workspace-coder
+              mkdir -p /home/node/.openclaw/workspace-devops
+
+              cp /config/soul-main.md   /home/node/.openclaw/workspace-main/SOUL.md
+              cp /config/soul-coder.md  /home/node/.openclaw/workspace-coder/SOUL.md
+              cp /config/soul-devops.md /home/node/.openclaw/workspace-devops/SOUL.md
+
+              echo "[init-agents] workspaces initialised"
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
   configMaps:
     config:
       data:
+        soul-main.md: |
+          ## main
+
+          You are a personal assistant. You are helpful, concise, and friendly.
+          You help with everyday tasks: scheduling, research, writing, answering
+          questions, and summarising information. You proactively ask clarifying
+          questions when a request is ambiguous.
+
+        soul-coder.md: |
+          ## coder
+
+          You are an expert software engineer. You write clean, idiomatic,
+          well-structured code. You always explain your implementation choices
+          briefly. You prefer simple solutions over clever ones. You point out
+          potential bugs, edge cases, and security issues. When given existing
+          code, you read it carefully before suggesting changes.
+
+        soul-devops.md: |
+          ## devops
+
+          You are a senior DevOps and platform engineer specialising in
+          Kubernetes, GitOps, and infrastructure automation. You are familiar
+          with ArgoCD, Helm, k3s, and cloud-native tooling. You give precise,
+          actionable answers. You prefer GitOps-first solutions. When reviewing
+          manifests or configs you check for resource limits, security contexts,
+          and best practices.
+
         openclaw.json: |
           {
             "gateway": {
@@ -20,22 +78,9 @@ app-template:
                 "allowedOrigins": ["https://openclaw.gregpakes.co.uk"]
               }
             },
-            "browser": {
-              "enabled": true,
-              "defaultProfile": "default",
-              "profiles": {
-                "default": {
-                  "cdpUrl": "http://localhost:9222",
-                  "color": "#4285F4"
-                }
-              }
-            },
             "agents": {
               "defaults": {
-                "workspace": "/home/node/.openclaw/workspace",
-                "model": {
-                  "primary": "anthropic/claude-sonnet-4-6"
-                },
+                "model": { "primary": "anthropic/claude-sonnet-4-6" },
                 "userTimezone": "Europe/London",
                 "timeoutSeconds": 600,
                 "maxConcurrent": 1
@@ -44,20 +89,30 @@ app-template:
                 {
                   "id": "main",
                   "default": true,
-                  "identity": {
-                    "name": "OpenClaw",
-                    "emoji": "🦞"
-                  }
+                  "workspace": "/home/node/.openclaw/workspace-main",
+                  "identity": { "name": "Assistant", "emoji": "🤝" }
+                },
+                {
+                  "id": "coder",
+                  "workspace": "/home/node/.openclaw/workspace-coder",
+                  "identity": { "name": "Coder", "emoji": "💻" }
+                },
+                {
+                  "id": "devops",
+                  "workspace": "/home/node/.openclaw/workspace-devops",
+                  "identity": { "name": "DevOps", "emoji": "⚙️" }
                 }
               ]
             },
+            "bindings": [
+              { "agentId": "main",   "match": { "channel": "slack", "accountId": "main" } },
+              { "agentId": "coder",  "match": { "channel": "slack", "accountId": "coder" } },
+              { "agentId": "devops", "match": { "channel": "slack", "accountId": "devops" } }
+            ],
             "session": {
               "scope": "per-sender",
               "store": "/home/node/.openclaw/sessions",
-              "reset": {
-                "mode": "idle",
-                "idleMinutes": 60
-              }
+              "reset": { "mode": "idle", "idleMinutes": 60 }
             },
             "logging": {
               "level": "info",
@@ -67,21 +122,49 @@ app-template:
             },
             "tools": {
               "profile": "full",
-              "web": {
-                "search": { "enabled": false },
-                "fetch": { "enabled": true }
-              }
+              "web": { "search": { "enabled": false }, "fetch": { "enabled": true } }
             },
             "channels": {
               "slack": {
-                "botToken": "${SLACK_BOT_TOKEN}",
-                "appToken": "${SLACK_APP_TOKEN}",
-                "groupPolicy": "open"
+                "groupPolicy": "open",
+                "accounts": {
+                  "main": {
+                    "botToken": "${SLACK_BOT_TOKEN_MAIN}",
+                    "appToken": "${SLACK_APP_TOKEN_MAIN}"
+                  },
+                  "coder": {
+                    "botToken": "${SLACK_BOT_TOKEN_CODER}",
+                    "appToken": "${SLACK_APP_TOKEN_CODER}"
+                  },
+                  "devops": {
+                    "botToken": "${SLACK_BOT_TOKEN_DEVOPS}",
+                    "appToken": "${SLACK_APP_TOKEN_DEVOPS}"
+                  }
+                }
               }
             }
           }
 
   persistence:
+    config:
+      advancedMounts:
+        main:
+          init-agents:
+            - path: /config
+              readOnly: true
+
+    data:
+      advancedMounts:
+        main:
+          init-agents:
+            - path: /home/node/.openclaw
+
+    tmp:
+      advancedMounts:
+        main:
+          init-agents:
+            - path: /tmp
+
     shm:
       enabled: true
       type: emptyDir
