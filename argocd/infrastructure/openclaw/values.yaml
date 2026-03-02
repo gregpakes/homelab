@@ -89,7 +89,7 @@ app-template:
                   "color": "#4285F4"
                 }
               }
-            }
+            },
             "agents": {
               "defaults": {
                 "model": { "primary": "anthropic/claude-sonnet-4-6" },
