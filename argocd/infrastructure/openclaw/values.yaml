@@ -15,7 +15,10 @@ app-template:
             "gateway": {
               "port": 18789,
               "mode": "local",
-              "trustedProxies": ["172.16.51.66"]
+              "trustedProxies": ["172.16.51.66"],
+              "controlUi": {
+                "allowedOrigins": ["https://openclaw.gregpakes.co.uk"]
+              }
             },
             "browser": {
               "enabled": true,
@@ -76,6 +79,17 @@ app-template:
               }
             }
           }
+
+  persistence:
+    shm:
+      enabled: true
+      type: emptyDir
+      medium: Memory
+      sizeLimit: 1Gi
+      advancedMounts:
+        main:
+          chromium:
+            - path: /dev/shm
 
   ingress:
     main:
