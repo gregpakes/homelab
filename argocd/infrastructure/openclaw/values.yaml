@@ -34,7 +34,7 @@ app-template:
               "defaults": {
                 "workspace": "/home/node/.openclaw/workspace",
                 "model": {
-                  "primary": "anthropic/claude-opus-4-6"
+                  "primary": "anthropic/claude-sonnet-4-6"
                 },
                 "userTimezone": "Europe/London",
                 "timeoutSeconds": 600,
