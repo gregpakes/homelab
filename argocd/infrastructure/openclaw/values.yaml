@@ -80,6 +80,16 @@ app-template:
                 "allowedOrigins": ["https://openclaw.gregpakes.co.uk"]
               }
             },
+            "browser": {
+              "enabled": true,
+              "defaultProfile": "default",
+              "profiles": {
+                "default": {
+                  "cdpUrl": "http://localhost:9222",
+                  "color": "#4285F4"
+                }
+              }
+            }
             "agents": {
               "defaults": {
                 "model": { "primary": "anthropic/claude-sonnet-4-6" },
