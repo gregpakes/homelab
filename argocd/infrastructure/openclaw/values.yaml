@@ -8,6 +8,8 @@ app-template:
           envFrom:
             - secretRef:
                 name: openclaw-secrets
+          env:
+            OLLAMA_API_KEY: "ollama-local"
 
       initContainers:
         init-agents:
@@ -90,6 +92,14 @@ app-template:
                 }
               }
             },
+            "models": {
+              "providers": {
+                "ollama": {
+                  "baseUrl": "http://172.16.10.133:11434",
+                  "api": "ollama"
+                }
+              }
+            },
             "agents": {
               "defaults": {
                 "model": { "primary": "anthropic/claude-sonnet-4-6" },
@@ -102,7 +112,8 @@ app-template:
                   "id": "main",
                   "default": true,
                   "workspace": "/home/node/.openclaw/workspace-main",
-                  "identity": { "name": "Assistant", "emoji": "🤝" }
+                  "identity": { "name": "Assistant", "emoji": "🤝" },
+                  "model": { "primary": "ollama/qwen3.5:35b" }
                 },
                 {
                   "id": "coder",
