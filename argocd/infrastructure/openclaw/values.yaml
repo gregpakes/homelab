@@ -8,9 +8,6 @@ app-template:
           envFrom:
             - secretRef:
                 name: openclaw-secrets
-          env:
-            OLLAMA_API_KEY: "ollama-local"
-
       initContainers:
         init-agents:
           dependsOn:
@@ -96,8 +93,9 @@ app-template:
               "providers": {
                 "ollama": {
                   "baseUrl": "http://172.16.10.133:11434",
-                  "api": "ollama",
-                  "models": [{ "name": "qwen3.5:35b" }]
+                  "apiKey": "ollama-local",
+                  "api": "openai-completions",
+                  "models": [{ "id": "qwen3.5:35b", "name": "Qwen 3.5 35B" }]
                 }
               }
             },
