@@ -97,7 +97,7 @@ app-template:
                 "ollama": {
                   "baseUrl": "http://172.16.10.133:11434",
                   "api": "ollama",
-                  "models": ["qwen3.5:35b"]
+                  "models": [{ "id": "qwen3.5:35b" }]
                 }
               }
             },
