@@ -20,13 +20,6 @@ app-template:
               mkdir -p /home/node/.openclaw/skills/flaresolverr
               cp /config/skill-flaresolverr.md /home/node/.openclaw/skills/flaresolverr/SKILL.md
 
-              mkdir -p /home/node/.openclaw/skills/github-main
-              mkdir -p /home/node/.openclaw/skills/github-coder
-              mkdir -p /home/node/.openclaw/skills/github-devops
-              cp /config/skill-github-main.md   /home/node/.openclaw/skills/github-main/SKILL.md
-              cp /config/skill-github-coder.md  /home/node/.openclaw/skills/github-coder/SKILL.md
-              cp /config/skill-github-devops.md /home/node/.openclaw/skills/github-devops/SKILL.md
-
               if [ ! -f /home/node/.openclaw/bin/gh ]; then
                 mkdir -p /home/node/.openclaw/bin
                 GH_VERSION=$(curl -fsSL https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
@@ -61,13 +54,17 @@ app-template:
             - sh
             - -c
             - |
-              mkdir -p /home/node/.openclaw/workspace-main
-              mkdir -p /home/node/.openclaw/workspace-coder
-              mkdir -p /home/node/.openclaw/workspace-devops
+              mkdir -p /home/node/.openclaw/workspace-main/skills/github-main
+              mkdir -p /home/node/.openclaw/workspace-coder/skills/github-coder
+              mkdir -p /home/node/.openclaw/workspace-devops/skills/github-devops
 
               cp /config/soul-main.md   /home/node/.openclaw/workspace-main/SOUL.md
               cp /config/soul-coder.md  /home/node/.openclaw/workspace-coder/SOUL.md
               cp /config/soul-devops.md /home/node/.openclaw/workspace-devops/SOUL.md
+
+              cp /config/skill-github-main.md   /home/node/.openclaw/workspace-main/skills/github-main/SKILL.md
+              cp /config/skill-github-coder.md  /home/node/.openclaw/workspace-coder/skills/github-coder/SKILL.md
+              cp /config/skill-github-devops.md /home/node/.openclaw/workspace-devops/skills/github-devops/SKILL.md
 
               echo "[init-agents] workspaces initialised"
           securityContext:
@@ -219,20 +216,17 @@ app-template:
                   "default": true,
                   "workspace": "/home/node/.openclaw/workspace-main",
                   "identity": { "name": "Assistant", "emoji": "🤝" },
-                  "model": { "primary": "ollama/qwen3.5:9b" },
-                  "skills": ["github-main"]
+                  "model": { "primary": "ollama/qwen3.5:9b" }
                 },
                 {
                   "id": "coder",
                   "workspace": "/home/node/.openclaw/workspace-coder",
-                  "identity": { "name": "Coder", "emoji": "💻" },
-                  "skills": ["github-coder"]
+                  "identity": { "name": "Coder", "emoji": "💻" }
                 },
                 {
                   "id": "devops",
                   "workspace": "/home/node/.openclaw/workspace-devops",
-                  "identity": { "name": "DevOps", "emoji": "⚙️" },
-                  "skills": ["github-devops"]
+                  "identity": { "name": "DevOps", "emoji": "⚙️" }
                 }
               ]
             },
