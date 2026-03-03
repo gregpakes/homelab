@@ -139,25 +139,25 @@ app-template:
                   "workspace": "/home/node/.openclaw/workspace-main",
                   "identity": { "name": "Assistant", "emoji": "🤝" },
                   "model": { "primary": "ollama/qwen3.5:9b" },
-                  "skills": {
-                    "github": { "env": { "GH_TOKEN": "${GITHUB_TOKEN_MAIN}" } }
-                  }
+                  "skills": [
+                    { "id": "github", "env": { "GH_TOKEN": "${GITHUB_TOKEN_MAIN}" } }
+                  ]
                 },
                 {
                   "id": "coder",
                   "workspace": "/home/node/.openclaw/workspace-coder",
                   "identity": { "name": "Coder", "emoji": "💻" },
-                  "skills": {
-                    "github": { "env": { "GH_TOKEN": "${GITHUB_TOKEN_CODER}" } }
-                  }
+                  "skills": [
+                    { "id": "github", "env": { "GH_TOKEN": "${GITHUB_TOKEN_CODER}" } }
+                  ]
                 },
                 {
                   "id": "devops",
                   "workspace": "/home/node/.openclaw/workspace-devops",
                   "identity": { "name": "DevOps", "emoji": "⚙️" },
-                  "skills": {
-                    "github": { "env": { "GH_TOKEN": "${GITHUB_TOKEN_DEVOPS}" } }
-                  }
+                  "skills": [
+                    { "id": "github", "env": { "GH_TOKEN": "${GITHUB_TOKEN_DEVOPS}" } }
+                  ]
                 }
               ]
             },
