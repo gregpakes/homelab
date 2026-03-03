@@ -19,6 +19,14 @@ app-template:
             - |
               mkdir -p /home/node/.openclaw/skills/flaresolverr
               cp /config/skill-flaresolverr.md /home/node/.openclaw/skills/flaresolverr/SKILL.md
+
+              mkdir -p /home/node/.openclaw/skills/github-main
+              mkdir -p /home/node/.openclaw/skills/github-coder
+              mkdir -p /home/node/.openclaw/skills/github-devops
+              cp /config/skill-github-main.md   /home/node/.openclaw/skills/github-main/SKILL.md
+              cp /config/skill-github-coder.md  /home/node/.openclaw/skills/github-coder/SKILL.md
+              cp /config/skill-github-devops.md /home/node/.openclaw/skills/github-devops/SKILL.md
+
               echo "[init-skills] shared skills initialised"
           securityContext:
             runAsUser: 1000
@@ -90,6 +98,65 @@ app-template:
           manifests or configs you check for resource limits, security contexts,
           and best practices.
 
+        skill-github-main.md: |
+          ---
+          name: github-main
+          description: "GitHub operations via `gh` CLI as the Assistant bot identity. Use for general GitHub queries: issues, PRs, CI status, repo info."
+          ---
+          # GitHub (Assistant)
+
+          Use the `gh` CLI to interact with GitHub. The `GH_TOKEN` is pre-configured with the Assistant bot identity.
+
+          ## Common Commands
+          ```bash
+          gh issue list --repo owner/repo
+          gh pr list --repo owner/repo
+          gh run list --repo owner/repo --limit 10
+          gh pr view <number> --repo owner/repo
+          gh issue create --title "..." --body "..." --repo owner/repo
+          ```
+          Always specify `--repo owner/repo`. Use `--json` with `--jq` for structured output.
+
+        skill-github-coder.md: |
+          ---
+          name: github-coder
+          description: "GitHub operations via `gh` CLI as the Coder bot identity. Use for code review, PRs, CI, issues. Identity: greg-coder-bot."
+          ---
+          # GitHub (Coder)
+
+          Use the `gh` CLI to interact with GitHub. The `GH_TOKEN` is pre-configured with the Coder bot identity.
+
+          ## Common Commands
+          ```bash
+          gh pr list --repo owner/repo
+          gh pr create --title "..." --body "..."
+          gh pr merge <number> --squash --repo owner/repo
+          gh pr checks <number> --repo owner/repo
+          gh run view <run-id> --repo owner/repo --log-failed
+          gh issue list --repo owner/repo --state open
+          ```
+          Always specify `--repo owner/repo`. Use `--json` with `--jq` for structured output.
+
+        skill-github-devops.md: |
+          ---
+          name: github-devops
+          description: "GitHub operations via `gh` CLI as the DevOps bot identity. Use for CI/CD, releases, workflow runs, repo admin. Identity: greg-devops-bot."
+          ---
+          # GitHub (DevOps)
+
+          Use the `gh` CLI to interact with GitHub. The `GH_TOKEN` is pre-configured with the DevOps bot identity.
+
+          ## Common Commands
+          ```bash
+          gh run list --repo owner/repo --limit 10
+          gh run view <run-id> --repo owner/repo
+          gh run rerun <run-id> --failed --repo owner/repo
+          gh release list --repo owner/repo
+          gh release create v1.0.0 --title "..." --notes "..."
+          gh workflow list --repo owner/repo
+          ```
+          Always specify `--repo owner/repo`. Use `--json` with `--jq` for structured output.
+
         openclaw.json: |
           {
             "gateway": {
@@ -122,7 +189,9 @@ app-template:
             },
             "skills": {
               "entries": {
-                "github": { "enabled": true }
+                "github-main":   { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_MAIN}" } },
+                "github-coder":  { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_CODER}" } },
+                "github-devops": { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_DEVOPS}" } }
               }
             },
             "agents": {
@@ -139,25 +208,19 @@ app-template:
                   "workspace": "/home/node/.openclaw/workspace-main",
                   "identity": { "name": "Assistant", "emoji": "🤝" },
                   "model": { "primary": "ollama/qwen3.5:9b" },
-                  "skills": [
-                    { "id": "github", "env": { "GH_TOKEN": "${GITHUB_TOKEN_MAIN}" } }
-                  ]
+                  "skills": ["github-main"]
                 },
                 {
                   "id": "coder",
                   "workspace": "/home/node/.openclaw/workspace-coder",
                   "identity": { "name": "Coder", "emoji": "💻" },
-                  "skills": [
-                    { "id": "github", "env": { "GH_TOKEN": "${GITHUB_TOKEN_CODER}" } }
-                  ]
+                  "skills": ["github-coder"]
                 },
                 {
                   "id": "devops",
                   "workspace": "/home/node/.openclaw/workspace-devops",
                   "identity": { "name": "DevOps", "emoji": "⚙️" },
-                  "skills": [
-                    { "id": "github", "env": { "GH_TOKEN": "${GITHUB_TOKEN_DEVOPS}" } }
-                  ]
+                  "skills": ["github-devops"]
                 }
               ]
             },
@@ -206,6 +269,9 @@ app-template:
     config:
       advancedMounts:
         main:
+          init-skills:
+            - path: /config
+              readOnly: true
           init-agents:
             - path: /config
               readOnly: true
