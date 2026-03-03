@@ -9,6 +9,27 @@ app-template:
             - secretRef:
                 name: openclaw-secrets
       initContainers:
+        init-skills:
+          image:
+            repository: ghcr.io/openclaw/openclaw
+            tag: "2026.3.2"
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /home/node/.openclaw/skills/flaresolverr
+              cp /config/skill-flaresolverr.md /home/node/.openclaw/skills/flaresolverr/SKILL.md
+              echo "[init-skills] shared skills initialised"
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
         init-agents:
           dependsOn:
             - init-config
@@ -189,15 +210,28 @@ app-template:
             - path: /config
               readOnly: true
 
+    skills:
+      type: configMap
+      name: openclaw-skills
+      advancedMounts:
+        main:
+          init-skills:
+            - path: /skills
+              readOnly: true
+
     data:
       advancedMounts:
         main:
+          init-skills:
+            - path: /home/node/.openclaw
           init-agents:
             - path: /home/node/.openclaw
 
     tmp:
       advancedMounts:
         main:
+          init-skills:
+            - path: /tmp
           init-agents:
             - path: /tmp
 
