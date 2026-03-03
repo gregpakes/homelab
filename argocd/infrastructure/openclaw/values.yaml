@@ -27,6 +27,18 @@ app-template:
               cp /config/skill-github-coder.md  /home/node/.openclaw/skills/github-coder/SKILL.md
               cp /config/skill-github-devops.md /home/node/.openclaw/skills/github-devops/SKILL.md
 
+              if [ ! -f /home/node/.openclaw/bin/gh ]; then
+                mkdir -p /home/node/.openclaw/bin
+                GH_VERSION=$(curl -fsSL https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+                curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz" -o /tmp/gh.tar.gz
+                tar -xf /tmp/gh.tar.gz -C /tmp
+                cp /tmp/gh_${GH_VERSION}_linux_amd64/bin/gh /home/node/.openclaw/bin/gh
+                chmod +x /home/node/.openclaw/bin/gh
+                echo "[init-skills] gh CLI installed: v${GH_VERSION}"
+              else
+                echo "[init-skills] gh CLI already installed: $(/home/node/.openclaw/bin/gh --version | head -1)"
+              fi
+
               echo "[init-skills] shared skills initialised"
           securityContext:
             runAsUser: 1000
@@ -189,9 +201,9 @@ app-template:
             },
             "skills": {
               "entries": {
-                "github-main":   { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_MAIN}" } },
-                "github-coder":  { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_CODER}" } },
-                "github-devops": { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_DEVOPS}" } }
+                "github-main":   { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_MAIN}",   "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } },
+                "github-coder":  { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_CODER}",  "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } },
+                "github-devops": { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_DEVOPS}", "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } }
               }
             },
             "agents": {
