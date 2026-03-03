@@ -15,7 +15,7 @@ app-template:
             - init-skills
           image:
             repository: ghcr.io/openclaw/openclaw
-            tag: "2026.3.1"
+            tag: "2026.3.2"
           command:
             - sh
             - -c
