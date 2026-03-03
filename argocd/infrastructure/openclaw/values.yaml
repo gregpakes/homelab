@@ -94,7 +94,7 @@ app-template:
                 "ollama": {
                   "baseUrl": "http://172.16.10.133:11434",
                   "apiKey": "ollama-local",
-                  "api": "openai-completions",
+                  "api": "ollama",
                   "models": [{ "id": "qwen3.5:35b", "name": "Qwen 3.5 35B" }]
                 }
               }
