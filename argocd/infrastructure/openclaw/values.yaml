@@ -99,6 +99,11 @@ app-template:
                 }
               }
             },
+            "skills": {
+              "entries": {
+                "github": { "enabled": true }
+              }
+            },
             "agents": {
               "defaults": {
                 "model": { "primary": "anthropic/claude-sonnet-4-6" },
@@ -112,17 +117,26 @@ app-template:
                   "default": true,
                   "workspace": "/home/node/.openclaw/workspace-main",
                   "identity": { "name": "Assistant", "emoji": "🤝" },
-                  "model": { "primary": "ollama/qwen3.5:9b" }
+                  "model": { "primary": "ollama/qwen3.5:9b" },
+                  "skills": {
+                    "github": { "env": { "GH_TOKEN": "${GITHUB_TOKEN_MAIN}" } }
+                  }
                 },
                 {
                   "id": "coder",
                   "workspace": "/home/node/.openclaw/workspace-coder",
-                  "identity": { "name": "Coder", "emoji": "💻" }
+                  "identity": { "name": "Coder", "emoji": "💻" },
+                  "skills": {
+                    "github": { "env": { "GH_TOKEN": "${GITHUB_TOKEN_CODER}" } }
+                  }
                 },
                 {
                   "id": "devops",
                   "workspace": "/home/node/.openclaw/workspace-devops",
-                  "identity": { "name": "DevOps", "emoji": "⚙️" }
+                  "identity": { "name": "DevOps", "emoji": "⚙️" },
+                  "skills": {
+                    "github": { "env": { "GH_TOKEN": "${GITHUB_TOKEN_DEVOPS}" } }
+                  }
                 }
               ]
             },
