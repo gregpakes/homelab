@@ -216,7 +216,7 @@ app-template:
                   "default": true,
                   "workspace": "/home/node/.openclaw/workspace-main",
                   "identity": { "name": "Assistant", "emoji": "🤝" },
-                  "model": { "primary": "ollama/qwen3.5:9b" }
+                  "model": { "primary": "ollama/qwen3.5:27b" }
                 },
                 {
                   "id": "coder",
