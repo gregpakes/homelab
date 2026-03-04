@@ -17,8 +17,12 @@ app-template:
             - sh
             - -c
             - |
+              # Copy shared skills from the openclaw-skills ConfigMap (mounted at /skills)
               mkdir -p /home/node/.openclaw/skills/flaresolverr
-              cp /config/skill-flaresolverr.md /home/node/.openclaw/skills/flaresolverr/SKILL.md
+              cp /skills/flaresolverr.SKILL.md /home/node/.openclaw/skills/flaresolverr/SKILL.md
+
+              mkdir -p /home/node/.openclaw/skills/1password
+              cp /skills/1password.SKILL.md /home/node/.openclaw/skills/1password/SKILL.md
 
               # Remove any old github skills from the shared folder (isolation is via workspace)
               rm -rf /home/node/.openclaw/skills/github-main
@@ -182,7 +186,8 @@ app-template:
               "entries": {
                 "github-main":   { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_MAIN}",   "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } },
                 "github-coder":  { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_CODER}",  "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } },
-                "github-devops": { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_DEVOPS}", "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } }
+                "github-devops": { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_DEVOPS}", "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } },
+                "1password":     { "enabled": true, "env": { "OP_CONNECT_TOKEN": "${OP_CONNECT_TOKEN}" } }
               }
             },
             "agents": {
@@ -226,7 +231,7 @@ app-template:
               "level": "info",
               "consoleLevel": "info",
               "consoleStyle": "compact",
-              "redactSensitive": "tools"
+              "redactSensitive": "all"
             },
             "tools": {
               "profile": "full",
