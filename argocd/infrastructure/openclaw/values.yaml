@@ -64,6 +64,7 @@ app-template:
             - sh
             - -c
             - |
+              set -euo pipefail
               cp /config/agents.md /home/node/.openclaw/workspace-main/AGENTS.md
               cp /config/agents.md /home/node/.openclaw/workspace-coder/AGENTS.md
               cp /config/agents.md /home/node/.openclaw/workspace-devops/AGENTS.md
