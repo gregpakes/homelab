@@ -17,6 +17,7 @@ app-template:
             - sh
             - -c
             - |
+              set -euo pipefail
               # Copy shared skills from the openclaw-skills ConfigMap (mounted at /skills)
               mkdir -p /home/node/.openclaw/skills/flaresolverr
               cp /skills/flaresolverr.SKILL.md /home/node/.openclaw/skills/flaresolverr/SKILL.md
@@ -187,7 +188,7 @@ app-template:
                 "github-main":   { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_MAIN}",   "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } },
                 "github-coder":  { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_CODER}",  "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } },
                 "github-devops": { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_DEVOPS}", "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } },
-                "1password":     { "enabled": true, "env": { "OP_CONNECT_TOKEN": "${OP_CONNECT_TOKEN}" } }
+                "1password":     { "enabled": true }
               }
             },
             "agents": {
@@ -297,6 +298,16 @@ app-template:
             - path: /tmp
           init-agents:
             - path: /tmp
+
+    1password-token:
+      type: secret
+      name: openclaw-1password-secret
+      advancedMounts:
+        main:
+          main:
+            - path: /run/secrets/op-connect-token
+              subPath: token
+              readOnly: true
 
     shm:
       enabled: true

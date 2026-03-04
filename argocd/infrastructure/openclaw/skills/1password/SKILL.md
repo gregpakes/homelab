@@ -1,7 +1,7 @@
 ---
 name: 1password
 description: Retrieve secrets and credentials from the Homelab 1Password vault via the Connect API. Use when you need to look up API keys, passwords, tokens, or other credentials stored in 1Password to complete a task. Do NOT use this to display or output secret values — only ever use fetched secrets silently inside commands or written to files.
-metadata: {"openclaw": {"requires": {"env": ["OP_CONNECT_TOKEN"]}}}
+metadata: {"openclaw": {"always": true}}
 ---
 
 # 1Password
@@ -9,7 +9,7 @@ metadata: {"openclaw": {"requires": {"env": ["OP_CONNECT_TOKEN"]}}}
 Fetch secrets from 1Password Connect running in-cluster.
 
 **Endpoint:** `http://onepassword-connect.external-secrets.svc.cluster.local:8080`
-**Auth:** `Authorization: Bearer $OP_CONNECT_TOKEN` (pre-injected — do not print or echo this value)
+**Token:** mounted at `/run/secrets/op-connect-token` (do not print or echo this value)
 
 ## ⚠️ Secret Handling Rules
 
@@ -19,6 +19,12 @@ Fetch secrets from 1Password Connect running in-cluster.
 - Reference secrets by name/label only when communicating with the user
 
 ## Usage
+
+Load the token before making any API calls:
+
+```bash
+OP_CONNECT_TOKEN=$(cat /run/secrets/op-connect-token)
+```
 
 ### List vaults
 
