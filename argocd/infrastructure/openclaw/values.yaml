@@ -192,7 +192,7 @@ app-template:
                   "baseUrl": "http://172.16.10.133:11434",
                   "apiKey": "ollama-local",
                   "api": "ollama",
-                  "models": [{ "id": "qwen3.5:35b", "name": "Qwen 3.5 35B", "contextWindow": 32768 }]
+                  "models": [{ "id": "qwen3.5:35b-a3b", "name": "Qwen 3.5 35B A3b", "contextWindow": 32768 }]
                 }
               }
             },
@@ -216,7 +216,7 @@ app-template:
                   "default": true,
                   "workspace": "/home/node/.openclaw/workspace-main",
                   "identity": { "name": "Assistant", "emoji": "🤝" },
-                  "model": { "primary": "ollama/qwen3.5:35b" }
+                  "model": { "primary": "ollama/qwen3.5:35b-a3b" }
                 },
                 {
                   "id": "coder",
