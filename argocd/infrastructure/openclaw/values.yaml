@@ -213,7 +213,7 @@ app-template:
                 "model": { "primary": "anthropic/claude-sonnet-4-6" },
                 "userTimezone": "Europe/London",
                 "timeoutSeconds": 600,
-                "maxConcurrent": 1
+                "maxConcurrent": 3
               },
               "list": [
                 {
@@ -253,7 +253,11 @@ app-template:
             },
             "tools": {
               "profile": "full",
-              "web": { "search": { "enabled": false }, "fetch": { "enabled": true } }
+              "web": { "search": { "enabled": false }, "fetch": { "enabled": true } },
+              "agentToAgent": {
+                "enabled": true,
+                "allow": ["main", "coder", "devops"]
+              }
             },
             "channels": {
               "slack": {
