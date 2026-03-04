@@ -20,6 +20,11 @@ app-template:
               mkdir -p /home/node/.openclaw/skills/flaresolverr
               cp /config/skill-flaresolverr.md /home/node/.openclaw/skills/flaresolverr/SKILL.md
 
+              # Remove any old github skills from the shared folder (isolation is via workspace)
+              rm -rf /home/node/.openclaw/skills/github-main
+              rm -rf /home/node/.openclaw/skills/github-coder
+              rm -rf /home/node/.openclaw/skills/github-devops
+
               if [ ! -f /home/node/.openclaw/bin/gh ]; then
                 mkdir -p /home/node/.openclaw/bin
                 GH_VERSION=$(curl -fsSL https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
