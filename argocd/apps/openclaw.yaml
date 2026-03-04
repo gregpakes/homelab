@@ -18,6 +18,8 @@ spec:
         releaseName: openclaw
         valueFiles:
           - $values/argocd/infrastructure/openclaw/values.yaml
+          - $values/argocd/infrastructure/openclaw/souls.yaml
+          - $values/argocd/infrastructure/openclaw/agents.yaml
 
     # 2) Git repo — provides values ref AND deploys extra manifests (ExternalSecret)
     - repoURL: https://github.com/gregpakes/homelab
