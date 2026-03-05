@@ -54,6 +54,9 @@ app-template:
           image:
             repository: ghcr.io/openclaw/openclaw
             tag: "2026.3.2"
+          envFrom:
+            - secretRef:
+                name: openclaw-secrets
           command:
             - sh
             - -c
@@ -217,13 +220,24 @@ app-template:
                   "baseUrl": "http://127.0.0.1:18801/v1",
                   "api": "openai-completions",
                   "models": [
-                    { "id": "freerouter/auto", "name": "FreeRouter Auto", "contextWindow": 200000 }
-                  ],
-                  "tiers": {
-                    "SIMPLE":    { "primary": "openrouter/minimax/minimax-m1" },
-                    "MEDIUM":    { "primary": "openrouter/deepseek/deepseek-chat" },
-                    "COMPLEX":   { "primary": "openrouter/anthropic/claude-sonnet-4.6" },
-                    "REASONING": { "primary": "openrouter/anthropic/claude-sonnet-4.6" }
+                    { "id": "freerouter/auto", "name": "FreeRouter Auto", "input": ["text"] }
+                  ]
+                }
+              }
+            },
+            "plugins": {
+              "entries": {
+                "openclaw-freerouter": {
+                  "config": {
+                    "port": 18801,
+                    "host": "127.0.0.1",
+                    "defaultTier": "MEDIUM",
+                    "tiers": {
+                      "SIMPLE":    { "primary": "openrouter/minimax/minimax-m1",          "fallback": [] },
+                      "MEDIUM":    { "primary": "openrouter/deepseek/deepseek-chat",       "fallback": ["openrouter/anthropic/claude-sonnet-4.6"] },
+                      "COMPLEX":   { "primary": "openrouter/anthropic/claude-sonnet-4.6",  "fallback": [] },
+                      "REASONING": { "primary": "openrouter/anthropic/claude-sonnet-4.6",  "fallback": [] }
+                    }
                   }
                 }
               }
