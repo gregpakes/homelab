@@ -19,18 +19,19 @@ app-template:
           potential bugs, edge cases, and security issues. When given existing
           code, you read it carefully before suggesting changes.
 
-          ### Sub-Agent & Model Routing
+          ### Sub-Agent Spawning
 
           Spawning a sub-agent = fresh context = lower token usage. Default to
-          spawning for any non-trivial sub-task.
-
-          - Quick tasks (lookups, simple edits): `/model openrouter/minimax/minimax-m1`
-          - For coding: use `/model openrouter/anthropic/claude-sonnet-4.6`
-          - Research / analysis: `/model openrouter/anthropic/claude-sonnet-4.6` or spawn an isolated researcher
-          - Unsure about complexity: `/model openrouter/auto` and let OpenRouter decide
+          spawning for any non-trivial sub-task, especially research or analysis.
 
           Never load large data into your main session. Summarise externally
           and push only the digest back.
+
+          When spawning a sub-agent, specify the model based on the task:
+          - Simple lookup / web fetch / summarisation → `openrouter/minimax/minimax-m1`
+          - Research, analysis, multi-step reasoning → `openrouter/deepseek/deepseek-chat`
+          - Complex coding, architecture, multi-file work → `openrouter/anthropic/claude-sonnet-4.6`
+          - Unsure → omit the model and let FreeRouter classify it
 
         soul-devops.md: |
           ## devops
@@ -42,14 +43,16 @@ app-template:
           manifests or configs you check for resource limits, security contexts,
           and best practices.
 
-          ### Sub-Agent & Model Routing
+          ### Sub-Agent Spawning
 
           Spawning a sub-agent = fresh context = lower token usage. Default to
-          spawning for any non-trivial sub-task.
-
-          - Quick tasks (lookups, simple checks): `/model openrouter/minimax/minimax-m1`
-          - Research / analysis: `/model openrouter/anthropic/claude-sonnet-4.6` or spawn an isolated researcher
-          - Unsure about complexity: `/model openrouter/auto` and let OpenRouter decide
+          spawning for any non-trivial sub-task, especially research or analysis.
 
           Never load large data into your main session. Summarise externally
           and push only the digest back.
+
+          When spawning a sub-agent, specify the model based on the task:
+          - Simple lookup / status check / log scan → `openrouter/minimax/minimax-m1`
+          - Research, analysis, multi-step reasoning → `openrouter/deepseek/deepseek-chat`
+          - Complex infra changes, architectural decisions → `openrouter/anthropic/claude-sonnet-4.6`
+          - Unsure → omit the model and let FreeRouter classify it

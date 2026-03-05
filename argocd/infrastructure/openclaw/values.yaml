@@ -48,6 +48,32 @@ app-template:
               drop:
                 - ALL
 
+        init-freerouter:
+          dependsOn:
+            - init-config
+          image:
+            repository: ghcr.io/openclaw/openclaw
+            tag: "2026.3.2"
+          command:
+            - sh
+            - -c
+            - |
+              if [ ! -d /home/node/.openclaw/plugins/freerouter ]; then
+                openclaw plugins install openclaw-freerouter
+                echo "[init-freerouter] freerouter plugin installed"
+              else
+                echo "[init-freerouter] freerouter plugin already installed, skipping"
+              fi
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
         init-agents:
           dependsOn:
             - init-config
@@ -59,9 +85,9 @@ app-template:
             - sh
             - -c
             - |
-              cp /config/agents.md /home/node/.openclaw/workspace-main/AGENTS.md
-              cp /config/agents.md /home/node/.openclaw/workspace-coder/AGENTS.md
-              cp /config/agents.md /home/node/.openclaw/workspace-devops/AGENTS.md
+              cp /config/agents.md        /home/node/.openclaw/workspace-main/AGENTS.md
+              cp /config/coder-agents.md  /home/node/.openclaw/workspace-coder/AGENTS.md
+              cp /config/agents.md        /home/node/.openclaw/workspace-devops/AGENTS.md
 
               mkdir -p /home/node/.openclaw/workspace-main/skills/github-main
               mkdir -p /home/node/.openclaw/workspace-coder/skills/github-coder
@@ -186,6 +212,19 @@ app-template:
                     { "id": "deepseek/deepseek-chat",      "name": "DeepSeek V3",         "contextWindow": 65536   },
                     { "id": "openrouter/auto",             "name": "Auto Router",         "contextWindow": 200000  }
                   ]
+                },
+                "freerouter": {
+                  "baseUrl": "http://127.0.0.1:18801/v1",
+                  "api": "openai-completions",
+                  "models": [
+                    { "id": "freerouter/auto", "name": "FreeRouter Auto", "contextWindow": 200000 }
+                  ],
+                  "tiers": {
+                    "SIMPLE":    { "primary": "openrouter/minimax/minimax-m1" },
+                    "MEDIUM":    { "primary": "openrouter/deepseek/deepseek-chat" },
+                    "COMPLEX":   { "primary": "openrouter/anthropic/claude-sonnet-4.6" },
+                    "REASONING": { "primary": "openrouter/anthropic/claude-sonnet-4.6" }
+                  }
                 }
               }
             },
@@ -198,7 +237,7 @@ app-template:
             },
             "agents": {
               "defaults": {
-                "model": { "primary": "openrouter/minimax/minimax-m1" },
+                "model": { "primary": "freerouter/freerouter/auto" },
                 "userTimezone": "Europe/London",
                 "timeoutSeconds": 600,
                 "maxConcurrent": 3
@@ -214,12 +253,14 @@ app-template:
                 {
                   "id": "coder",
                   "workspace": "/home/node/.openclaw/workspace-coder",
-                  "identity": { "name": "Coder", "emoji": "💻" }
+                  "identity": { "name": "Coder", "emoji": "💻" },
+                  "model": { "primary": "openrouter/anthropic/claude-sonnet-4.6" }
                 },
                 {
                   "id": "devops",
                   "workspace": "/home/node/.openclaw/workspace-devops",
-                  "identity": { "name": "DevOps", "emoji": "⚙️" }
+                  "identity": { "name": "DevOps", "emoji": "⚙️" },
+                  "model": { "primary": "freerouter/freerouter/auto" }
                 }
               ]
             },
@@ -291,6 +332,8 @@ app-template:
     data:
       advancedMounts:
         main:
+          init-freerouter:
+            - path: /home/node/.openclaw
           init-skills:
             - path: /home/node/.openclaw
           init-agents:
@@ -299,6 +342,8 @@ app-template:
     tmp:
       advancedMounts:
         main:
+          init-freerouter:
+            - path: /tmp
           init-skills:
             - path: /tmp
           init-agents:
