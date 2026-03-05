@@ -179,7 +179,13 @@ app-template:
                 "openrouter": {
                   "baseUrl": "https://openrouter.ai/api/v1",
                   "apiKey": "${OPENROUTER_API_KEY}",
-                  "api": "openai"
+                  "api": "openai-completions",
+                  "models": [
+                    { "id": "anthropic/claude-sonnet-4.6", "name": "Claude Sonnet 4.6", "contextWindow": 1000000 },
+                    { "id": "minimax/minimax-m1",          "name": "MiniMax M1",         "contextWindow": 1000000 },
+                    { "id": "deepseek/deepseek-chat",      "name": "DeepSeek V3",         "contextWindow": 65536   },
+                    { "id": "openrouter/auto",             "name": "Auto Router",         "contextWindow": 200000  }
+                  ]
                 }
               }
             },
@@ -189,13 +195,6 @@ app-template:
                 "github-coder":  { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_CODER}",  "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } },
                 "github-devops": { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_DEVOPS}", "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } }
               }
-            },
-            "modelAliases": {
-              "sonnet": "openrouter/anthropic/claude-sonnet-4.6",
-              "auto": "openrouter/auto",
-              "minimax": "openrouter/minimax/minimax-m1",
-              "deepseek": "openrouter/deepseek/deepseek-chat",
-              "qwen": "ollama/qwen3.5:35b-a3b"
             },
             "agents": {
               "defaults": {

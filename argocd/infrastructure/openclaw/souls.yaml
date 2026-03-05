@@ -24,9 +24,9 @@ app-template:
           Spawning a sub-agent = fresh context = lower token usage. Default to
           spawning for any non-trivial sub-task.
 
-          - Quick tasks (lookups, simple edits): `/model minimax`
-          - Research / analysis: `/model sonnet` or spawn an isolated researcher
-          - Unsure about complexity: `/model auto` and let OpenRouter decide
+          - Quick tasks (lookups, simple edits): `/model openrouter/minimax/minimax-m1`
+          - Research / analysis: `/model openrouter/anthropic/claude-sonnet-4.6` or spawn an isolated researcher
+          - Unsure about complexity: `/model openrouter/auto` and let OpenRouter decide
 
           Never load large data into your main session. Summarise externally
           and push only the digest back.
@@ -46,9 +46,9 @@ app-template:
           Spawning a sub-agent = fresh context = lower token usage. Default to
           spawning for any non-trivial sub-task.
 
-          - Quick tasks (lookups, simple checks): `/model minimax`
-          - Research / analysis: `/model sonnet` or spawn an isolated researcher
-          - Unsure about complexity: `/model auto` and let OpenRouter decide
+          - Quick tasks (lookups, simple checks): `/model openrouter/minimax/minimax-m1`
+          - Research / analysis: `/model openrouter/anthropic/claude-sonnet-4.6` or spawn an isolated researcher
+          - Unsure about complexity: `/model openrouter/auto` and let OpenRouter decide
 
           Never load large data into your main session. Summarise externally
           and push only the digest back.
