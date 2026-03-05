@@ -25,6 +25,7 @@ app-template:
           spawning for any non-trivial sub-task.
 
           - Quick tasks (lookups, simple edits): `/model openrouter/minimax/minimax-m1`
+          - For coding: use `/model openrouter/anthropic/claude-sonnet-4.6`
           - Research / analysis: `/model openrouter/anthropic/claude-sonnet-4.6` or spawn an isolated researcher
           - Unsure about complexity: `/model openrouter/auto` and let OpenRouter decide
 
