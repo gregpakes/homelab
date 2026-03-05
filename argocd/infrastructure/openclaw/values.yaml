@@ -231,6 +231,7 @@ app-template:
               }
             },
             "plugins": {
+              "allow": ["openclaw-freerouter"],
               "entries": {
                 "openclaw-freerouter": {
                   "config": {
