@@ -30,6 +30,20 @@ app-template:
               rm -rf /home/node/.openclaw/skills/github-coder
               rm -rf /home/node/.openclaw/skills/github-devops
 
+              if [ ! -f /home/node/.openclaw/bin/op ]; then
+                mkdir -p /home/node/.openclaw/bin
+                OP_VERSION=$(curl -fsSL https://app-updates.agilebits.com/api/1/op/v2/check?app=CLIOP&platform=linux_amd64 | grep -o '"tag_name":"[^"]*"' | sed 's/.*"tag_name":"v\([^"]*\)".*/\1/' | head -1)
+                if [ -z "$OP_VERSION" ]; then
+                  OP_VERSION="2.31.0"  # fallback to known stable version
+                fi
+                curl -fsSL "https://cache.agilebits.com/op/v2/op_amd64_linux_v${OP_VERSION}.zip" -o /tmp/op.zip
+                unzip -j -o /tmp/op.zip "op_amd64_linux_v${OP_VERSION}/op" -d /home/node/.openclaw/bin/op
+                chmod +x /home/node/.openclaw/bin/op
+                echo "[init-skills] 1Password CLI installed: v${OP_VERSION}"
+              else
+                echo "[init-skills] 1Password CLI already installed: $(/home/node/.openclaw/bin/op --version)"
+              fi
+
               if [ ! -f /home/node/.openclaw/bin/gh ]; then
                 mkdir -p /home/node/.openclaw/bin
                 GH_VERSION=$(curl -fsSL https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
@@ -188,7 +202,7 @@ app-template:
                 "github-main":   { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_MAIN}",   "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } },
                 "github-coder":  { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_CODER}",  "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } },
                 "github-devops": { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_DEVOPS}", "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } },
-                "1password":     { "enabled": true }
+                "1password":     { "enabled": true, "env": { "OP_CONNECT_TOKEN_FILE": "/run/secrets/op-connect-token", "OP_HOST": "http://onepassword-connect.external-secrets.svc.cluster.local:8080" } }
               }
             },
             "agents": {
