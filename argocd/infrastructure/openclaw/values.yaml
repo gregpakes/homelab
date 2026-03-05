@@ -239,10 +239,10 @@ app-template:
                     "host": "127.0.0.1",
                     "defaultTier": "MEDIUM",
                     "tiers": {
-                      "SIMPLE":    { "primary": "minimax/minimax-m1",         "fallback": [] },
-                      "MEDIUM":    { "primary": "deepseek/deepseek-chat",      "fallback": ["anthropic/claude-sonnet-4-6"] },
-                      "COMPLEX":   { "primary": "anthropic/claude-sonnet-4-6", "fallback": [] },
-                      "REASONING": { "primary": "anthropic/claude-sonnet-4-6", "fallback": [] }
+                      "SIMPLE":    { "primary": "openrouter/minimax/minimax-m1",         "fallback": [] },
+                      "MEDIUM":    { "primary": "openrouter/deepseek/deepseek-chat",      "fallback": ["openrouter/anthropic/claude-sonnet-4-6"] },
+                      "COMPLEX":   { "primary": "openrouter/anthropic/claude-sonnet-4-6", "fallback": [] },
+                      "REASONING": { "primary": "openrouter/anthropic/claude-sonnet-4-6", "fallback": [] }
                     }
                   }
                 }
