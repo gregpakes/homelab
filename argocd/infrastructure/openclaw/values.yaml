@@ -57,13 +57,17 @@ app-template:
           envFrom:
             - secretRef:
                 name: openclaw-secrets
+          env:
+            - name: NPM_CONFIG_CACHE
+              value: /tmp/npm-cache
           command:
             - sh
             - -c
             - |
               if [ ! -d /home/node/.openclaw/plugins/freerouter ]; then
-                openclaw plugins install openclaw-freerouter
-                echo "[init-freerouter] freerouter plugin installed"
+                openclaw plugins install openclaw-freerouter && \
+                  echo "[init-freerouter] freerouter plugin installed" || \
+                  echo "[init-freerouter] ERROR: plugin install failed"
               else
                 echo "[init-freerouter] freerouter plugin already installed, skipping"
               fi
@@ -218,6 +222,7 @@ app-template:
                 },
                 "freerouter": {
                   "baseUrl": "http://127.0.0.1:18801/v1",
+                  "apiKey": "freerouter-local",
                   "api": "openai-completions",
                   "models": [
                     { "id": "freerouter/auto", "name": "FreeRouter Auto", "input": ["text"] }
