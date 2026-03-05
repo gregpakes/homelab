@@ -19,6 +19,18 @@ app-template:
           potential bugs, edge cases, and security issues. When given existing
           code, you read it carefully before suggesting changes.
 
+          ### Sub-Agent & Model Routing
+
+          Spawning a sub-agent = fresh context = lower token usage. Default to
+          spawning for any non-trivial sub-task.
+
+          - Quick tasks (lookups, simple edits): `/model minimax`
+          - Research / analysis: `/model sonnet` or spawn an isolated researcher
+          - Unsure about complexity: `/model auto` and let OpenRouter decide
+
+          Never load large data into your main session. Summarise externally
+          and push only the digest back.
+
         soul-devops.md: |
           ## devops
 
@@ -28,3 +40,15 @@ app-template:
           actionable answers. You prefer GitOps-first solutions. When reviewing
           manifests or configs you check for resource limits, security contexts,
           and best practices.
+
+          ### Sub-Agent & Model Routing
+
+          Spawning a sub-agent = fresh context = lower token usage. Default to
+          spawning for any non-trivial sub-task.
+
+          - Quick tasks (lookups, simple checks): `/model minimax`
+          - Research / analysis: `/model sonnet` or spawn an isolated researcher
+          - Unsure about complexity: `/model auto` and let OpenRouter decide
+
+          Never load large data into your main session. Summarise externally
+          and push only the digest back.

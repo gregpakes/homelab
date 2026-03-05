@@ -175,6 +175,11 @@ app-template:
                   "apiKey": "ollama-local",
                   "api": "ollama",
                   "models": [{ "id": "qwen3.5:35b-a3b", "name": "Qwen 3.5 35B A3b", "contextWindow": 32768 }]
+                },
+                "openrouter": {
+                  "baseUrl": "https://openrouter.ai/api/v1",
+                  "apiKey": "${OPENROUTER_API_KEY}",
+                  "api": "openai"
                 }
               }
             },
@@ -185,9 +190,16 @@ app-template:
                 "github-devops": { "enabled": true, "env": { "GH_TOKEN": "${GITHUB_TOKEN_DEVOPS}", "PATH": "/home/node/.openclaw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" } }
               }
             },
+            "modelAliases": {
+              "sonnet": "openrouter/anthropic/claude-sonnet-4.6",
+              "auto": "openrouter/auto",
+              "minimax": "openrouter/minimax/minimax-m1",
+              "deepseek": "openrouter/deepseek/deepseek-chat",
+              "qwen": "ollama/qwen3.5:35b-a3b"
+            },
             "agents": {
               "defaults": {
-                "model": { "primary": "anthropic/claude-sonnet-4-6" },
+                "model": { "primary": "openrouter/anthropic/claude-sonnet-4.6" },
                 "userTimezone": "Europe/London",
                 "timeoutSeconds": 600,
                 "maxConcurrent": 3
