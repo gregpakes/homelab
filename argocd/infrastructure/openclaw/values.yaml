@@ -198,7 +198,7 @@ app-template:
             },
             "agents": {
               "defaults": {
-                "model": { "primary": "openrouter/anthropic/claude-sonnet-4.6" },
+                "model": { "primary": "openrouter/minimax/minimax-m1" },
                 "userTimezone": "Europe/London",
                 "timeoutSeconds": 600,
                 "maxConcurrent": 3
