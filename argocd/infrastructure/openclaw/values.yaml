@@ -48,39 +48,6 @@ app-template:
               drop:
                 - ALL
 
-        init-freerouter:
-          dependsOn:
-            - init-config
-          image:
-            repository: ghcr.io/openclaw/openclaw
-            tag: "2026.3.2"
-          envFrom:
-            - secretRef:
-                name: openclaw-secrets
-          env:
-            - name: NPM_CONFIG_CACHE
-              value: /tmp/npm-cache
-          command:
-            - sh
-            - -c
-            - |
-              if [ ! -d /home/node/.openclaw/plugins/freerouter ]; then
-                openclaw plugins install openclaw-freerouter && \
-                  echo "[init-freerouter] freerouter plugin installed" || \
-                  echo "[init-freerouter] ERROR: plugin install failed"
-              else
-                echo "[init-freerouter] freerouter plugin already installed, skipping"
-              fi
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            runAsNonRoot: true
-            readOnlyRootFilesystem: true
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-
         init-agents:
           dependsOn:
             - init-config
@@ -220,32 +187,6 @@ app-template:
                     { "id": "openrouter/auto",             "name": "Auto Router",         "contextWindow": 200000  }
                   ]
                 },
-                "freerouter": {
-                  "baseUrl": "http://127.0.0.1:18801/v1",
-                  "apiKey": "freerouter-local",
-                  "api": "openai-completions",
-                  "models": [
-                    { "id": "freerouter/auto", "name": "FreeRouter Auto", "input": ["text"] }
-                  ]
-                }
-              }
-            },
-            "plugins": {
-              "allow": ["openclaw-freerouter"],
-              "entries": {
-                "openclaw-freerouter": {
-                  "config": {
-                    "port": 18801,
-                    "host": "127.0.0.1",
-                    "defaultTier": "MEDIUM",
-                    "tiers": {
-                      "SIMPLE":    { "primary": "openrouter/minimax/minimax-m1",         "fallback": [] },
-                      "MEDIUM":    { "primary": "openrouter/deepseek/deepseek-chat",      "fallback": ["openrouter/anthropic/claude-sonnet-4-6"] },
-                      "COMPLEX":   { "primary": "openrouter/anthropic/claude-sonnet-4-6", "fallback": [] },
-                      "REASONING": { "primary": "openrouter/anthropic/claude-sonnet-4-6", "fallback": [] }
-                    }
-                  }
-                }
               }
             },
             "skills": {
@@ -257,7 +198,7 @@ app-template:
             },
             "agents": {
               "defaults": {
-                "model": { "primary": "freerouter/freerouter/auto" },
+                "model": { "primary": "openrouter/deepseek/deepseek-chat" },
                 "userTimezone": "Europe/London",
                 "timeoutSeconds": 600,
                 "maxConcurrent": 3
@@ -280,7 +221,7 @@ app-template:
                   "id": "devops",
                   "workspace": "/home/node/.openclaw/workspace-devops",
                   "identity": { "name": "DevOps", "emoji": "⚙️" },
-                  "model": { "primary": "freerouter/freerouter/auto" }
+                  "model": { "primary": "openrouter/deepseek/deepseek-chat" }
                 }
               ]
             },
@@ -352,8 +293,6 @@ app-template:
     data:
       advancedMounts:
         main:
-          init-freerouter:
-            - path: /home/node/.openclaw
           init-skills:
             - path: /home/node/.openclaw
           init-agents:
@@ -362,8 +301,6 @@ app-template:
     tmp:
       advancedMounts:
         main:
-          init-freerouter:
-            - path: /tmp
           init-skills:
             - path: /tmp
           init-agents:
