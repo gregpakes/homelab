@@ -276,8 +276,8 @@ app-template:
               "reset": { "mode": "idle", "idleMinutes": 60 }
             },
             "logging": {
-              "level": "info",
-              "consoleLevel": "info",
+              "level": "debug",
+              "consoleLevel": "debug",
               "consoleStyle": "compact",
               "redactSensitive": "tools"
             },
