@@ -5,6 +5,8 @@ app-template:
     main:
       containers:
         main:
+          env:
+            NODE_PATH: /home/node/.openclaw/node_modules
           envFrom:
             - secretRef:
                 name: openclaw-secrets
