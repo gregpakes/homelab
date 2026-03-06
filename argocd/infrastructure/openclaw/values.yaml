@@ -9,6 +9,26 @@ app-template:
             - secretRef:
                 name: openclaw-secrets
       initContainers:
+        init-plugins:
+          image:
+            repository: ghcr.io/openclaw/openclaw
+            tag: "2026.3.2"
+          command:
+            - sh
+            - -c
+            - |
+              openclaw plugins install @openclaw/msteams
+              echo "[init-plugins] plugins installed"
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
         init-skills:
           image:
             repository: ghcr.io/openclaw/openclaw
