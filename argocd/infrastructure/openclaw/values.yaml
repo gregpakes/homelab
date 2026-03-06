@@ -276,8 +276,8 @@ app-template:
               "reset": { "mode": "idle", "idleMinutes": 60 }
             },
             "logging": {
-              "level": "debug",
-              "consoleLevel": "debug",
+              "level": "info",
+              "consoleLevel": "info",
               "consoleStyle": "compact",
               "redactSensitive": "tools"
             },
@@ -297,7 +297,8 @@ app-template:
                 "tenantId": "${MSTEAMS_TENANT_ID}",
                 "webhook": { "port": 3978, "path": "/api/messages" },
                 "groupPolicy": "open",
-                "dmPolicy": "open"
+                "dmPolicy": "open",
+                "allowFrom": ["*"]
               },
               "slack": {
                 "groupPolicy": "open",
