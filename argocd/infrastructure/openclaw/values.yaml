@@ -335,6 +335,8 @@ app-template:
     data:
       advancedMounts:
         main:
+          init-plugins:
+            - path: /home/node/.openclaw
           init-skills:
             - path: /home/node/.openclaw
           init-agents:
@@ -343,6 +345,8 @@ app-template:
     tmp:
       advancedMounts:
         main:
+          init-plugins:
+            - path: /tmp
           init-skills:
             - path: /tmp
           init-agents:
