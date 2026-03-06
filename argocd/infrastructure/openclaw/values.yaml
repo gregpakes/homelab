@@ -19,6 +19,9 @@ app-template:
             - |
               openclaw plugins install @openclaw/msteams
               echo "[init-plugins] plugins installed"
+          envFrom:
+            - secretRef:
+                name: openclaw-secrets
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
