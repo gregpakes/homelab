@@ -62,6 +62,7 @@ app-template:
               cp /config/agents.md        /home/node/.openclaw/workspace-main/AGENTS.md
               cp /config/coder-agents.md  /home/node/.openclaw/workspace-coder/AGENTS.md
               cp /config/agents.md        /home/node/.openclaw/workspace-devops/AGENTS.md
+              cp /config/agents.md        /home/node/.openclaw/workspace-horace/AGENTS.md
 
               mkdir -p /home/node/.openclaw/workspace-main/skills/github-main
               mkdir -p /home/node/.openclaw/workspace-coder/skills/github-coder
@@ -70,6 +71,7 @@ app-template:
               cp /config/soul-main.md   /home/node/.openclaw/workspace-main/SOUL.md
               cp /config/soul-coder.md  /home/node/.openclaw/workspace-coder/SOUL.md
               cp /config/soul-devops.md /home/node/.openclaw/workspace-devops/SOUL.md
+              cp /config/soul-horace.md /home/node/.openclaw/workspace-horace/SOUL.md
 
               cp /config/skill-github-main.md   /home/node/.openclaw/workspace-main/skills/github-main/SKILL.md
               cp /config/skill-github-coder.md  /home/node/.openclaw/workspace-coder/skills/github-coder/SKILL.md
@@ -148,6 +150,12 @@ app-template:
           ```
           Always specify `--repo owner/repo`. Use `--json` with `--jq` for structured output.
 
+        soul-horace.md: |
+          # Horace
+
+          You are Horace, a helpful assistant available via Microsoft Teams.
+          You assist with questions, tasks, and coordination across the team.
+
         openclaw.json: |
           {
             "gateway": {
@@ -222,13 +230,20 @@ app-template:
                   "workspace": "/home/node/.openclaw/workspace-devops",
                   "identity": { "name": "DevOps", "emoji": "⚙️" },
                   "model": { "primary": "openrouter/minimax/minimax-m2" }
+                },
+                {
+                  "id": "horace",
+                  "workspace": "/home/node/.openclaw/workspace-horace",
+                  "identity": { "name": "Horace", "emoji": "🎩" },
+                  "model": { "primary": "openrouter/minimax/minimax-m2" }
                 }
               ]
             },
             "bindings": [
               { "agentId": "main",   "match": { "channel": "slack", "accountId": "main" } },
               { "agentId": "coder",  "match": { "channel": "slack", "accountId": "coder" } },
-              { "agentId": "devops", "match": { "channel": "slack", "accountId": "devops" } }
+              { "agentId": "devops", "match": { "channel": "slack", "accountId": "devops" } },
+              { "agentId": "horace", "match": { "channel": "msteams" } }
             ],
             "session": {
               "scope": "per-sender",
@@ -250,6 +265,13 @@ app-template:
               }
             },
             "channels": {
+              "msteams": {
+                "enabled": true,
+                "appId": "${MSTEAMS_APP_ID}",
+                "appPassword": "${MSTEAMS_APP_PASSWORD}",
+                "tenantId": "${MSTEAMS_TENANT_ID}",
+                "webhook": { "port": 3978, "path": "/api/messages" }
+              },
               "slack": {
                 "groupPolicy": "open",
                 "accounts": {
@@ -315,6 +337,13 @@ app-template:
         main:
           chromium:
             - path: /dev/shm
+
+  service:
+    msteams-webhook:
+      controller: main
+      ports:
+        webhook:
+          port: 3978
 
   ingress:
     main:

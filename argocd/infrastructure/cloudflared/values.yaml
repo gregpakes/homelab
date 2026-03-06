@@ -1,0 +1,60 @@
+controllers:
+  cloudflared:
+    type: deployment
+    replicas: 2
+    containers:
+      app:
+        image:
+          repository: cloudflare/cloudflared
+          tag: "2025.4.0"
+          pullPolicy: IfNotPresent
+        command:
+          - cloudflared
+          - tunnel
+          - --no-autoupdate
+          - run
+        envFrom:
+          - secretRef:
+              name: cloudflare-tunnel-secret
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /ready
+                port: 2000
+              initialDelaySeconds: 10
+              periodSeconds: 10
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /ready
+                port: 2000
+              initialDelaySeconds: 5
+              periodSeconds: 5
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+          runAsGroup: 65532
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+
+defaultPodOptions:
+  securityContext:
+    runAsNonRoot: true
+
+service:
+  main:
+    enabled: false
+
+ingress:
+  main:
+    enabled: false
+
+persistence: {}
