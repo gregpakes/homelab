@@ -5,35 +5,10 @@ app-template:
     main:
       containers:
         main:
-          env:
-            NODE_PATH: /home/node/.openclaw/node_modules
           envFrom:
             - secretRef:
                 name: openclaw-secrets
       initContainers:
-        init-plugins:
-          image:
-            repository: ghcr.io/openclaw/openclaw
-            tag: "2026.3.2"
-          command:
-            - sh
-            - -c
-            - |
-              npm install --prefix /home/node/.openclaw @microsoft/agents-hosting
-              echo "[init-plugins] plugins installed"
-          envFrom:
-            - secretRef:
-                name: openclaw-secrets
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            runAsNonRoot: true
-            readOnlyRootFilesystem: false
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-
         init-skills:
           image:
             repository: ghcr.io/openclaw/openclaw
@@ -295,7 +270,8 @@ app-template:
                 "appId": "${MSTEAMS_APP_ID}",
                 "appPassword": "${MSTEAMS_APP_PASSWORD}",
                 "tenantId": "${MSTEAMS_TENANT_ID}",
-                "webhook": { "port": 3978, "path": "/api/messages" }
+                "webhook": { "port": 3978, "path": "/api/messages" },
+                "groupPolicy": "open"
               },
               "slack": {
                 "groupPolicy": "open",
@@ -340,8 +316,6 @@ app-template:
     data:
       advancedMounts:
         main:
-          init-plugins:
-            - path: /home/node/.openclaw
           init-skills:
             - path: /home/node/.openclaw
           init-agents:
@@ -350,8 +324,6 @@ app-template:
     tmp:
       advancedMounts:
         main:
-          init-plugins:
-            - path: /tmp
           init-skills:
             - path: /tmp
           init-agents:
