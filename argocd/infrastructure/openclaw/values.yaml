@@ -296,7 +296,8 @@ app-template:
                 "appPassword": "${MSTEAMS_APP_PASSWORD}",
                 "tenantId": "${MSTEAMS_TENANT_ID}",
                 "webhook": { "port": 3978, "path": "/api/messages" },
-                "groupPolicy": "open"
+                "groupPolicy": "open",
+                "dmPolicy": "open"
               },
               "slack": {
                 "groupPolicy": "open",
