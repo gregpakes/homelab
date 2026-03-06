@@ -1,7 +1,7 @@
 controllers:
   cloudflared:
     type: deployment
-    replicas: 2
+    replicas: 0
     containers:
       app:
         image:
