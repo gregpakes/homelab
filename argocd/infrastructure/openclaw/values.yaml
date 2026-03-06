@@ -17,7 +17,7 @@ app-template:
             - sh
             - -c
             - |
-              openclaw plugins install @openclaw/msteams
+              npm install --prefix /home/node/.openclaw @microsoft/agents-hosting
               echo "[init-plugins] plugins installed"
           envFrom:
             - secretRef:
