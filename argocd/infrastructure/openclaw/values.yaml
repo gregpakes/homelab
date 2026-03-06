@@ -291,7 +291,7 @@ app-template:
             },
             "channels": {
               "msteams": {
-                "enabled": true,
+                "enabled": false,
                 "appId": "${MSTEAMS_APP_ID}",
                 "appPassword": "${MSTEAMS_APP_PASSWORD}",
                 "tenantId": "${MSTEAMS_TENANT_ID}",
