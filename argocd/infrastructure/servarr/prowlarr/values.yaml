@@ -10,7 +10,7 @@ controllers:
       prowlarr:
         image:
           repository: lscr.io/linuxserver/prowlarr
-          tag: latest
+          tag: 2.3.0
         env:
           TZ: Europe/London
           PUID: "1000"

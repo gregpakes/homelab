@@ -12,7 +12,7 @@ controllers:
       subsyncarr-plus:
         image:
           repository: tomtomw123/subsyncarr-plus
-          tag: latest
+          tag: 1.2.5
           pullPolicy: IfNotPresent
         ports:
           - name: http

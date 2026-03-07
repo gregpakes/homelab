@@ -3,12 +3,12 @@
   "extends": ["config:recommended"],
 
   "argocd": {
-    "managerFilePatterns": ["/argocd/.+\\.yaml$/"]
-  },
-  "flux": {
-    "managerFilePatterns": ["/clusters/.+\\.yaml$/"]
+    "managerFilePatterns": ["/argocd/apps/.+\\.yaml$/"]
   },
   "kubernetes": {
-    "managerFilePatterns": ["/clusters/.+\\.yaml$/"]
+    "managerFilePatterns": ["/argocd/infrastructure/.+\\.yaml$/"]
+  },
+  "helm-values": {
+    "managerFilePatterns": ["/argocd/infrastructure/.+/values\\.yaml$/"]
   }
 }
