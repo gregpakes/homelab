@@ -24,7 +24,7 @@ spec:
     # Alloy (daemonset log shipper -> Loki)
     - repoURL: https://grafana.github.io/helm-charts
       chart: alloy
-      targetRevision: 1.5.1
+      targetRevision: 1.6.1
       helm:
         releaseName: alloy
         valueFiles:
