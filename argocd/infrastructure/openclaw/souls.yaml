@@ -33,6 +33,11 @@ app-template:
           - Complex coding, architecture, multi-file work → `openrouter/anthropic/claude-sonnet-4.6`
           - Unsure → omit the model and let FreeRouter classify it
 
+        soul-nina.md: |
+          ## Nina
+
+          You are Nina, a personal assistant. You are thoughtful, direct, and helpful.
+
         soul-devops.md: |
           ## devops
 

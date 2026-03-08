@@ -88,6 +88,7 @@ app-template:
               cp /config/coder-agents.md  /home/node/.openclaw/workspace-coder/AGENTS.md
               cp /config/agents.md        /home/node/.openclaw/workspace-devops/AGENTS.md
               cp /config/agents.md        /home/node/.openclaw/workspace-horace/AGENTS.md
+              cp /config/agents.md        /home/node/.openclaw/workspace-nina/AGENTS.md
 
               mkdir -p /home/node/.openclaw/workspace-main/skills/github-main
               mkdir -p /home/node/.openclaw/workspace-coder/skills/github-coder
@@ -97,6 +98,7 @@ app-template:
               cp /config/soul-coder.md  /home/node/.openclaw/workspace-coder/SOUL.md
               cp /config/soul-devops.md /home/node/.openclaw/workspace-devops/SOUL.md
               cp /config/soul-horace.md /home/node/.openclaw/workspace-horace/SOUL.md
+              cp /config/soul-nina.md   /home/node/.openclaw/workspace-nina/SOUL.md
 
               cp /config/skill-github-main.md   /home/node/.openclaw/workspace-main/skills/github-main/SKILL.md
               cp /config/skill-github-coder.md  /home/node/.openclaw/workspace-coder/skills/github-coder/SKILL.md
@@ -220,6 +222,14 @@ app-template:
                     { "id": "openrouter/auto",             "name": "Auto Router",         "contextWindow": 200000  }
                   ]
                 },
+                "anthropic": {
+                  "baseUrl": "https://api.anthropic.com",
+                  "api": "anthropic",
+                  "models": [
+                    { "id": "claude-opus-4-5", "name": "Claude Opus 4.5", "contextWindow": 200000 },
+                    { "id": "claude-sonnet-4-5", "name": "Claude Sonnet 4.5", "contextWindow": 200000 }
+                  ]
+                }
               }
             },
             "skills": {
@@ -261,6 +271,12 @@ app-template:
                   "workspace": "/home/node/.openclaw/workspace-horace",
                   "identity": { "name": "Horace", "emoji": "🎩" },
                   "model": { "primary": "openrouter/minimax/minimax-m2" }
+                },
+                {
+                  "id": "nina",
+                  "workspace": "/home/node/.openclaw/workspace-nina",
+                  "identity": { "name": "Nina", "emoji": "✨" },
+                  "model": { "primary": "anthropic/claude-opus-4-5" }
                 }
               ]
             },
@@ -268,7 +284,8 @@ app-template:
               { "agentId": "main",   "match": { "channel": "slack", "accountId": "main" } },
               { "agentId": "coder",  "match": { "channel": "slack", "accountId": "coder" } },
               { "agentId": "devops", "match": { "channel": "slack", "accountId": "devops" } },
-              { "agentId": "horace", "match": { "channel": "msteams" } }
+              { "agentId": "horace", "match": { "channel": "msteams" } },
+              { "agentId": "nina",   "match": { "channel": "slack", "accountId": "nina" } }
             ],
             "session": {
               "scope": "per-sender",
@@ -314,6 +331,10 @@ app-template:
                   "devops": {
                     "botToken": "${SLACK_BOT_TOKEN_DEVOPS}",
                     "appToken": "${SLACK_APP_TOKEN_DEVOPS}"
+                  },
+                  "nina": {
+                    "botToken": "${SLACK_BOT_TOKEN_NINA}",
+                    "appToken": "${SLACK_APP_TOKEN_NINA}"
                   }
                 }
               }
