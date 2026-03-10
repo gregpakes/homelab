@@ -20,7 +20,7 @@ controllers:
       gluetun:
         image:
           repository: qmcgaw/gluetun
-          tag: v3.40.3
+          tag: v3.41.1
         env:
           TZ: Europe/London
 
