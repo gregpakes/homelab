@@ -224,7 +224,7 @@ app-template:
                 },
                 "anthropic": {
                   "baseUrl": "https://api.anthropic.com",
-                  "api": "anthropic",
+                  "api": "anthropic-messages",
                   "models": [
                     { "id": "claude-opus-4-5", "name": "Claude Opus 4.5", "contextWindow": 200000 },
                     { "id": "claude-sonnet-4-5", "name": "Claude Sonnet 4.5", "contextWindow": 200000 }
