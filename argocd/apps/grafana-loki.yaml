@@ -15,7 +15,7 @@ spec:
     # Loki (single-binary, Longhorn-backed)
     - repoURL: https://grafana.github.io/helm-charts
       chart: loki
-      targetRevision: 6.49.0
+      targetRevision: 6.53.0
       helm:
         releaseName: loki
         valueFiles:
@@ -24,7 +24,7 @@ spec:
     # Alloy (daemonset log shipper -> Loki)
     - repoURL: https://grafana.github.io/helm-charts
       chart: alloy
-      targetRevision: 1.5.1
+      targetRevision: 1.6.1
       helm:
         releaseName: alloy
         valueFiles:
