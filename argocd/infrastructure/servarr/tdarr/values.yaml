@@ -172,9 +172,6 @@ persistence:
     enabled: true
     type: persistentVolumeClaim
     existingClaim: tdarr-config
-    globalMounts:
-      - path: /app/server
-      - path: /app/configs
 
   # GPU passthrough 
   dri:
