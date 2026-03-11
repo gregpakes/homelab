@@ -132,6 +132,11 @@ controllers:
 
           PYTHONPATH: /pytools
           PATH: /pytools/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        resources:
+          requests:
+            ephemeral-storage: "1Gi"
+          limits:
+            ephemeral-storage: "2Gi"
 
 service:
   web:
