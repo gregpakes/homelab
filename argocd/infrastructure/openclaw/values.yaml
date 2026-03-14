@@ -43,8 +43,8 @@ app-template:
 
         init-skills:
           image:
-            repository: alpine
-            tag: "3.21"
+            repository: ghcr.io/openclaw/openclaw
+            tag: "2026.3.12"
           command:
             - sh
             - -c
@@ -85,8 +85,8 @@ app-template:
             - init-config
             - init-skills
           image:
-            repository: alpine
-            tag: "3.21"
+            repository: ghcr.io/openclaw/openclaw
+            tag: "2026.3.12"
           command:
             - sh
             - -c
