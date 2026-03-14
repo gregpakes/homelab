@@ -99,7 +99,7 @@ controllers:
       nzbget:
         image:
           repository: ghcr.io/linuxserver/nzbget
-          tag: version-v25.4
+          tag: version-v26.0
         env:
           TZ: Europe/London
           PUID: "1000"
