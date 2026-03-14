@@ -100,6 +100,8 @@ app-template:
               mkdir -p /home/node/.openclaw/workspace-main/skills/github-main
               mkdir -p /home/node/.openclaw/workspace-coder/skills/github-coder
               mkdir -p /home/node/.openclaw/workspace-devops/skills/github-devops
+              mkdir -p /home/node/.openclaw/workspace-horace
+              mkdir -p /home/node/.openclaw/workspace-nina
 
               cp /config/soul-main.md   /home/node/.openclaw/workspace-main/SOUL.md
               cp /config/soul-coder.md  /home/node/.openclaw/workspace-coder/SOUL.md
