@@ -10,5 +10,12 @@
   },
   "helm-values": {
     "managerFilePatterns": ["/argocd/infrastructure/.+/values\\.yaml$/"]
-  }
+  },
+  "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["ghcr.io/linuxserver/nzbget"],
+      "versioning": "regex:^version-v(?<major>\\d+)\\.(?<minor>\\d+)$"
+    }
+  ]
 }
