@@ -7,9 +7,16 @@ app-template:
         main:
           env:
             NODE_PATH: /home/node/.openclaw/node_modules
+            NODE_OPTIONS: --max-old-space-size=2048
           envFrom:
             - secretRef:
                 name: openclaw-secrets
+          resources:
+            requests:
+              memory: 512Mi
+              cpu: 250m
+            limits:
+              memory: 3Gi
       initContainers:
         init-plugins:
           image:
