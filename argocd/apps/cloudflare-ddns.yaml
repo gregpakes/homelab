@@ -14,7 +14,7 @@ spec:
     # 1) Upstream Helm chart (bjw-s/app-template)
     - repoURL: https://bjw-s-labs.github.io/helm-charts/
       chart: app-template
-      targetRevision: 4.4.0
+      targetRevision: 4.6.2
       helm:
         # Pull values.yaml from the Git source below via its "ref" ($values)
         valueFiles:
