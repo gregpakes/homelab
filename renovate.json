@@ -16,6 +16,11 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["ghcr.io/linuxserver/nzbget"],
       "versioning": "regex:^version-v(?<major>\\d+)\\.(?<minor>\\d+)$"
+    },
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["ghcr.io/lukegus/termix"],
+      "versioning": "regex:^release-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
     }
   ]
 }
