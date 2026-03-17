@@ -45,12 +45,6 @@ controllers:
       labels:
         app: tdarr-node
       affinity:
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchLabels:
-                  app: tdarr-server
-              topologyKey: kubernetes.io/hostname
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
@@ -178,6 +172,7 @@ persistence:
     enabled: true
     type: persistentVolumeClaim
     existingClaim: tdarr-config
+    globalMounts: []
 
   # GPU passthrough 
   dri:
@@ -209,9 +204,14 @@ persistence:
 
 advancedMounts:
   server:
+    perms:
+      - name: config
+        path: /app/configs
     tdarr:
       - name: dri
         path: /dev/dri
+      - name: config
+        path: /app/configs
   node:
     tdarr-node:
       - name: dri
