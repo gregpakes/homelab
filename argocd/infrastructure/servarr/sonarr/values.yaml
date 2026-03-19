@@ -9,7 +9,7 @@ controllers:
       sonarr:
         image:
           repository: ghcr.io/linuxserver/sonarr
-          tag: 4.0.16
+          tag: 4.0.17
         env:
           TZ: Europe/London
           PUID: "1000"
