@@ -22,6 +22,9 @@ spec:
           - --api.insecure=false
           - --global.sendanonymoususage=false
           - --global.checknewversion=false
+          - --entrypoints.web.http.redirections.entrypoint.to=websecure
+          - --entrypoints.web.http.redirections.entrypoint.scheme=https
+          - --entrypoints.web.http.redirections.entrypoint.permanent=true
 
           logs:
             general:
@@ -39,12 +42,6 @@ spec:
 
           nodeSelector:
             worker: "true"
-
-          ports:
-            web:
-              redirectTo:
-                port: websecure
-                permanent: true
 
           providers:
             kubernetesCRD:
