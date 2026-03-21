@@ -21,7 +21,9 @@ spec:
           - --serversTransport.insecureSkipVerify=true
           - --api.dashboard=true
           - --api.insecure=false
-          
+          - --global.sendanonymoususage=false
+          - --global.checknewversion=false
+
           logs:
             general:
               level: DEBUG
@@ -35,9 +37,6 @@ spec:
             initContainers: []
             podAnnotations: {}
             replicas: 2
-          globalArguments:
-          - --global.sendanonymoususage=false
-          - --global.checknewversion=false
           ingressRoute:
             dashboard:
               enabled: false
@@ -45,14 +44,9 @@ spec:
             worker: "true"
           ports:
             web:
-              redirections:
-                entryPoint:
-                  permanent: true
-                  scheme: https
-                  to: websecure
-            websecure:
-              tls:
-                enabled: true
+              redirectTo:
+                port: websecure
+                permanent: true
           providers:
             kubernetesCRD:
               allowExternalNameServices: true
@@ -61,7 +55,6 @@ spec:
             kubernetesIngress:
               allowExternalNameServices: true
               ingressClass: traefik-external
-              ingressClassByName: true
               enabled: true
               publishedService:
                 enabled: true

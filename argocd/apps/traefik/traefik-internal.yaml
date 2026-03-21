@@ -20,6 +20,8 @@ spec:
           - --serversTransport.insecureSkipVerify=true
           - --api.dashboard=true
           - --api.insecure=false
+          - --global.sendanonymoususage=false
+          - --global.checknewversion=false
 
           logs:
             general:
@@ -31,10 +33,6 @@ spec:
             enabled: true
             replicas: 1
 
-          globalArguments:
-          - --global.sendanonymoususage=false
-          - --global.checknewversion=false
-
           ingressRoute:
             dashboard:
               enabled: false  # or true with an internal-only host + TLS later
@@ -44,14 +42,9 @@ spec:
 
           ports:
             web:
-              redirections:
-                entryPoint:
-                  permanent: true
-                  scheme: https
-                  to: websecure
-            websecure:
-              tls:
-                enabled: true
+              redirectTo:
+                port: websecure
+                permanent: true
 
           providers:
             kubernetesCRD:
