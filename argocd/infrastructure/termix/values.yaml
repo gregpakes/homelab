@@ -1,5 +1,6 @@
 controllers:
   termix:
+    strategy: Recreate
     replicas: 1
   
     containers:

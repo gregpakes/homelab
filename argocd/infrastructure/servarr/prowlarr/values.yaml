@@ -1,6 +1,7 @@
 # argocd/infrastructure/servarr/prowlarr/values.yaml
 controllers:
   main:
+    strategy: Recreate
     replicas: 1
     pod:
       securityContext:

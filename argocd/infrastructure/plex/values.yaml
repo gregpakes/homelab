@@ -1,5 +1,6 @@
 controllers:
   plex:
+    strategy: Recreate
     replicas: 1
   
     containers:

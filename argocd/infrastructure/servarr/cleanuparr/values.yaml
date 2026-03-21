@@ -1,5 +1,6 @@
 controllers:
   main:
+    strategy: Recreate
     pod:
       securityContext:
         fsGroup: 988

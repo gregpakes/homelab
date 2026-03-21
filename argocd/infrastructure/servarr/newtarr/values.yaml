@@ -1,5 +1,6 @@
 controllers:
   newtarr:
+    strategy: Recreate
     replicas: 1
 
     containers:

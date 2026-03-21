@@ -1,6 +1,7 @@
 # servarr/qbit-vpn/values.yaml
 controllers:
   main:
+    strategy: Recreate
     replicas: 1
     pod:
       nodeSelector:

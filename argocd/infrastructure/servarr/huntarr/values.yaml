@@ -1,5 +1,6 @@
 controllers:
   huntarr:
+    strategy: Recreate
     replicas: 0
   
     containers:
