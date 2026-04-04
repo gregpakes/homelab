@@ -10,7 +10,7 @@ controllers:
       radarr:
         image:
           repository: ghcr.io/linuxserver/radarr
-          tag: 6.0.4
+          tag: 6.1.1
         env:
           TZ: Europe/London
           PUID: "1000"
