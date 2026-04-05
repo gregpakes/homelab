@@ -4,6 +4,8 @@
 controllers:
   main:
     strategy: Recreate
+    pod:
+      hostNetwork: true
     containers:
       portainer:
         image:
