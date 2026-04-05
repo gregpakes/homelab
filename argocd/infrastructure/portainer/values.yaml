@@ -1,0 +1,46 @@
+# --- Portainer CE ---
+# Manages Docker hosts (e.g. infra-pi) via Portainer Agent
+
+controllers:
+  main:
+    strategy: Recreate
+    containers:
+      portainer:
+        image:
+          repository: portainer/portainer-ce
+          tag: latest
+        env:
+          TZ: Europe/London
+        probes:
+          liveness:  { enabled: true, type: TCP, port: 9000 }
+          readiness: { enabled: true, type: TCP, port: 9000 }
+
+service:
+  web:
+    controller: main
+    type: ClusterIP
+    ports:
+      http:
+        port: 9000
+
+ingress:
+  web:
+    enabled: true
+    className: traefik-internal
+    hosts:
+      - host: portainer.gregpakes.co.uk
+        paths:
+          - path: /
+            service:
+              identifier: web
+              port: http
+
+persistence:
+  data:
+    enabled: true
+    type: persistentVolumeClaim
+    storageClass: longhorn
+    size: 1Gi
+    accessMode: ReadWriteOnce
+    globalMounts:
+      - path: /data
