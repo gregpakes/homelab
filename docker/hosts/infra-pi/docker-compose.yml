@@ -1,0 +1,28 @@
+---
+services:
+  raspbx:
+    image: raspbx/raspbx:latest
+    container_name: raspbx
+    restart: unless-stopped
+    # PBX/SIP requires host networking to avoid NAT issues with RTP media streams
+    network_mode: host
+    privileged: true
+    environment:
+      - TZ=${TZ:-Europe/London}
+    volumes:
+      - asterisk-config:/etc/asterisk
+      - asterisk-spool:/var/spool/asterisk
+      - asterisk-lib:/var/lib/asterisk
+      - asterisk-log:/var/log/asterisk
+    healthcheck:
+      test: ["CMD", "asterisk", "-rx", "core show version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  asterisk-config:
+  asterisk-spool:
+  asterisk-lib:
+  asterisk-log:
