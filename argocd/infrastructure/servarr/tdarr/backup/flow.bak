@@ -57,23 +57,6 @@
       "fpEnabled": true
     },
     {
-      "name": "Mark File",
-      "sourceRepo": "Community",
-      "pluginName": "runCli",
-      "version": "1.0.0",
-      "id": "Q9xa3P22H",
-      "position": {
-        "x": 588,
-        "y": 480
-      },
-      "fpEnabled": true,
-      "inputsDB": {
-        "useCustomCliPath": "true",
-        "customCliPath": "/temp/scripts/ffsubsync.sh ",
-        "cliArguments": "{{{args.inputFileObj._id}}}"
-      }
-    },
-    {
       "name": "Has Non-English Tracks",
       "id": "roHL1RgYL",
       "sourceRepo": "Local",
@@ -95,20 +78,6 @@
       "id": "952uJsFPz"
     },
     {
-      "source": "0-5Q2KzG6",
-      "sourceHandle": "1",
-      "target": "Q9xa3P22H",
-      "targetHandle": null,
-      "id": "QV41tXZfT"
-    },
-    {
-      "source": "Q9xa3P22H",
-      "sourceHandle": "1",
-      "target": "A_-uzpK8j",
-      "targetHandle": null,
-      "id": "9RFxxkUsr"
-    },
-    {
       "source": "JKu9r_9Yt",
       "sourceHandle": "1",
       "target": "roHL1RgYL",
@@ -121,6 +90,13 @@
       "target": "0-5Q2KzG6",
       "targetHandle": null,
       "id": "NCiuB9ygF"
+    },
+    {
+      "source": "0-5Q2KzG6",
+      "sourceHandle": "1",
+      "target": "A_-uzpK8j",
+      "targetHandle": null,
+      "id": "uM1h05Pzw"
     }
   ]
 }
