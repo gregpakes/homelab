@@ -240,6 +240,17 @@ persistence:
     path: /var/nfs/shared/Media
     globalMounts:
       - path: /media
+
+  # Store Tdarr's built-in nightly backups directly on the NAS.
+  backups:
+    enabled: true
+    type: nfs
+    server: 172.16.250.191
+    path: /var/nfs/shared/Backups/Tdarr
+    advancedMounts:
+      server:
+        tdarr:
+          - path: /app/server/Tdarr/Backups
   
   pytools:
     enabled: true
