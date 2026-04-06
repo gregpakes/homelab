@@ -213,6 +213,8 @@ persistence:
       server:
         perms:
           - path: /app/server
+        flow-plugins:
+          - path: /app/server
         tdarr:
           - path: /app/server
 
