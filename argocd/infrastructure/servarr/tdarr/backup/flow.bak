@@ -1,0 +1,126 @@
+{
+  "_id": "pCjXSbqEp",
+  "name": "My Flow",
+  "description": "My Flow",
+  "tags": "",
+  "flowPlugins": [
+    {
+      "name": "Input File",
+      "sourceRepo": "Community",
+      "pluginName": "inputFile",
+      "version": "1.0.0",
+      "id": "JKu9r_9Yt",
+      "position": {
+        "x": 564,
+        "y": 252
+      },
+      "fpEnabled": true
+    },
+    {
+      "name": "Replace Original File",
+      "sourceRepo": "Community",
+      "pluginName": "replaceOriginalFile",
+      "version": "1.0.0",
+      "id": "A_-uzpK8j",
+      "position": {
+        "x": 600,
+        "y": 576
+      },
+      "fpEnabled": true
+    },
+    {
+      "name": "Strip Subtitles and Audio Tracks",
+      "sourceRepo": "Community",
+      "pluginName": "runCli",
+      "version": "1.0.0",
+      "id": "0-5Q2KzG6",
+      "position": {
+        "x": 600,
+        "y": 384
+      },
+      "fpEnabled": true,
+      "inputsDB": {
+        "cliArguments": "-o \"${outputFilePath}\" --audio-tracks eng --subtitle-tracks eng \"{{{args.inputFileObj._id}}}\"",
+        "userCli": "mkvmerge"
+      }
+    },
+    {
+      "name": "Fail Flow",
+      "sourceRepo": "Community",
+      "pluginName": "failFlow",
+      "version": "1.0.0",
+      "id": "d5TnzIhwk",
+      "position": {
+        "x": 768,
+        "y": 432
+      },
+      "fpEnabled": true
+    },
+    {
+      "name": "Mark File",
+      "sourceRepo": "Community",
+      "pluginName": "runCli",
+      "version": "1.0.0",
+      "id": "Q9xa3P22H",
+      "position": {
+        "x": 588,
+        "y": 480
+      },
+      "fpEnabled": true,
+      "inputsDB": {
+        "useCustomCliPath": "true",
+        "customCliPath": "/temp/scripts/ffsubsync.sh ",
+        "cliArguments": "{{{args.inputFileObj._id}}}"
+      }
+    },
+    {
+      "name": "Has Non-English Tracks",
+      "id": "roHL1RgYL",
+      "sourceRepo": "Local",
+      "pluginName": "hasNonEnglishTracks",
+      "version": "1.0.0",
+      "position": {
+        "x": 588,
+        "y": 312
+      },
+      "fpEnabled": true
+    }
+  ],
+  "flowEdges": [
+    {
+      "source": "0-5Q2KzG6",
+      "sourceHandle": "err1",
+      "target": "d5TnzIhwk",
+      "targetHandle": null,
+      "id": "952uJsFPz"
+    },
+    {
+      "source": "0-5Q2KzG6",
+      "sourceHandle": "1",
+      "target": "Q9xa3P22H",
+      "targetHandle": null,
+      "id": "QV41tXZfT"
+    },
+    {
+      "source": "Q9xa3P22H",
+      "sourceHandle": "1",
+      "target": "A_-uzpK8j",
+      "targetHandle": null,
+      "id": "9RFxxkUsr"
+    },
+    {
+      "source": "JKu9r_9Yt",
+      "sourceHandle": "1",
+      "target": "roHL1RgYL",
+      "targetHandle": null,
+      "id": "WoYdipqcB"
+    },
+    {
+      "source": "roHL1RgYL",
+      "sourceHandle": "1",
+      "target": "0-5Q2KzG6",
+      "targetHandle": null,
+      "id": "NCiuB9ygF"
+    }
+  ]
+}
