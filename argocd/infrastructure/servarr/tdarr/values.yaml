@@ -31,8 +31,8 @@ controllers:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            mkdir -p /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0 &&
-            cp /plugin-src/hasNonEnglishTracks.js /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0/index.js
+            mkdir -p /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/Custom/hasNonEnglishTracks/1.0.0 &&
+            cp /plugin-src/hasNonEnglishTracks.js /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/Custom/hasNonEnglishTracks/1.0.0/index.js
         securityContext:
           runAsUser: 0
           runAsGroup: 0
@@ -88,8 +88,8 @@ controllers:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            mkdir -p /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0 &&
-            cp /plugin-src/hasNonEnglishTracks.js /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0/index.js
+            mkdir -p /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/Custom/hasNonEnglishTracks/1.0.0 &&
+            cp /plugin-src/hasNonEnglishTracks.js /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/Custom/hasNonEnglishTracks/1.0.0/index.js
         securityContext:
           runAsUser: 0
           runAsGroup: 0
