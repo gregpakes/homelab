@@ -7,6 +7,16 @@ data:
   hasNonEnglishTracks.js: |
     const details = () => ({
       name: 'Has Non-English Tracks',
+      description: 'Output 1 if non-English audio/sub tracks exist, output 2 if already clean.',
+      style: {
+        borderColor: 'orange',
+      },
+      tags: '',
+      isStartPlugin: false,
+      pType: '',
+      requiresVersion: '2.11.01',
+      sidebarPosition: -1,
+      icon: 'faFilter',
       category: 'filter',
       type: 'filter',
       id: 'hasNonEnglishTracks',
@@ -14,14 +24,12 @@ data:
       SubStage: 'filter',
       startPoint: false,
       flowHashMd5: '',
-      description: 'Output 1 if non-English audio/sub tracks exist, output 2 if already clean.',
       version: '1.0.0',
       outputs: [
         { number: 1, tooltip: 'Has non-English tracks - process' },
         { number: 2, tooltip: 'Already clean - skip' },
       ],
       inputs: [],
-      tags: '',
     });
 
     const plugin = (args) => {
