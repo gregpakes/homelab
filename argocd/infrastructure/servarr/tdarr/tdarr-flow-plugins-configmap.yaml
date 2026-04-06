@@ -5,7 +5,11 @@ metadata:
   namespace: servarr
 data:
   hasNonEnglishTracks.js: |
-    const details = () => ({
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.plugin = exports.details = void 0;
+
+    var details = function () { return ({
       name: 'Has Non-English Tracks',
       description: 'Output 1 if non-English audio/sub tracks exist, output 2 if already clean.',
       style: {
@@ -17,27 +21,25 @@ data:
       requiresVersion: '2.11.01',
       sidebarPosition: -1,
       icon: 'faFilter',
-      category: 'filter',
-      type: 'filter',
-      id: 'hasNonEnglishTracks',
-      Stage: 'pre-processing',
-      SubStage: 'filter',
-      startPoint: false,
-      flowHashMd5: '',
-      version: '1.0.0',
+      inputs: [],
       outputs: [
         { number: 1, tooltip: 'Has non-English tracks - process' },
         { number: 2, tooltip: 'Already clean - skip' },
       ],
-      inputs: {},
-    });
+    }); };
+    exports.details = details;
 
-    const plugin = (args) => {
-      const streams = args.inputFileObj?.ffProbeData?.streams ?? [];
+    var plugin = function (args) {
+      var lib = require('../../../../../methods/lib')();
+      args.inputs = lib.loadDefaultValues(args.inputs, details);
 
-      const hasNonEnglish = streams.some((stream) => {
+      var streams = (args.inputFileObj
+        && args.inputFileObj.ffProbeData
+        && args.inputFileObj.ffProbeData.streams) || [];
+
+      var hasNonEnglish = streams.some(function (stream) {
         if (stream.codec_type !== 'audio' && stream.codec_type !== 'subtitle') return false;
-        const lang = (stream.tags?.language ?? 'und').toLowerCase();
+        var lang = ((stream.tags && stream.tags.language) || 'und').toLowerCase();
         return lang !== 'eng' && lang !== 'und';
       });
 
@@ -47,5 +49,4 @@ data:
         variables: args.variables,
       };
     };
-
-    module.exports = { details, plugin };
+    exports.plugin = plugin;
