@@ -29,7 +29,7 @@ data:
         { number: 1, tooltip: 'Has non-English tracks - process' },
         { number: 2, tooltip: 'Already clean - skip' },
       ],
-      inputs: [],
+      inputs: {},
     });
 
     const plugin = (args) => {
