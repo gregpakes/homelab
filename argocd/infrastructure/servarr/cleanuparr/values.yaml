@@ -10,7 +10,7 @@ controllers:
       cleanuparr:
         image:
           repository: ghcr.io/cleanuparr/cleanuparr
-          tag: 2.8.1
+          tag: 2.9.3
         env:
           TZ: Europe/London
           PUID: "1000"
