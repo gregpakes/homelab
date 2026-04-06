@@ -24,6 +24,19 @@ controllers:
           runAsUser: 0
           runAsGroup: 0
 
+      flow-plugins:
+        image:
+          repository: alpine
+          tag: "3.23"
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            mkdir -p /app/plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0 &&
+            cp /plugin-src/hasNonEnglishTracks.js /app/plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0/index.js
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+
     containers:
       tdarr:
         image:
@@ -65,6 +78,19 @@ controllers:
             mkdir -p /temp &&
             chown -R 1000:988 /temp &&
             chmod -R u+rwX,g+rwX /temp
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+
+      flow-plugins:
+        image:
+          repository: alpine
+          tag: "3.23"
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            mkdir -p /app/plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0 &&
+            cp /plugin-src/hasNonEnglishTracks.js /app/plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0/index.js
         securityContext:
           runAsUser: 0
           runAsGroup: 0
@@ -219,18 +245,28 @@ persistence:
     enabled: true
     type: emptyDir
 
+  plugins:
+    enabled: true
+    type: emptyDir
+
   flow-plugins:
     enabled: true
     type: configMap
     name: tdarr-flow-plugins
     advancedMounts:
       server:
+        flow-plugins:
+          - path: /plugin-src
+            readOnly: true
         tdarr:
-          - path: /app/plugins/FlowPlugins/LocalFlowPlugins
+          - path: /plugin-src
             readOnly: true
       node:
+        flow-plugins:
+          - path: /plugin-src
+            readOnly: true
         tdarr-node:
-          - path: /app/plugins/FlowPlugins/LocalFlowPlugins
+          - path: /plugin-src
             readOnly: true
 
 
@@ -239,9 +275,19 @@ advancedMounts:
     tdarr:
       - name: dri
         path: /dev/dri
+      - name: plugins
+        path: /app/plugins
+    flow-plugins:
+      - name: plugins
+        path: /app/plugins
   node:
     tdarr-node:
       - name: dri
         path: /dev/dri
       - name: pytools
         path: /pytools
+      - name: plugins
+        path: /app/plugins
+    flow-plugins:
+      - name: plugins
+        path: /app/plugins
