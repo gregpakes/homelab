@@ -31,8 +31,8 @@ controllers:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            mkdir -p /app/plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0 &&
-            cp /plugin-src/hasNonEnglishTracks.js /app/plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0/index.js
+            mkdir -p /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0 &&
+            cp /plugin-src/hasNonEnglishTracks.js /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0/index.js
         securityContext:
           runAsUser: 0
           runAsGroup: 0
@@ -46,7 +46,6 @@ controllers:
           TZ: Europe/London
           PUID: "1000"
           PGID: "988"
-          pluginsDir: /app/plugins
 
   node:
     strategy: Recreate
@@ -89,8 +88,8 @@ controllers:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            mkdir -p /app/plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0 &&
-            cp /plugin-src/hasNonEnglishTracks.js /app/plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0/index.js
+            mkdir -p /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0 &&
+            cp /plugin-src/hasNonEnglishTracks.js /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/tools/hasNonEnglishTracks/1.0.0/index.js
         securityContext:
           runAsUser: 0
           runAsGroup: 0
@@ -156,7 +155,6 @@ controllers:
           serverIP: tdarr-server
           serverPort: "8266"
           nodeID: tdarr-node
-          pluginsDir: /app/plugins
 
           PYTHONPATH: /pytools
           PATH: /pytools/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -245,10 +243,6 @@ persistence:
     enabled: true
     type: emptyDir
 
-  plugins:
-    enabled: true
-    type: emptyDir
-
   flow-plugins:
     enabled: true
     type: configMap
@@ -258,14 +252,8 @@ persistence:
         flow-plugins:
           - path: /plugin-src
             readOnly: true
-        tdarr:
-          - path: /plugin-src
-            readOnly: true
       node:
         flow-plugins:
-          - path: /plugin-src
-            readOnly: true
-        tdarr-node:
           - path: /plugin-src
             readOnly: true
 
@@ -275,19 +263,9 @@ advancedMounts:
     tdarr:
       - name: dri
         path: /dev/dri
-      - name: plugins
-        path: /app/plugins
-    flow-plugins:
-      - name: plugins
-        path: /app/plugins
   node:
     tdarr-node:
       - name: dri
         path: /dev/dri
       - name: pytools
         path: /pytools
-      - name: plugins
-        path: /app/plugins
-    flow-plugins:
-      - name: plugins
-        path: /app/plugins
