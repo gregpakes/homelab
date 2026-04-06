@@ -21,6 +21,7 @@ data:
       requiresVersion: '2.11.01',
       sidebarPosition: -1,
       icon: 'faFilter',
+      id: 'hasNonEnglishTracks',
       inputs: [],
       outputs: [
         { number: 1, tooltip: 'Has non-English tracks - process' },
