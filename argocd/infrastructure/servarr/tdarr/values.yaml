@@ -181,6 +181,17 @@ persistence:
         tdarr:
           - path: /app/configs
 
+  server-data:
+    enabled: true
+    type: persistentVolumeClaim
+    existingClaim: tdarr-server
+    advancedMounts:
+      server:
+        perms:
+          - path: /app/server
+        tdarr:
+          - path: /app/server
+
   # GPU passthrough 
   dri:
     enabled: true
