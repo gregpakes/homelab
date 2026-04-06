@@ -33,6 +33,7 @@ controllers:
           TZ: Europe/London
           PUID: "1000"
           PGID: "988"
+          pluginsDir: /app/plugins
 
   node:
     strategy: Recreate
@@ -129,6 +130,7 @@ controllers:
           serverIP: tdarr-server
           serverPort: "8266"
           nodeID: tdarr-node
+          pluginsDir: /app/plugins
 
           PYTHONPATH: /pytools
           PATH: /pytools/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -206,6 +208,20 @@ persistence:
     enabled: true
     type: emptyDir
 
+  flow-plugins:
+    enabled: true
+    type: configMap
+    name: tdarr-flow-plugins
+    advancedMounts:
+      server:
+        tdarr:
+          - path: /app/plugins/FlowPlugins/LocalFlowPlugins
+            readOnly: true
+      node:
+        tdarr-node:
+          - path: /app/plugins/FlowPlugins/LocalFlowPlugins
+            readOnly: true
+
 
 advancedMounts:
   server:
@@ -218,4 +234,3 @@ advancedMounts:
         path: /dev/dri
       - name: pytools
         path: /pytools
-

@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tdarr-flow-plugins
+  namespace: servarr
+data:
+  hasNonEnglishTracks.js: |
+    const details = () => ({
+      name: 'Has Non-English Tracks',
+      category: 'filter',
+      type: 'filter',
+      id: 'hasNonEnglishTracks',
+      Stage: 'pre-processing',
+      SubStage: 'filter',
+      startPoint: false,
+      flowHashMd5: '',
+      description: 'Output 1 if non-English audio/sub tracks exist, output 2 if already clean.',
+      version: '1.0.0',
+      outputs: [
+        { number: 1, tooltip: 'Has non-English tracks - process' },
+        { number: 2, tooltip: 'Already clean - skip' },
+      ],
+      inputs: [],
+      tags: '',
+    });
+
+    const plugin = (args) => {
+      const streams = args.inputFileObj?.ffProbeData?.streams ?? [];
+
+      const hasNonEnglish = streams.some((stream) => {
+        if (stream.codec_type !== 'audio' && stream.codec_type !== 'subtitle') return false;
+        const lang = (stream.tags?.language ?? 'und').toLowerCase();
+        return lang !== 'eng' && lang !== 'und';
+      });
+
+      return {
+        outputFileObj: args.inputFileObj,
+        outputNumber: hasNonEnglish ? 1 : 2,
+        variables: args.variables,
+      };
+    };
+
+    module.exports = { details, plugin };
