@@ -21,7 +21,7 @@ app-template:
         init-plugins:
           image:
             repository: ghcr.io/openclaw/openclaw
-            tag: "2026.4.14"
+            tag: "2026.4.15"
           command:
             - sh
             - -c
@@ -44,7 +44,7 @@ app-template:
         init-skills:
           image:
             repository: ghcr.io/openclaw/openclaw
-            tag: "2026.4.14"
+            tag: "2026.4.15"
           command:
             - sh
             - -c
@@ -86,7 +86,7 @@ app-template:
             - init-skills
           image:
             repository: ghcr.io/openclaw/openclaw
-            tag: "2026.4.14"
+            tag: "2026.4.15"
           command:
             - sh
             - -c
