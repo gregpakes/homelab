@@ -9,6 +9,15 @@ services:
     ports:
       - "8080:80"
 
+  placeholder-2:
+    image: traefik/whoami:latest
+    container_name: infra-pi-placeholder-2
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ:-Europe/London}
+    ports:
+      - "8081:80"
+
 # Original Raspbx service kept here for reference until replaced with a real PBX image.
 #  raspbx:
 #    image: raspbx/raspbx:latest
