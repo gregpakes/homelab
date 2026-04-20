@@ -149,7 +149,7 @@ controllers:
       tdarr-node:
         image:
           repository: docker.io/haveagitgat/tdarr_node
-          tag: 2.69.01
+          tag: 2.70.01
         env:
           TZ: Europe/London
           serverIP: tdarr-server
