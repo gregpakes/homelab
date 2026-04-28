@@ -13,7 +13,7 @@ spec:
     # 1) OpenClaw Helm chart (wraps bjw-s app-template)
     - repoURL: https://serhanekicii.github.io/openclaw-helm
       chart: openclaw
-      targetRevision: 1.5.26
+      targetRevision: 1.5.27
       helm:
         releaseName: openclaw
         valueFiles:
