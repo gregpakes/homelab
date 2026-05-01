@@ -11,6 +11,19 @@
   "helm-values": {
     "managerFilePatterns": ["/argocd/infrastructure/.+/values\\.yaml$/"]
   },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^argocd/apps/rancher\\.yaml$/"],
+      "matchStrings": [
+        "repoURL:\\s+https://releases\\.rancher\\.com/server-charts/stable\\s+chart:\\s+rancher\\s+targetRevision:\\s+(?<currentValue>\\S+)"
+      ],
+      "depNameTemplate": "rancher",
+      "datasourceTemplate": "helm",
+      "registryUrlTemplate": "https://releases.rancher.com/server-charts/stable",
+      "versioningTemplate": "semver"
+    }
+  ],
   "packageRules": [
     {
       "matchDatasources": ["docker"],
