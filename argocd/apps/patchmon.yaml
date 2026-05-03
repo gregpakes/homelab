@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: patchmon
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: patchmon
+
+  sources:
+    - repoURL: ghcr.io/ruthlessbeat200/charts
+      chart: patchmon
+      targetRevision: 2.2.1
+      helm:
+        releaseName: patchmon
+        valueFiles:
+          - $values/argocd/infrastructure/patchmon/values.yaml
+
+    - repoURL: https://github.com/gregpakes/homelab
+      targetRevision: main
+      ref: values
+      path: argocd/infrastructure/patchmon
+      directory:
+        recurse: true
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
