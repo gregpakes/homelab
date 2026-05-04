@@ -371,6 +371,7 @@ app-template:
               readOnly: true
 
     data:
+      size: 10Gi
       advancedMounts:
         main:
           init-plugins:
