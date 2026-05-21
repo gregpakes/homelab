@@ -14,7 +14,7 @@ spec:
   sources:
     - repoURL: ghcr.io/ruthlessbeat200/charts
       chart: patchmon
-      targetRevision: 2.2.1
+      targetRevision: 3.0.0
       helm:
         releaseName: patchmon
         valueFiles:
