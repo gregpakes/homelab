@@ -11,6 +11,10 @@ database:
     existingSecretPasswordKey: postgres-password
   persistence:
     size: 5Gi
+  # Temporary for the chart 3.0 ownership migration. Disable after a healthy sync.
+  initContainers:
+    fixPermissions:
+      enabled: true
 
 redis:
   image:
@@ -20,6 +24,10 @@ redis:
     existingSecretPasswordKey: redis-password
   persistence:
     size: 2Gi
+  # Temporary for the chart 3.0 ownership migration. Disable after a healthy sync.
+  initContainers:
+    fixPermissions:
+      enabled: true
 
 server:
   image:
