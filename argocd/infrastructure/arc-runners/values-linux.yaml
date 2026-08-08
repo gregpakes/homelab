@@ -27,7 +27,7 @@ controllerServiceAccount:
 
 # Scale to zero when CI is idle: these pods exist only for the life of one job.
 minRunners: 0
-maxRunners: 12
+maxRunners: 6
 
 template:
   spec:
