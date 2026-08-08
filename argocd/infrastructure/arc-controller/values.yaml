@@ -1,0 +1,21 @@
+## Actions Runner Controller — controller only.
+##
+## Watches AutoscalingRunnerSet resources cluster-wide and creates one ephemeral
+## runner Pod per queued GitHub Actions job. The runners themselves live in the
+## arc-runners namespace (see argocd/apps/arc-runner-linux*.yaml).
+
+replicaCount: 1
+
+# The controller is small and stateless; it can run anywhere, including the
+# control-plane nodes. Only the runners are pinned to workers.
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Leave flags at their defaults. In particular do NOT set
+# flags.watchSingleNamespace: the scale-set chart then has to be told the
+# controller's ServiceAccount explicitly, which is a standing footgun.

@@ -1,0 +1,78 @@
+## General-purpose Linux CI pool for gregpakes/LapSmith.
+##
+## Target with `runs-on: homelab-linux`.
+##
+## Sized for the light-to-medium jobs: flutter analyze, the sharded flutter test
+## suite, the shared-package tests, the Node guard scripts, and the desktop
+## analyze/test job. Anything that needs a lot of disk (the Android compile)
+## belongs on the homelab-linux-xl pool instead — see values-linux-xl.yaml.
+
+githubConfigUrl: https://github.com/gregpakes/LapSmith
+
+# Pre-defined secret (Variation C), populated by external-secrets from the
+# 1Password Homelab vault. See shared/externalsecret.yaml.
+githubConfigSecret: arc-github-app
+
+runnerScaleSetName: homelab-linux
+
+# Required, not optional, when installing via Argo CD. The chart otherwise tries
+# to *discover* the controller's ServiceAccount with a live cluster lookup
+# (app.kubernetes.io/part-of=gha-rs-controller). Argo renders with
+# `helm template`, where lookups return nothing, so the chart fails outright with
+# "No gha-rs-controller deployment found". Must match the controller's release
+# name (arc) and namespace in argocd/apps/arc-controller.yaml.
+controllerServiceAccount:
+  namespace: arc-systems
+  name: arc-gha-rs-controller
+
+# Scale to zero when CI is idle: these pods exist only for the life of one job.
+minRunners: 0
+maxRunners: 6
+
+template:
+  spec:
+    # All three workers. Masters are excluded because they are 4 CPU / 6 GB with
+    # ~12 GB of disk and also run etcd — a Flutter build there would hurt.
+    nodeSelector:
+      worker: "true"
+
+    # Ephemeral runners: a job's workspace never needs to outlive the pod, so an
+    # emptyDir is both correct and the fastest option (node-local disk, no
+    # Longhorn replication in the build path).
+    volumes:
+      - name: work
+        emptyDir:
+          sizeLimit: 30Gi
+      - name: runner-hooks
+        configMap:
+          name: arc-runner-hooks
+          defaultMode: 0755
+
+    containers:
+      - name: runner
+        image: ghcr.io/actions/actions-runner:2.336.0
+        command: ["/home/runner/run.sh"]
+        env:
+          # Installs the base OS packages the minimal runner image lacks.
+          # xz-utils is load-bearing for subosito/flutter-action.
+          - name: ACTIONS_RUNNER_HOOK_JOB_STARTED
+            value: /home/runner/hooks/job-started.sh
+        volumeMounts:
+          - name: work
+            mountPath: /home/runner/_work
+          - name: runner-hooks
+            mountPath: /home/runner/hooks
+        resources:
+          requests:
+            cpu: "1"
+            memory: 2Gi
+            # Reserved so the scheduler will not stack more runners onto a node
+            # than its disk can hold. This is the guard against the original
+            # failure mode (a build dying when the filesystem filled up).
+            ephemeral-storage: 12Gi
+          limits:
+            # Deliberately far above the request: Gradle and the Dart frontend
+            # are bursty, and there is normally spare CPU on the workers.
+            cpu: "4"
+            memory: 8Gi
+            ephemeral-storage: 35Gi

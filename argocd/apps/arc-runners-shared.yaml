@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: arc-runners-shared
+  namespace: argocd
+  annotations:
+    # Between the controller (20) and the scale sets (25): the GitHub App secret
+    # and the job hook must exist before a runner pod is created.
+    argocd.argoproj.io/sync-wave: "24"
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: arc-runners
+  source:
+    repoURL: https://github.com/gregpakes/homelab
+    targetRevision: main
+    # Deliberately a dedicated subdirectory, not argocd/infrastructure/arc-runners
+    # itself: the Helm values files live one level up, and pointing a directory
+    # source at them would make Argo try to apply them as manifests.
+    path: argocd/infrastructure/arc-runners/shared
+    directory:
+      recurse: true
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

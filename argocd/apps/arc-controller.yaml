@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: arc-controller
+  namespace: argocd
+  annotations:
+    # After external-secrets (wave 8) so the runner scale sets that follow can
+    # resolve their GitHub App credentials from 1Password.
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: arc-systems
+
+  sources:
+    - repoURL: ghcr.io/actions/actions-runner-controller-charts
+      chart: gha-runner-scale-set-controller
+      targetRevision: 0.14.2
+      helm:
+        releaseName: arc
+        valueFiles:
+          - $values/argocd/infrastructure/arc-controller/values.yaml
+
+    - repoURL: https://github.com/gregpakes/homelab
+      targetRevision: main
+      ref: values
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

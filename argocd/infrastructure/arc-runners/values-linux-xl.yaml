@@ -1,0 +1,81 @@
+## Disk-heavy Linux CI pool for gregpakes/LapSmith.
+##
+## Target with `runs-on: homelab-linux-xl`.
+##
+## This pool exists because the workers do not have comparable disk:
+##
+##   k3s-04   ~37 GB allocatable ephemeral storage
+##   k3s-06   ~62 GB
+##   k3s-05  ~531 GB
+##
+## The Android compile needs the Flutter SDK, the Android SDK + cmdline-tools,
+## the pub cache and the Gradle caches all at once — comfortably over what
+## k3s-04 can spare. Scheduling it anywhere but k3s-05 would reproduce the
+## out-of-disk failure this whole setup is meant to fix, so it is pinned.
+
+githubConfigUrl: https://github.com/gregpakes/LapSmith
+
+githubConfigSecret: arc-github-app
+
+runnerScaleSetName: homelab-linux-xl
+
+# See the equivalent note in values-linux.yaml: mandatory under Argo CD, because
+# the chart's live-lookup discovery of the controller ServiceAccount cannot work
+# under `helm template`.
+controllerServiceAccount:
+  namespace: arc-systems
+  name: arc-gha-rs-controller
+
+minRunners: 0
+# Two concurrent heavy builds. k3s-05 has 8 CPU with roughly 5 uncommitted, so
+# this pool alone will not exhaust it, and the general pool can still land here.
+maxRunners: 2
+
+template:
+  spec:
+    # Pinned by hostname rather than a custom node label: node labels are not
+    # managed by this repo, so a label would be undocumented cluster state that
+    # someone has to remember to reapply. If k3s-05 is ever rebuilt or the big
+    # disk moves, change it here.
+    nodeSelector:
+      kubernetes.io/hostname: k3s-05
+
+    volumes:
+      - name: work
+        emptyDir:
+          sizeLimit: 120Gi
+      - name: runner-hooks
+        configMap:
+          name: arc-runner-hooks
+          defaultMode: 0755
+
+    containers:
+      - name: runner
+        image: ghcr.io/actions/actions-runner:2.336.0
+        command: ["/home/runner/run.sh"]
+        env:
+          - name: ACTIONS_RUNNER_HOOK_JOB_STARTED
+            value: /home/runner/hooks/job-started.sh
+        volumeMounts:
+          - name: work
+            mountPath: /home/runner/_work
+          - name: runner-hooks
+            mountPath: /home/runner/hooks
+        resources:
+          requests:
+            cpu: "2"
+            # Sized off apps/mobile/android/gradle.properties, which asks for
+            # -Xmx8G plus a 4G metaspace for the Gradle daemon, on top of the
+            # Kotlin compile daemon and the Dart frontend. A 12Gi ceiling here
+            # OOMKills the build partway through.
+            memory: 8Gi
+            ephemeral-storage: 40Gi
+          limits:
+            cpu: "6"
+            # 2 runners x 16Gi is the whole of k3s-05's 32GB, so two Android
+            # builds both peaking at once could still have one killed by the
+            # kernel. Requests (2 x 8Gi) are what the scheduler honours and
+            # those fit comfortably; raise the node or drop maxRunners to 1 if
+            # that ever actually bites.
+            memory: 16Gi
+            ephemeral-storage: 130Gi

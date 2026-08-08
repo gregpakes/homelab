@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: arc-runner-hooks
+  namespace: arc-runners
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+data:
+  # Runs inside the runner container before every job, via
+  # ACTIONS_RUNNER_HOOK_JOB_STARTED.
+  #
+  # Why this exists: ghcr.io/actions/actions-runner is a minimal Ubuntu 24.04
+  # image, not the fat GitHub-hosted ubuntu-latest image. It does ship
+  # passwordless sudo and apt, but a handful of things the workflows assume are
+  # simply absent. The load-bearing one is xz-utils: subosito/flutter-action
+  # fetches the Linux Flutter SDK as .tar.xz, and tar cannot decompress it
+  # without the xz binary — every Flutter job fails at setup without this.
+  #
+  # Toolchains proper (Flutter, Java, Node, Dart, Ruby, the Android SDK) stay in
+  # the workflows via their setup actions, so the workflows remain runnable on
+  # GitHub-hosted runners unchanged. Only base OS packages belong here.
+  job-started.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    PKGS=(xz-utils zip wget file)
+
+    missing=()
+    for p in "${PKGS[@]}"; do
+      dpkg -s "$p" >/dev/null 2>&1 || missing+=("$p")
+    done
+
+    if ((${#missing[@]} == 0)); then
+      echo "runner-hook: base packages already present"
+      exit 0
+    fi
+
+    echo "runner-hook: installing ${missing[*]}"
+    sudo apt-get update -qq
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+      --no-install-recommends "${missing[@]}"
+    echo "runner-hook: done"

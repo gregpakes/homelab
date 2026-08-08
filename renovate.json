@@ -1,5 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "assignees": ["gregpakes"],
   "extends": ["config:recommended"],
 
   "argocd": {
@@ -22,9 +23,23 @@
       "datasourceTemplate": "helm",
       "registryUrlTemplate": "https://releases.rancher.com/server-charts/stable",
       "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^argocd/infrastructure/arc-runners/values-.+\\.yaml$/"],
+      "matchStrings": [
+        "image:\\s+(?<depName>ghcr\\.io/actions/actions-runner):(?<currentValue>\\S+)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "semver"
     }
   ],
   "packageRules": [
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["longhorn"],
+      "prPriority": 10
+    },
     {
       "matchDatasources": ["docker"],
       "matchPackageNames": ["ghcr.io/linuxserver/nzbget"],
