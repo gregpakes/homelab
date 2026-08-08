@@ -18,11 +18,37 @@ data:
   #
   # Toolchains proper (Flutter, Java, Node, Dart, Ruby, the Android SDK) stay in
   # the workflows via their setup actions, so the workflows remain runnable on
-  # GitHub-hosted runners unchanged. Only base OS packages belong here.
+  # GitHub-hosted runners unchanged. What belongs here is only the environment
+  # those actions assume already exists: base OS packages, and a writable tool
+  # cache for them to extract into.
   job-started.sh: |
     #!/usr/bin/env bash
     set -euo pipefail
 
+    # --- 1. Runner tool cache -------------------------------------------------
+    #
+    # EVERY setup action writes here: ruby/setup-ruby, actions/setup-node,
+    # actions/setup-java, dart-lang/setup-dart and subosito/flutter-action all
+    # extract into the runner tool cache. GitHub-hosted images ship
+    # /opt/hostedtoolcache already owned by the runner user. This image has no
+    # such directory at all, /opt is root-owned 0755, and the runner sets no
+    # RUNNER_TOOL_CACHE, so the actions fail on their first write with:
+    #
+    #   Error: EACCES: permission denied, mkdir '/opt/hostedtoolcache'
+    #
+    # Created at the canonical path rather than relocated via RUNNER_TOOL_CACHE
+    # on purpose: ruby/setup-ruby documents "the default tool cache directory
+    # (/opt/hostedtoolcache on Linux) must be writable by the runner user" and
+    # does not promise to honour an override, so moving it is a gamble whereas
+    # creating it satisfies every action either way.
+    TOOL_CACHE="${RUNNER_TOOL_CACHE:-/opt/hostedtoolcache}"
+    if [[ ! -w "$TOOL_CACHE" ]]; then
+      echo "runner-hook: preparing tool cache at $TOOL_CACHE"
+      sudo mkdir -p "$TOOL_CACHE"
+      sudo chown "$(id -u):$(id -g)" "$TOOL_CACHE"
+    fi
+
+    # --- 2. Base OS packages --------------------------------------------------
     PKGS=(xz-utils zip wget file)
 
     missing=()
@@ -30,13 +56,13 @@ data:
       dpkg -s "$p" >/dev/null 2>&1 || missing+=("$p")
     done
 
-    if ((${#missing[@]} == 0)); then
+    if ((${#missing[@]})); then
+      echo "runner-hook: installing ${missing[*]}"
+      sudo apt-get update -qq
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+        --no-install-recommends "${missing[@]}"
+    else
       echo "runner-hook: base packages already present"
-      exit 0
     fi
 
-    echo "runner-hook: installing ${missing[*]}"
-    sudo apt-get update -qq
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
-      --no-install-recommends "${missing[@]}"
     echo "runner-hook: done"
