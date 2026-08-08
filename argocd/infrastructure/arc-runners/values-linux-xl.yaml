@@ -40,6 +40,15 @@ template:
     nodeSelector:
       kubernetes.io/hostname: k3s-05
 
+    # Needed once `image` below points at the prebaked Android runner, which is a
+    # private GHCR package (gregpakes/LapSmith is private). Harmless while the
+    # image is still the public upstream one, and landing it first means flipping
+    # the image tag is a one-line change that cannot fail on auth.
+    # Provided by shared/ghcr-pull-externalsecret.yaml, which syncs in an earlier
+    # wave than this scale set.
+    imagePullSecrets:
+      - name: ghcr-pull
+
     volumes:
       - name: work
         emptyDir:
