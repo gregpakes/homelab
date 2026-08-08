@@ -36,16 +36,27 @@ data:
     #
     #   Error: EACCES: permission denied, mkdir '/opt/hostedtoolcache'
     #
-    # Created at the canonical path rather than relocated via RUNNER_TOOL_CACHE
-    # on purpose: ruby/setup-ruby documents "the default tool cache directory
-    # (/opt/hostedtoolcache on Linux) must be writable by the runner user" and
-    # does not promise to honour an override, so moving it is a gamble whereas
-    # creating it satisfies every action either way.
-    TOOL_CACHE="${RUNNER_TOOL_CACHE:-/opt/hostedtoolcache}"
-    if [[ ! -w "$TOOL_CACHE" ]]; then
-      echo "runner-hook: preparing tool cache at $TOOL_CACHE"
-      sudo mkdir -p "$TOOL_CACHE"
-      sudo chown "$(id -u):$(id -g)" "$TOOL_CACHE"
+    # The path is hardcoded deliberately, and must NOT be derived from
+    # RUNNER_TOOL_CACHE. The runner does set RUNNER_TOOL_CACHE to a writable
+    # location of its own, which is why actions/setup-node, setup-java and
+    # dart-lang/setup-dart all work here without help. ruby/setup-ruby is the
+    # exception: it ignores that variable and goes straight to the literal
+    # /opt/hostedtoolcache, as its own log shows when it puts
+    # /opt/hostedtoolcache/Ruby/<v>/x64/bin on PATH before dying.
+    #
+    # An earlier version of this hook guarded on
+    # `[[ ! -w "${RUNNER_TOOL_CACHE:-/opt/hostedtoolcache}" ]]`, which silently
+    # did nothing: RUNNER_TOOL_CACHE was set and writable, so the test was false
+    # and the directory Ruby actually needs was never created. Worse, the skipped
+    # branch printed nothing, so the hook output was indistinguishable from the
+    # version that had no tool-cache handling at all. Keep this unconditional.
+    HOSTED_TOOL_CACHE=/opt/hostedtoolcache
+    if [[ ! -d "$HOSTED_TOOL_CACHE" || ! -w "$HOSTED_TOOL_CACHE" ]]; then
+      echo "runner-hook: preparing $HOSTED_TOOL_CACHE (RUNNER_TOOL_CACHE=${RUNNER_TOOL_CACHE:-unset})"
+      sudo mkdir -p "$HOSTED_TOOL_CACHE"
+      sudo chown "$(id -u):$(id -g)" "$HOSTED_TOOL_CACHE"
+    else
+      echo "runner-hook: $HOSTED_TOOL_CACHE already writable"
     fi
 
     # --- 2. Base OS packages --------------------------------------------------
