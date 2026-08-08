@@ -60,7 +60,20 @@ template:
 
     containers:
       - name: runner
-        image: ghcr.io/actions/actions-runner:2.336.0
+        # Prebaked image, NOT the stock upstream runner: it carries the Android
+        # SDK, NDK 28.2.13676358, CMake 3.22.1, platforms 34/35/36 and
+        # build-tools 35, which Gradle otherwise re-downloaded on every job
+        # (~10 GB, ~16 min) because the runners are ephemeral.
+        #
+        # Built from .github/runner-image/Dockerfile in gregpakes/LapSmith and
+        # published by its "CI runner image" workflow. The tag is a commit SHA and
+        # is pinned by hand on purpose — an auto-updating tag would silently
+        # change what CI runs on, and a bad runner image breaks every Android
+        # build at once. To move it: rerun that workflow, take the tag from its
+        # job summary, change it here.
+        #
+        # Private package, so this pool needs imagePullSecrets (above).
+        image: ghcr.io/gregpakes/lapsmith-ci-runner-android:sha-238d82c
         command: ["/home/runner/run.sh"]
         env:
           - name: ACTIONS_RUNNER_HOOK_JOB_STARTED
