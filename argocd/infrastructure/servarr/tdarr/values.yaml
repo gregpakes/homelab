@@ -13,7 +13,7 @@ controllers:
       perms:
         image:
           repository: alpine
-          tag: "3.23"
+          tag: "3.24"
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -27,7 +27,7 @@ controllers:
       flow-plugins:
         image:
           repository: alpine
-          tag: "3.23"
+          tag: "3.24"
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -70,7 +70,7 @@ controllers:
       perms:
         image:
           repository: alpine
-          tag: "3.23"
+          tag: "3.24"
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -84,7 +84,7 @@ controllers:
       flow-plugins:
         image:
           repository: alpine
-          tag: "3.23"
+          tag: "3.24"
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -109,7 +109,7 @@ controllers:
       ffsubsync-script:
         image:
           repository: alpine
-          tag: "3.23"
+          tag: "3.24"
         command: ["/bin/sh", "-c"]
         args:
           - |
