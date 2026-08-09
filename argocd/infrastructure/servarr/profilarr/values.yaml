@@ -10,7 +10,7 @@ controllers:
       profilarr:
         image:
           repository: santiagosayshey/profilarr
-          tag: v1.1.4
+          tag: v1.1.5
         env:
           TZ: Europe/London
         probes:
