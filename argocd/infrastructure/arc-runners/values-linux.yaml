@@ -36,6 +36,32 @@ template:
     nodeSelector:
       worker: "true"
 
+    # ARC does no placement of its own: it creates N runner pods and leaves them
+    # to kube-scheduler, which scores by *requests* and prefers the
+    # least-allocated node. Because a runner requests 1 CPU but may use 4, the
+    # scheduler thinks it is placing something small and stacks 6-7 Flutter
+    # builds onto whichever node currently looks emptiest — observed live, with
+    # all three general runners on k3s-06 while k3s-04 and k3s-05 idled.
+    #
+    # That both wastes two thirds of the cluster and creates the CPU contention
+    # that makes timing-sensitive tests flaky (obd_adapter_controller_rate_test
+    # measures a rate and fails just over its threshold under load).
+    #
+    # ScheduleAnyway, not DoNotSchedule: a hard constraint would leave pods
+    # Pending when a node is full, and ARC counts a Pending pod as already
+    # provisioned, so jobs would stall rather than queue visibly.
+    #
+    # Scoped to this scale set's instance label so the -xl pool, which is pinned
+    # to a single node by nodeSelector, is not counted in the skew.
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/instance: homelab-linux
+            app.kubernetes.io/component: runner
+
     # Required now that `image` below is a private GHCR package. Without it every
     # job on this pool fails at ImagePullBackOff, not just some.
     # Provided by shared/ghcr-pull-externalsecret.yaml, which syncs in an earlier
