@@ -87,20 +87,23 @@ template:
           - name: runner-hooks
             mountPath: /home/runner/hooks
         resources:
+          # Measured on real Android builds, not derived from gradle.properties.
+          # Sampling the full job lifecycle gave a peak of 5557m CPU and
+          # 14600Mi (14.3 GiB) memory.
           requests:
-            cpu: "2"
-            # Sized off apps/mobile/android/gradle.properties, which asks for
-            # -Xmx8G plus a 4G metaspace for the Gradle daemon, on top of the
-            # Kotlin compile daemon and the Dart frontend. A 12Gi ceiling here
-            # OOMKills the build partway through.
-            memory: 8Gi
+            # Was 2 — a 3x understatement, which let the scheduler place other
+            # work on top of a job that actually wants six cores.
+            cpu: "6"
+            memory: 12Gi
             ephemeral-storage: 40Gi
           limits:
-            cpu: "6"
-            # 2 runners x 16Gi is the whole of k3s-05's 32GB, so two Android
-            # builds both peaking at once could still have one killed by the
-            # kernel. Requests (2 x 8Gi) are what the scheduler honours and
-            # those fit comfortably; raise the node or drop maxRunners to 1 if
-            # that ever actually bites.
-            memory: 16Gi
+            # Was 6, and the build was clipping against it at 5557m.
+            cpu: "10"
+            # Was 16Gi against a measured 14.3 GiB peak — only 9% headroom. An
+            # OOM-killed Gradle worker is also the best explanation available for
+            # the old "Gradle build failed to produce an .apk file" failure,
+            # which produced no Gradle error, no APK, and orphaned java
+            # processes at cleanup. Unproven retroactively, but this removes the
+            # cliff either way.
+            memory: 20Gi
             ephemeral-storage: 130Gi

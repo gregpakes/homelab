@@ -116,16 +116,25 @@ template:
           - name: runner-hooks
             mountPath: /home/runner/hooks
         resources:
+          # Measured, not guessed. Sampling 24 runners through a full job
+          # lifecycle gave a typical peak of ~1400-1700m CPU and a maximum of
+          # 3797Mi memory — so the old 1 CPU / 2Gi request understated both, and
+          # kube-scheduler (which scores on requests and is blind to actual load)
+          # responded by stacking the whole pool onto whichever node looked
+          # emptiest.
           requests:
-            cpu: "1"
-            memory: 2Gi
+            cpu: "2"
+            memory: 4Gi
             # Reserved so the scheduler will not stack more runners onto a node
             # than its disk can hold. This is the guard against the original
             # failure mode (a build dying when the filesystem filled up).
             ephemeral-storage: 12Gi
           limits:
-            # Deliberately far above the request: Gradle and the Dart frontend
-            # are bursty, and there is normally spare CPU on the workers.
-            cpu: "4"
+            # Raised from 4: in that same sample, 9 of 24 runners sat pinned at
+            # exactly 4000-4005m, i.e. they were not using 4 cores, they were
+            # being throttled at the ceiling. Real demand is higher than 4 and
+            # the old limit hid how much. Still bursty by design — the Dart
+            # frontend and Gradle spike hard and briefly.
+            cpu: "6"
             memory: 8Gi
             ephemeral-storage: 35Gi
