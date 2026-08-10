@@ -123,7 +123,12 @@ template:
           # responded by stacking the whole pool onto whichever node looked
           # emptiest.
           requests:
-            cpu: "2"
+            # 3, not 2, for a scheduling reason as much as a usage one: with ~13
+            # CPU free per 16-core worker, a 2-CPU request still lets all six
+            # runners fit on ONE node (6x2=12 <= 13) — the exact packing this is
+            # meant to stop. At 3 the arithmetic caps it at four per node, and
+            # the topology spread constraint above handles the rest.
+            cpu: "3"
             memory: 4Gi
             # Reserved so the scheduler will not stack more runners onto a node
             # than its disk can hold. This is the guard against the original

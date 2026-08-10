@@ -94,7 +94,12 @@ template:
             # Was 2 — a 3x understatement, which let the scheduler place other
             # work on top of a job that actually wants six cores.
             cpu: "6"
-            memory: 12Gi
+            # 14Gi matches the observed peak rather than sitting under it. Five
+            # sampled builds peaked at 13.5-14.6 GiB, so this is the normal high
+            # water mark, not an outlier. Requesting less would leave the pod
+            # Burstable and evictable under node memory pressure, which is a poor
+            # trade for a 10-minute build.
+            memory: 14Gi
             ephemeral-storage: 40Gi
           limits:
             # Was 6, and the build was clipping against it at 5557m.
