@@ -15,7 +15,7 @@ spec:
     # Loki (single-binary, Longhorn-backed)
     - repoURL: https://grafana.github.io/helm-charts
       chart: loki
-      targetRevision: 7.0.0
+      targetRevision: 7.2.0
       helm:
         releaseName: loki
         valueFiles:
