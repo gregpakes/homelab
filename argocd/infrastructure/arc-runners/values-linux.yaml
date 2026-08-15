@@ -101,7 +101,7 @@ template:
         # rerun that repo's "CI runner image" workflow and take the tag from its
         # job summary. Keep it in step with values-linux-xl.yaml; test.yml's
         # analyze job fails loudly if the baked Flutter drifts from its pin.
-        image: ghcr.io/gregpakes/lapsmith-ci-runner:sha-7dc8cf2
+        image: ghcr.io/gregpakes/lapsmith-ci-runner:sha-a9be3ab
         command: ["/home/runner/run.sh"]
         env:
           # Now a no-op on this image (the packages and the tool cache are baked
