@@ -76,7 +76,7 @@ template:
         # Keep this tag in step with values-linux.yaml: both images are built from
         # the same Dockerfile in the same workflow run, and the android target is
         # layered on the base one, so mixed tags mean mixed Flutter SDKs.
-        image: ghcr.io/gregpakes/lapsmith-ci-runner-android:sha-9f909ce
+        image: ghcr.io/gregpakes/lapsmith-ci-runner-android:sha-3df90b0
         command: ["/home/runner/run.sh"]
         env:
           - name: ACTIONS_RUNNER_HOOK_JOB_STARTED
