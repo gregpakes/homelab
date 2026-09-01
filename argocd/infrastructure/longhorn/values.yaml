@@ -7,13 +7,13 @@ global:
       value: longhorn
       effect: NoSchedule
 
-# overrides for the v1.11.0 regression - remove when we upgrade to a fixed release
-# image:
-#   longhorn:
-#     manager:
-#       tag: v1.11.0-hotfix-1
-#     instanceManager:
-#       tag: v1.11.0-hotfix-1
+# Longhorn 1.12 turned the internal NetworkPolicies ON by default
+# (in 1.11 they were gated behind networkPolicies.enabled, which is false here).
+# The longhorn-manager policy only permits ingress from other Longhorn pods, which
+# blocks the kube-prometheus-stack ServiceMonitor scrape of longhorn-manager:9500.
+# Keeping the 1.11 behaviour; revisit if we want to lock this down properly.
+networkPolicies:
+  restrictInternalTraffic: false
 
 engine:
   tolerations:
