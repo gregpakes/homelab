@@ -137,11 +137,21 @@ persistence:
     globalMounts:
       - path: /transcode
 
- # removed because we use the intel Intel GPU Device Plugin Helm Chart
-  # 4️⃣ Intel Arc A310 (VAAPI)
+  # 4️⃣ Intel Arc A310 (VAAPI) - direct hostPath, the Intel GPU device plugin is not deployed
   dri:
     enabled: true
     type: hostPath
     hostPath: /dev/dri
+    hostPathType: Directory
     globalMounts:
       - path: /dev/dri
+
+  # Guard: /dev/dri exists as an empty directory on a node whose GPU failed to initialise,
+  # which silently drops Plex to CPU transcoding. CharDevice makes the pod fail to start instead.
+  dri-render:
+    enabled: true
+    type: hostPath
+    hostPath: /dev/dri/renderD128
+    hostPathType: CharDevice
+    globalMounts:
+      - path: /dev/dri/renderD128

@@ -79,6 +79,7 @@ When extra manifests are required (PVCs, ExternalSecrets, Traefik certificates, 
 
 - **GPU enablement (optional)**
   - `argocd/apps/intel-device-plugins-operator.yaml` and `intel-gpu-plugin.yaml` are currently commented templates. Uncomment them when the Intel plugin should be reconciled by Argo.
+  - Plex and Tdarr instead mount `/dev/dri` from the host directly. See [GPU passthrough](#gpu-passthrough-intel-arc-a310) for the A310 reset quirk and the required Proxmox hookscript.
 
 ---
 
@@ -160,8 +161,54 @@ Once the cluster is online, install Argo CD as described in the GitOps workflow 
    ls -l /dev/dri
    # card0 and renderD128 should exist
    ```
+6. **Force i915 to claim the card in the guest** — DG2 needs an explicit opt-in on
+   the 6.8 kernel, and the experimental `xe` driver must be kept out of the way:
+   ```bash
+   echo 'options i915 force_probe=56a6' | sudo tee /etc/modprobe.d/i915-force.conf
+   echo 'blacklist xe' | sudo tee /etc/modprobe.d/blacklist-xe.conf
+   sudo update-initramfs -u && sudo reboot
+   ```
 
-With the GPU visible inside the worker, the Plex Helm values (under `argocd/infrastructure/plex/values.yaml`) can request the `intel.com/gpu` resources exposed by the Intel plugin once it is enabled.
+Plex mounts `/dev/dri` (and `/dev/dri/renderD128` as a `CharDevice`) straight from the
+host — see `argocd/infrastructure/plex/values.yaml`. The Intel GPU device plugin apps
+under `argocd/apps/` stay commented out; nothing requests `intel.com/gpu` resources.
+
+#### The A310 does not survive a VM restart (important)
+
+These cards hold state across the QEMU process exiting. Restarting a VM that has
+already initialised the GPU leaves the card wedged, and the next boot fails with
+either of:
+
+```
+i915 0000:01:00.0: [drm] *ERROR* LMEM not initialized by firmware
+i915 0000:01:00.0: [drm] *ERROR* Device is non-operational; MMIO access returns 0xFFFFFFFF!
+```
+
+The guest then has **no `/dev/dri`**, and — before the `CharDevice` guard was added —
+Plex silently fell back to CPU transcoding. All three cards were found dead this way
+on 2026-09-18, having been broken since roughly early August.
+
+`scripts/proxmox-gpu-reset.sh` is a Proxmox `pre-start` hookscript that fixes this by
+forcing a **secondary bus reset** before the VM starts. The default FLR is not enough:
+the kernel reports success while the card's firmware never re-runs its init. Install it
+on each hypervisor (see the script header for the host/VM/IP mapping):
+
+```bash
+scp scripts/proxmox-gpu-reset.sh root@172.16.250.1X:/var/lib/vz/snippets/gpu-reset.sh
+# then on the host:
+chmod +x /var/lib/vz/snippets/gpu-reset.sh
+qm set <vmid> --hookscript local:snippets/gpu-reset.sh
+```
+
+Verify after any VM restart — `renderD128` present and HuC authenticated:
+
+```bash
+qm guest exec <vmid> -- sh -c 'ls -l /dev/dri; dmesg | grep -i huc | tail -1'
+```
+
+If a card is ever wedged with the hookscript already in place, the next escalation is a
+**cold power cycle** of the hypervisor (a warm reboot may not clear it), then the host
+BIOS settings *Above 4G Decoding* and *Resizable BAR*.
 
 ---
 
