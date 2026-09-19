@@ -224,6 +224,13 @@ persistence:
     type: hostPath
     hostPath: /dev/dri
     hostPathType: Directory
+    advancedMounts:
+      server:
+        tdarr:
+          - path: /dev/dri
+      node:
+        tdarr-node:
+          - path: /dev/dri
 
   # Guard: /dev/dri exists as an empty directory on a node whose Arc A310 failed
   # to initialise, so the directory mount above happily succeeds and tdarr-node
@@ -271,6 +278,14 @@ persistence:
   pytools:
     enabled: true
     type: emptyDir
+    advancedMounts:
+      node:
+        # ffsubsync populates /pytools (pip install --target=/pytools);
+        # tdarr-node consumes it via PATH/PYTHONPATH.
+        ffsubsync:
+          - path: /pytools
+        tdarr-node:
+          - path: /pytools
 
   flow-plugins:
     enabled: true
@@ -286,11 +301,11 @@ persistence:
           - path: /plugin-src
             readOnly: true
 
-
-# NOTE: a top-level `advancedMounts:` block used to live here, scoping `dri` to
-# server/tdarr + node/tdarr-node and `pytools` to node/tdarr-node. app-template
-# has no such top-level key, so it was inert: both volumes are in fact mounted
-# into *every* container of *both* controllers by the chart's default for an
-# item that declares no mounts of its own (a hostPath defaults to its own
-# hostPath, an emptyDir to /<name>). Removing the block renders byte-identical
-# output. Scope mounts per persistence item, as the entries above do.
+# NOTE: a top-level `advancedMounts:` block used to live here. app-template has
+# no such top-level key, so it was inert, and `dri` and `pytools` were in fact
+# mounted into *every* container of *both* controllers by the chart's default
+# for an item that declares no mounts of its own (a hostPath defaults to its
+# own hostPath, an emptyDir to /<name>). Both are now scoped per persistence
+# item above, as every other item here is. Note that `pytools` is scoped to the
+# ffsubsync init container as well as tdarr-node: ffsubsync is what populates
+# the emptyDir, and it was only receiving it via that accidental default.
