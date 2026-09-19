@@ -60,17 +60,17 @@ persistence:
     enabled: true
     existingClaim: prowlarr-config
     type: persistentVolumeClaim
+    advancedMounts:
+      main:
+        prowlarr:
+          - path: /config
 
   downloads:
     enabled: true
     type: nfs
     server: 172.16.250.191
     path: /var/nfs/shared/Media
-
-advancedMounts:
-  main:
-    prowlarr:
-      - name: config
-        path: /config
-      - name: downloads
-        path: /downloads
+    advancedMounts:
+      main:
+        prowlarr:
+          - path: /downloads

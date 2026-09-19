@@ -46,17 +46,17 @@ persistence:
     enabled: true
     type: persistentVolumeClaim
     existingClaim: sonarr-config
+    advancedMounts:
+      main:
+        sonarr:
+          - path: /config
 
   downloads:
     enabled: true
     type: nfs
     server: 172.16.250.191
     path: /var/nfs/shared/Media
-
-advancedMounts:
-  main:
-    sonarr:
-      - name: config
-        path: /config
-      - name: downloads
-        path: /downloads
+    advancedMounts:
+      main:
+        sonarr:
+          - path: /downloads

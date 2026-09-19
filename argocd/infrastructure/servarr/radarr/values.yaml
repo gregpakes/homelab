@@ -46,17 +46,17 @@ persistence:
     enabled: true
     type: persistentVolumeClaim
     existingClaim: radarr-config
+    advancedMounts:
+      main:
+        radarr:
+          - path: /config
 
   downloads:
     enabled: true
     type: nfs
     server: 172.16.250.191
     path: /var/nfs/shared/Media
-
-advancedMounts:
-  main:
-    radarr:
-      - name: config
-        path: /config
-      - name: downloads
-        path: /downloads
+    advancedMounts:
+      main:
+        radarr:
+          - path: /downloads
