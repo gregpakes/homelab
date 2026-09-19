@@ -218,12 +218,28 @@ persistence:
         tdarr:
           - path: /app/server
 
-  # GPU passthrough 
+  # GPU passthrough
   dri:
     enabled: true
     type: hostPath
     hostPath: /dev/dri
     hostPathType: Directory
+
+  # Guard: /dev/dri exists as an empty directory on a node whose Arc A310 failed
+  # to initialise, so the directory mount above happily succeeds and tdarr-node
+  # silently transcodes on CPU. CharDevice makes the pod fail to start instead.
+  # Mounted on the node only - the server does not transcode, and taking the web
+  # UI down would remove the means of noticing. See argocd/readme.md for the
+  # A310 reset quirk and scripts/proxmox-gpu-reset.sh.
+  dri-render:
+    enabled: true
+    type: hostPath
+    hostPath: /dev/dri/renderD128
+    hostPathType: CharDevice
+    advancedMounts:
+      node:
+        tdarr-node:
+          - path: /dev/dri/renderD128
 
   cache:
     enabled: true
@@ -271,14 +287,10 @@ persistence:
             readOnly: true
 
 
-advancedMounts:
-  server:
-    tdarr:
-      - name: dri
-        path: /dev/dri
-  node:
-    tdarr-node:
-      - name: dri
-        path: /dev/dri
-      - name: pytools
-        path: /pytools
+# NOTE: a top-level `advancedMounts:` block used to live here, scoping `dri` to
+# server/tdarr + node/tdarr-node and `pytools` to node/tdarr-node. app-template
+# has no such top-level key, so it was inert: both volumes are in fact mounted
+# into *every* container of *both* controllers by the chart's default for an
+# item that declares no mounts of its own (a hostPath defaults to its own
+# hostPath, an emptyDir to /<name>). Removing the block renders byte-identical
+# output. Scope mounts per persistence item, as the entries above do.
