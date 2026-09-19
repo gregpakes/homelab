@@ -4,17 +4,28 @@ metadata:
   name: tdarr-flow-plugins
   namespace: servarr
 data:
+  # Guard plugin for the strip-tracks flow. Emits ${trackArgs} for the runCli
+  # node rather than letting it hardcode language selectors, because keeping
+  # forced subtitles and dropping commentary both need individual track IDs.
+  #
+  # Policy (agreed 2026-09-19): keep ALL English audio, drop commentary, drop
+  # every subtitle except forced English, skip non-mkv and files with no
+  # English audio, hold files still hardlinked to a seeding torrent.
   hasNonEnglishTracks.js: |
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.plugin = exports.details = void 0;
 
+    var fs = require('fs');
+    var cp = require('child_process');
+
     var details = function () { return ({
-      name: 'Has Non-English Tracks',
-      description: 'Output 1 if non-English audio/sub tracks exist, output 2 if already clean.',
-      style: {
-        borderColor: 'orange',
-      },
+      name: 'Select Tracks To Keep',
+      description: 'Works out which audio and subtitle tracks to keep and emits the '
+        + 'mkvmerge arguments as ${trackArgs}. Keeps English audio, drops commentary, '
+        + 'drops every subtitle except forced English. Refuses to touch files with no '
+        + 'English audio, non-mkv files, and files still hardlinked to a seeding torrent.',
+      style: { borderColor: 'orange' },
       tags: '',
       isStartPlugin: false,
       pType: '',
@@ -22,10 +33,28 @@ data:
       sidebarPosition: -1,
       icon: 'faFilter',
       id: 'hasNonEnglishTracks',
-      inputs: [],
+      inputs: [
+        { name: 'keepLanguages', type: 'string', defaultValue: 'eng',
+          inputUI: { type: 'text' },
+          tooltip: 'Comma-separated audio languages to keep (ISO 639-2).' },
+        { name: 'stripCommentary', type: 'boolean', defaultValue: 'true',
+          inputUI: { type: 'dropdown', options: ['false', 'true'] },
+          tooltip: 'Drop audio/subtitle tracks whose name matches /comment/i.' },
+        { name: 'keepForcedSubs', type: 'boolean', defaultValue: 'true',
+          inputUI: { type: 'dropdown', options: ['false', 'true'] },
+          tooltip: 'Keep forced subtitles in a keeper language. These translate '
+            + 'foreign dialogue inside English films.' },
+        { name: 'skipHardlinked', type: 'boolean', defaultValue: 'true',
+          inputUI: { type: 'dropdown', options: ['false', 'true'] },
+          tooltip: 'Hold files still hardlinked to a seeding torrent.' },
+        { name: 'mkvmergePath', type: 'string', defaultValue: 'mkvmerge',
+          inputUI: { type: 'text' }, tooltip: 'Path to mkvmerge.' },
+      ],
       outputs: [
-        { number: 1, tooltip: 'Has non-English tracks - process' },
-        { number: 2, tooltip: 'Already clean - skip' },
+        { number: 1, tooltip: 'Process - strip tracks' },
+        { number: 2, tooltip: 'Already clean - nothing to do' },
+        { number: 3, tooltip: 'Skipped - not safe or not applicable' },
+        { number: 4, tooltip: 'Held - still hardlinked (seeding)' },
       ],
     }); };
     exports.details = details;
@@ -34,20 +63,95 @@ data:
       var lib = require('../../../../../methods/lib')();
       args.inputs = lib.loadDefaultValues(args.inputs, details);
 
-      var streams = (args.inputFileObj
-        && args.inputFileObj.ffProbeData
-        && args.inputFileObj.ffProbeData.streams) || [];
-
-      var hasNonEnglish = streams.some(function (stream) {
-        if (stream.codec_type !== 'audio' && stream.codec_type !== 'subtitle') return false;
-        var lang = ((stream.tags && stream.tags.language) || 'und').toLowerCase();
-        return lang !== 'eng' && lang !== 'und';
-      });
-
-      return {
-        outputFileObj: args.inputFileObj,
-        outputNumber: hasNonEnglish ? 1 : 2,
-        variables: args.variables,
+      var filePath = args.inputFileObj._id;
+      var bool = function (v) { return String(v) === 'true'; };
+      var out = function (n, msg) {
+        args.jobLog(msg);
+        return { outputFileObj: args.inputFileObj, outputNumber: n, variables: args.variables };
       };
+
+      // Only Matroska. mkvmerge always writes Matroska, so processing an mp4 would
+      // rename it and break Sonarr/Radarr's file reference until a rescan.
+      if (String(args.inputFileObj.container).toLowerCase() !== 'mkv') {
+        return out(3, 'Skipped: container is ' + args.inputFileObj.container + ', not mkv');
+      }
+
+      // Hold while the file is still a seeding torrent's inode. Rewriting it breaks
+      // the hardlink - harmless to the torrent, but it costs a second full copy of a
+      // 2160p file. Once the torrent is culled the count drops to 1 and the next
+      // scan picks it up for free. Unreadable link count FAILS CLOSED.
+      if (bool(args.inputs.skipHardlinked)) {
+        try {
+          var st = fs.statSync(filePath);
+          if (st.nlink > 1) { return out(4, 'Held: still hardlinked (nlink=' + st.nlink + ')'); }
+        } catch (err) {
+          return out(4, 'Held: could not read link count (' + err.message + ')');
+        }
+      }
+
+      // Authoritative track IDs come from mkvmerge itself. ffProbeData stream
+      // indexes are NOT a safe substitute: mkvmerge counts attachments separately
+      // and cover art as a video track, so the two numberings drift apart on
+      // exactly the files where getting it wrong would strip the wrong track.
+      var probe;
+      try {
+        var raw = cp.execFileSync(args.inputs.mkvmergePath, ['-J', filePath],
+          { maxBuffer: 64 * 1024 * 1024, encoding: 'utf8' });
+        probe = JSON.parse(raw);
+      } catch (err) {
+        return out(3, 'Skipped: mkvmerge -J failed (' + (err.message || err) + ')');
+      }
+      var tracks = (probe && probe.tracks) || [];
+      if (!tracks.length) { return out(3, 'Skipped: mkvmerge reported no tracks'); }
+
+      var keepLangs = String(args.inputs.keepLanguages || 'eng')
+        .split(',').map(function (s) { return s.trim().toLowerCase(); })
+        .filter(function (s) { return s.length > 0; });
+
+      var p = function (t) { return t.properties || {}; };
+      var langOf = function (t) { return String(p(t).language || 'und').toLowerCase(); };
+      var nameOf = function (t) { return String(p(t).track_name || ''); };
+      var isCommentary = function (t) { return /comment/i.test(nameOf(t)); };
+      var isForced = function (t) { return p(t).forced_track === true; };
+      var isKeeperLang = function (t) { return keepLangs.indexOf(langOf(t)) !== -1; };
+
+      var audio = tracks.filter(function (t) { return t.type === 'audio'; });
+      var subs = tracks.filter(function (t) { return t.type === 'subtitles'; });
+
+      if (!audio.length) { return out(3, 'Skipped: no audio tracks'); }
+
+      // --- audio: keep every keeper-language track, minus commentary ------------
+      var keepAudio = audio.filter(isKeeperLang);
+      if (!keepAudio.length) {
+        // No English audio. Could be a foreign-language film you want as-is.
+        return out(3, 'Skipped: ' + audio.length + ' audio track(s), none in ['
+          + keepLangs.join(',') + ']');
+      }
+      if (bool(args.inputs.stripCommentary)) {
+        var nonComm = keepAudio.filter(function (t) { return !isCommentary(t); });
+        // Never let the commentary filter empty the list - a file whose only
+        // English audio is labelled "commentary" keeps it rather than going silent.
+        if (nonComm.length) { keepAudio = nonComm; }
+      }
+
+      // --- subtitles: forced keeper-language only -------------------------------
+      var keepSubs = bool(args.inputs.keepForcedSubs)
+        ? subs.filter(function (t) { return isForced(t) && isKeeperLang(t); })
+        : [];
+
+      if (keepAudio.length === audio.length && keepSubs.length === subs.length) {
+        return out(2, 'Already clean: ' + audio.length + ' audio, ' + subs.length + ' subtitle');
+      }
+
+      var ids = function (list) { return list.map(function (t) { return t.id; }).join(','); };
+      var trackArgs = '--audio-tracks ' + ids(keepAudio) + ' '
+        + (keepSubs.length ? '--subtitle-tracks ' + ids(keepSubs) : '--no-subtitles');
+
+      args.variables.user = args.variables.user || {};
+      args.variables.user.trackArgs = trackArgs;
+
+      return out(1, 'Process: audio ' + audio.length + '->' + keepAudio.length
+        + ', subtitles ' + subs.length + '->' + keepSubs.length
+        + ' | ' + trackArgs);
     };
     exports.plugin = plugin;
