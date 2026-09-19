@@ -170,45 +170,49 @@ persistence:
     type: hostPath
     hostPath: /dev/net/tun
     hostPathType: CharDevice
+    advancedMounts:
+      main:
+        gluetun:
+          - path: /dev/net/tun
 
   config:
     enabled: true
     type: persistentVolumeClaim
     existingClaim: download-clients-qbit-config
+    advancedMounts:
+      main:
+        qbittorrent:
+          - path: /config
 
   nzb-config:
     enabled: true
     type: persistentVolumeClaim
     existingClaim: download-clients-nzbget-config
+    advancedMounts:
+      main:
+        nzbget:
+          - path: /config
 
   downloads:
     enabled: true
     type: nfs
     server: 172.16.250.191
     path: /var/nfs/shared/Media
+    advancedMounts:
+      main:
+        qbittorrent:
+          - path: /downloads
+        nzbget:
+          - path: /downloads
 
   local-downloads:
     enabled: true
     type: hostPath
     hostPath: /mnt/local-downloads
     hostPathType: DirectoryOrCreate
-
-advancedMounts:
-  main:
-    gluetun:
-      - name: dev-tun
-        path: /dev/net/tun
-    qbittorrent:
-      - name: config
-        path: /config
-      - name: downloads
-        path: /downloads
-      - name: local-downloads
-        path: /local-downloads
-    nzbget:
-      - name: nzb-config
-        path: /config
-      - name: downloads
-        path: /downloads
-      - name: local-downloads
-        path: /local-downloads
+    advancedMounts:
+      main:
+        qbittorrent:
+          - path: /mnt/local-downloads
+        nzbget:
+          - path: /mnt/local-downloads
