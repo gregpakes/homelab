@@ -1,0 +1,113 @@
+{
+  "_id": "pCjXSbqEp",
+  "name": "Strip foreign tracks, commentary and non-forced subtitles",
+  "description": "Keeps all English audio minus commentary, keeps only forced English subtitles, drops everything else. Skips non-mkv files, files with no English audio, and files still hardlinked to a seeding torrent.",
+  "tags": "",
+  "flowPlugins": [
+    {
+      "name": "Input File",
+      "sourceRepo": "Community",
+      "pluginName": "inputFile",
+      "version": "1.0.0",
+      "id": "JKu9r_9Yt",
+      "position": {
+        "x": 560,
+        "y": 160
+      },
+      "fpEnabled": true
+    },
+    {
+      "name": "Select Tracks To Keep",
+      "sourceRepo": "Local",
+      "pluginName": "hasNonEnglishTracks",
+      "version": "1.0.0",
+      "id": "roHL1RgYL",
+      "position": {
+        "x": 560,
+        "y": 280
+      },
+      "fpEnabled": true,
+      "inputsDB": {
+        "keepLanguages": "eng",
+        "stripCommentary": "true",
+        "keepForcedSubs": "true",
+        "skipHardlinked": "true",
+        "mkvmergePath": "mkvmerge"
+      }
+    },
+    {
+      "name": "Strip Tracks (mkvmerge)",
+      "sourceRepo": "Community",
+      "pluginName": "runCli",
+      "version": "1.0.0",
+      "id": "0-5Q2KzG6",
+      "position": {
+        "x": 400,
+        "y": 430
+      },
+      "fpEnabled": true,
+      "inputsDB": {
+        "useCustomCliPath": "false",
+        "userCli": "mkvmerge",
+        "doesCommandCreateOutputFile": "true",
+        "userOutputFilePath": "${cacheDir}/${fileName}.mkv",
+        "cliArguments": "-o \"${outputFilePath}\" {{{args.variables.user.trackArgs}}} \"{{{args.inputFileObj._id}}}\"",
+        "outputFileBecomesWorkingFile": "true"
+      }
+    },
+    {
+      "name": "Replace Original File",
+      "sourceRepo": "Community",
+      "pluginName": "replaceOriginalFile",
+      "version": "1.0.0",
+      "id": "A_-uzpK8j",
+      "position": {
+        "x": 400,
+        "y": 560
+      },
+      "fpEnabled": true
+    },
+    {
+      "name": "Fail Flow",
+      "sourceRepo": "Community",
+      "pluginName": "failFlow",
+      "version": "1.0.0",
+      "id": "d5TnzIhwk",
+      "position": {
+        "x": 180,
+        "y": 560
+      },
+      "fpEnabled": true
+    }
+  ],
+  "flowEdges": [
+    {
+      "source": "JKu9r_9Yt",
+      "sourceHandle": "1",
+      "target": "roHL1RgYL",
+      "targetHandle": null,
+      "id": "e-input-guard"
+    },
+    {
+      "source": "roHL1RgYL",
+      "sourceHandle": "1",
+      "target": "0-5Q2KzG6",
+      "targetHandle": null,
+      "id": "e-guard-strip"
+    },
+    {
+      "source": "0-5Q2KzG6",
+      "sourceHandle": "1",
+      "target": "A_-uzpK8j",
+      "targetHandle": null,
+      "id": "e-strip-replace"
+    },
+    {
+      "source": "0-5Q2KzG6",
+      "sourceHandle": "err1",
+      "target": "d5TnzIhwk",
+      "targetHandle": null,
+      "id": "e-strip-fail"
+    }
+  ]
+}
