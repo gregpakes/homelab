@@ -47,6 +47,8 @@ controllers:
         app: plex
       affinity:
         podAntiAffinity:
+          # Required: Plex and tdarr-node cannot share a GPU. This is a resource
+          # conflict, not a preference - co-scheduling them breaks both.
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
                 matchLabels:
@@ -55,18 +57,30 @@ controllers:
                 - servarr
               topologyKey: kubernetes.io/hostname
 
-            # qBittorrent and NZBGet download to /mnt/local-downloads - a hostPath on
-            # their own node's disk - and seed over that node's NIC. The service below
-            # is externalTrafficPolicy: Local, so every LAN stream enters the cluster
-            # through whichever node runs this pod. Co-scheduling Plex with the download
-            # clients puts both on the same disk and the same wire, which stalls even
-            # Direct Play while the NFS library reads fine.
-            - labelSelector:
-                matchLabels:
-                  app: download-clients
-              namespaces:
-                - servarr
-              topologyKey: kubernetes.io/hostname
+          # Preferred, not required. qBittorrent and NZBGet download to
+          # /mnt/local-downloads - a hostPath on their own node's disk - and seed over
+          # that node's NIC. The service below is externalTrafficPolicy: Local, so every
+          # LAN stream enters the cluster through whichever node runs this pod. Sharing a
+          # node with the download clients stalls even Direct Play while the NFS library
+          # reads fine, which is what this term exists to avoid.
+          #
+          # But it stays soft deliberately. GPUs are on k3s-04, k3s-05 and k3s-06 only
+          # (scripts/proxmox-gpu-reset.sh), and the download clients are pinned to k3s-05.
+          # Made required, losing k3s-06 while tdarr-node holds k3s-04 would leave Plex no
+          # valid node - and because the CharDevice guard below is a kubelet mount check
+          # rather than a scheduler predicate, it would land somewhere GPU-less and wedge
+          # in ContainerCreating instead of failing as a readable Pending. Weight 100 gets
+          # the same placement in normal operation, and degrades to buffering rather than
+          # downtime when a node is lost.
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: download-clients
+                namespaces:
+                  - servarr
+                topologyKey: kubernetes.io/hostname
 
 service:
   app:
