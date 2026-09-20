@@ -1,0 +1,58 @@
+controllers:
+  neutarr:
+    strategy: Recreate
+    pod:
+      securityContext:
+        fsGroup: 988
+        fsGroupChangePolicy: OnRootMismatch
+    replicas: 1
+
+    containers:
+      app:
+        # NeutArr, not NewtArr. Both are Huntarr forks with the same lineage and
+        # the same port, but ElfHosted's newtarr images live in a ghcr.io org
+        # that stopped serving anonymous pulls (every elfhosted/* package now
+        # 401s at the token endpoint), so nothing in this cluster can fetch
+        # them. NeutArr publishes to Docker Hub with no auth required.
+        image:
+          repository: iampuid0/neutarr
+          tag: 1.11.1
+        env:
+          TZ: Europe/London
+          PUID: "1000"
+          PGID: "988"
+        ports:
+          - name: http
+            containerPort: 9705
+        probes:
+          liveness:  { enabled: true, type: HTTP, path: /api/health, port: 9705 }
+          readiness: { enabled: true, type: HTTP, path: /api/health, port: 9705 }
+          startup:   { enabled: true, type: HTTP, path: /api/health, port: 9705 }
+
+service:
+  main:
+    controller: neutarr
+    ports:
+      http:
+        port: 9705
+        targetPort: 9705
+        protocol: TCP
+
+ingress:
+  main:
+    enabled: true
+    className: traefik-internal
+    hosts:
+      - host: neutarr.gregpakes.co.uk
+        paths:
+          - path: /
+            service:
+              identifier: main
+              port: http
+
+persistence:
+  data:
+    enabled: true
+    existingClaim: neutarr-config
+    globalMounts:
+      - path: /config
