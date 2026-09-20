@@ -13,7 +13,7 @@ controllers:
       perms:
         image:
           repository: alpine
-          tag: 3.240
+          tag: "3.24"
         command: ["/bin/sh","-c"]
         args:
           - |
@@ -28,7 +28,7 @@ controllers:
       jellyseerr:
         image:
           repository: ghcr.io/fallenbagel/jellyseerr
-          tag: latest
+          tag: 2.7.3
         env:
           TZ: Europe/London
           # If you want to force non-root:
