@@ -4,6 +4,8 @@ controllers:
     strategy: Recreate
     replicas: 1
     pod:
+      labels:
+        app: download-clients
       nodeSelector:
         kubernetes.io/hostname: k3s-05 # Pin to 05 because we download to local path due to perf issues when downloading directly to the NFS drive
       dnsPolicy: None

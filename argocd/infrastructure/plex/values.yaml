@@ -55,6 +55,19 @@ controllers:
                 - servarr
               topologyKey: kubernetes.io/hostname
 
+            # qBittorrent and NZBGet download to /mnt/local-downloads - a hostPath on
+            # their own node's disk - and seed over that node's NIC. The service below
+            # is externalTrafficPolicy: Local, so every LAN stream enters the cluster
+            # through whichever node runs this pod. Co-scheduling Plex with the download
+            # clients puts both on the same disk and the same wire, which stalls even
+            # Direct Play while the NFS library reads fine.
+            - labelSelector:
+                matchLabels:
+                  app: download-clients
+              namespaces:
+                - servarr
+              topologyKey: kubernetes.io/hostname
+
 service:
   app:
     controller: plex
