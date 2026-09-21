@@ -45,11 +45,23 @@ controllers:
         supplementalGroups: [44, 109, 992]
       labels:
         app: plex
+
+      # All three workers have a GPU passed through (scripts/proxmox-gpu-reset.sh); the
+      # masters do not, and are 4 CPU / 6 GB running etcd. Nothing else tells the
+      # scheduler Plex needs a GPU node - the Intel device plugin is not deployed, so
+      # there is no extended resource to request, and the CharDevice guard further down
+      # is a kubelet mount check rather than a scheduler predicate. Without this
+      # selector a master placement is accepted and then wedges in ContainerCreating
+      # instead of failing as a readable Pending. Same idiom as pihole, traefik and the
+      # ARC runners.
+      nodeSelector:
+        worker: "true"
+
       affinity:
         podAntiAffinity:
-          # Required: Plex and tdarr-node cannot share a GPU. This is a resource
-          # conflict, not a preference - co-scheduling them breaks both.
           requiredDuringSchedulingIgnoredDuringExecution:
+            # Plex and tdarr-node cannot share a GPU. A resource conflict, not a
+            # preference - co-scheduling them breaks both.
             - labelSelector:
                 matchLabels:
                   app: tdarr-node
@@ -57,30 +69,29 @@ controllers:
                 - servarr
               topologyKey: kubernetes.io/hostname
 
-          # Preferred, not required. qBittorrent and NZBGet download to
-          # /mnt/local-downloads - a hostPath on their own node's disk - and seed over
-          # that node's NIC. The service below is externalTrafficPolicy: Local, so every
-          # LAN stream enters the cluster through whichever node runs this pod. Sharing a
-          # node with the download clients stalls even Direct Play while the NFS library
-          # reads fine, which is what this term exists to avoid.
-          #
-          # But it stays soft deliberately. GPUs are on k3s-04, k3s-05 and k3s-06 only
-          # (scripts/proxmox-gpu-reset.sh), and the download clients are pinned to k3s-05.
-          # Made required, losing k3s-06 while tdarr-node holds k3s-04 would leave Plex no
-          # valid node - and because the CharDevice guard below is a kubelet mount check
-          # rather than a scheduler predicate, it would land somewhere GPU-less and wedge
-          # in ContainerCreating instead of failing as a readable Pending. Weight 100 gets
-          # the same placement in normal operation, and degrades to buffering rather than
-          # downtime when a node is lost.
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchLabels:
-                    app: download-clients
-                namespaces:
-                  - servarr
-                topologyKey: kubernetes.io/hostname
+            # qBittorrent and NZBGet download to /mnt/local-downloads - a hostPath on
+            # their own node's disk - and seed over that node's NIC. The service below is
+            # externalTrafficPolicy: Local, so every LAN stream enters the cluster through
+            # whichever node runs this pod. Sharing a node with the download clients
+            # stalls even Direct Play, while the NFS library itself still reads at
+            # 75 MB/s.
+            #
+            # Required rather than weighted: a preferred term only biases scoring, and
+            # k3s-06 routinely carries ARC runners (see arc-runners/values-linux.yaml,
+            # which documents the scheduler stacking all three onto whichever node looks
+            # emptiest). NodeResourcesFit can outweigh the penalty and leave Plex on
+            # k3s-05 with the buffering unfixed.
+            #
+            # The cost: GPUs are on the three workers only and the download clients are
+            # pinned to k3s-05, so losing k3s-06 while tdarr-node holds k3s-04 leaves Plex
+            # nowhere to go. With the nodeSelector above that surfaces as a plain Pending
+            # naming this rule - scale tdarr-node to zero to free k3s-04.
+            - labelSelector:
+                matchLabels:
+                  app: download-clients
+              namespaces:
+                - servarr
+              topologyKey: kubernetes.io/hostname
 
 service:
   app:
