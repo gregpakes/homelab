@@ -1,0 +1,51 @@
+# OAuth credentials deliberately left empty. Setting oauth.clientId here makes the
+# chart template an operator-oauth Secret with the client secret inlined from this
+# file - i.e. in git. Leaving both empty makes the chart skip that Secret, and the
+# Deployment falls through to mounting the pre-existing operator-oauth Secret, which
+# externalsecret.yaml in this directory builds from 1Password.
+oauth:
+  clientId: ""
+  clientSecret: ""
+
+# Renders the tailscale.com CRDs as ordinary chart templates - upstream avoids
+# Helm's crds/ directory because it never upgrades CRDs once installed. This is the
+# only thing creating Connector/ProxyClass/etc, so turning it off would leave
+# connector.yaml permanently unappliable.
+installCRDs: true
+
+operatorConfig:
+  # Appears in the tailnet device list under this name.
+  hostname: tailscale-operator
+  defaultTags:
+    - "tag:k8s-operator"
+  # Masters carry node-role.kubernetes.io/master=true:NoSchedule
+  # (clusters/deployment/k3s.sh), so with no toleration this lands on a worker
+  # without needing the worker: "true" selector that the GPU workloads use.
+  nodeSelector:
+    kubernetes.io/os: linux
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+proxyConfig:
+  # Tag applied to the devices the operator creates - the subnet router from
+  # connector.yaml shows up in the tailnet with this tag. ACLs and route
+  # auto-approval key off it.
+  defaultTags: "tag:k8s"
+
+# Not exposing the Kubernetes API over the tailnet. The Connector advertises
+# 172.16.51.70/32 and 172.16.51.67/32 only; the API VIP on 172.16.51.50 is
+# deliberately not routed, so leaving this off keeps the cluster off the tailnet
+# entirely rather than relying on ACLs to keep it there.
+apiServerProxyConfig:
+  mode: "false"
+  allowImpersonation: "false"
+
+# The operator watches for Ingresses with this class. Nothing uses it yet - Plex is
+# reached over the subnet route on its MetalLB IP, not through a tailnet Ingress -
+# but the class is harmless and is the migration path if a per-service tailnet
+# hostname is wanted later.
+ingressClass:
+  enabled: true
+  name: tailscale

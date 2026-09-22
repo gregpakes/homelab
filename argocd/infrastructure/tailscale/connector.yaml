@@ -1,0 +1,39 @@
+# Subnet router exposing two single-host routes to the tailnet.
+#
+# Host routes rather than the whole 172.16.51.0/24: that VLAN also carries the k3s
+# API VIP (.50), all five nodes (.201-.205) and both Traefik LBs (.65/.66, which
+# front ArgoCD, Longhorn, Rancher, Portainer, Grafana and the servarr stack).
+# Advertising the /24 would put all of that on the tailnet and leave only the
+# Tailscale ACL - which lives in the admin console, not in this repo - between a
+# compromised tailnet device and the cluster. Widen the CIDR here if that changes.
+#
+# Why a subnet route instead of exposing the Service with a tailnet hostname: Plex
+# keeps its 172.16.51.70 identity, so it stays inside the ALLOWED_NETWORKS
+# 172.16.0.0/16 already set in infrastructure/plex/values.yaml. Plex therefore
+# treats tailnet clients as LAN clients and skips the remote-access bitrate cap,
+# with no change to the Plex app. (Tailscale SNATs subnet-routed traffic by
+# default, so Plex actually sees the router pod's 10.42.x.x address - also already
+# in ALLOWED_NETWORKS.)
+#
+# Routes are NOT live until approved. Either tick them under Machines ->
+# ts-plex-subnet-router -> Edit route settings in the admin console, or grant
+# tag:k8s autoApprovers in the tailnet policy file. See README.md here.
+apiVersion: tailscale.com/v1alpha1
+kind: Connector
+metadata:
+  name: plex-subnet-router
+  annotations:
+    # The chart's resources - including the Connector CRD itself - are wave 0.
+    # This CR must not apply until that CRD is established, and waiting on the
+    # wave also means the operator Deployment is up to reconcile it immediately.
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  hostname: ts-plex-subnet-router
+  subnetRouter:
+    advertiseRoutes:
+      # Plex - MetalLB LoadBalancer (infrastructure/plex/values.yaml)
+      - 172.16.51.70/32
+      # Pi-hole - MetalLB LoadBalancer (infrastructure/pihole/service.yaml).
+      # Routed so it can serve as the tailnet nameserver, which is what makes
+      # plex.gregpakes.co.uk and the other internal names resolve while away.
+      - 172.16.51.67/32
