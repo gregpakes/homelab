@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: k3s-upgrade
+  namespace: argocd
+spec:
+  project: default
+  # Plans must live in cattle-system: that is the only namespace Rancher's
+  # system-upgrade-controller (v0.20.1) watches. Rancher owns the namespace,
+  # so no CreateNamespace.
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cattle-system
+
+  source:
+    repoURL: https://github.com/gregpakes/homelab
+    targetRevision: main
+    path: argocd/infrastructure/k3s-upgrade
+    directory:
+      recurse: true
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
