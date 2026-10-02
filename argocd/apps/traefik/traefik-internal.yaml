@@ -26,15 +26,39 @@ spec:
           - --entrypoints.web.http.redirections.entrypoint.scheme=https
           - --entrypoints.web.http.redirections.entrypoint.permanent=true
 
-          logs:
-            general:
-              level: DEBUG
-            access:
-              enabled: true
+          # Chart 41 renamed logs.general -> log and logs.access -> accessLog,
+          # and its schema rejects the old `logs` key outright.
+          log:
+            level: DEBUG
+          accessLog:
+            enabled: true
 
+          # Two replicas, like the external Traefik. Every internal hostname
+          # resolves to this one IP, so with a single replica any eviction
+          # (node drain, descheduler) took them all offline until the
+          # replacement started.
           deployment:
             enabled: true
-            replicas: 1
+            replicas: 2
+
+          # Never lets a drain or the descheduler take both down at once.
+          podDisruptionBudget:
+            enabled: true
+            maxUnavailable: 1
+
+          # Preferred, not required: the rollout surges a third pod
+          # (maxUnavailable 0, maxSurge 1), and with one of the three workers
+          # cordoned a hard rule would leave it Pending and stall the rollout.
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  podAffinityTerm:
+                    labelSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: '{{ template "traefik.name" . }}'
+                        app.kubernetes.io/instance: '{{ .Release.Name }}-{{ include "traefik.namespace" . }}'
+                    topologyKey: kubernetes.io/hostname
 
           ingressRoute:
             dashboard:
