@@ -2,7 +2,12 @@ controllers:
   termix:
     strategy: Recreate
     replicas: 1
-  
+    pod:
+      # The descheduler never evicts this (argocd/infrastructure/descheduler):
+      # moving Termix drops every open terminal session.
+      annotations:
+        descheduler.alpha.kubernetes.io/prefer-no-eviction: ""
+
     containers:
       app:
         image:
