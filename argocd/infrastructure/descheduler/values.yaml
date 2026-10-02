@@ -1,0 +1,96 @@
+# Descheduler: puts pods back onto a worker that a drain left nearly empty.
+#
+# The scheduler only places pods when they are created and never moves them
+# afterwards, so every worker drain (k3s upgrades, Proxmox host maintenance)
+# leaves that worker idle while the other two carry everything. On 2026-10-02,
+# after the k3s 1.36 upgrade, k3s-04 sat at 1% CPU while k3s-05 and k3s-06
+# ran at 81-84%.
+#
+# This is deliberately conservative. It only acts when one worker is nearly
+# empty, and it moves a few pods per cycle until that worker stops being
+# nearly empty. It is not meant to keep load continuously balanced.
+
+kind: Deployment
+deschedulingInterval: 10m
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 256Mi
+
+deschedulerPolicy:
+  # Workers only. The control planes are almost empty by design and would
+  # otherwise look like the best place to move pods to. Same `worker` label that
+  # pihole, traefik, plex and the ARC runners select on.
+  nodeSelector: "worker=true"
+  maxNoOfPodsToEvictTotal: 10
+
+  profiles:
+    - name: default
+      pluginConfig:
+        - name: DefaultEvictor
+          args:
+            # Only evict a pod if another worker can actually take it. This
+            # covers anything pinned by nodeSelector, e.g. the download clients
+            # on k3s-05.
+            nodeFit: true
+            # Pods that were just created, including everything a drain has just
+            # moved, are left alone for an hour. That gives Longhorn time to
+            # rebuild replicas before any more volumes move.
+            minPodAge: 1h
+            # Workloads where a restart is user-visible (Plex streams, Termix
+            # sessions, Tdarr transcodes) carry the
+            # descheduler.alpha.kubernetes.io/prefer-no-eviction annotation in
+            # their own values. Mandatory makes that annotation a hard rule.
+            noEvictionPolicy: Mandatory
+            namespaceLabelSelector:
+              matchExpressions:
+                - key: kubernetes.io/metadata.name
+                  operator: NotIn
+                  values:
+                    # CI runners: their emptyDir is the build workspace, so
+                    # an eviction kills the build.
+                    - arc-runners
+                    - arc-systems
+                    # Moving instance managers would detach volumes.
+                    - longhorn-system
+                    - kube-system
+            podProtections:
+              # Most charts here mount an emptyDir for scratch space, which would
+              # otherwise make nearly every pod unevictable. Losing an emptyDir
+              # on eviction is the same as losing it on a drain.
+              defaultDisabled:
+                - PodsWithLocalStorage
+
+        # Spreads replicas of one Deployment/StatefulSet that ended up sharing a
+        # worker (e.g. two Rancher replicas on k3s-05).
+        - name: RemoveDuplicates
+
+        - name: LowNodeUtilization
+          args:
+            # Percentages of allocatable, from pod *requests* (as the scheduler
+            # sees them) and pod count. A worker is underused only when it is
+            # below ALL of these, which in practice only happens after a drain.
+            # ~12 DaemonSet pods per worker is ~11% of the 110-pod capacity.
+            thresholds:
+              cpu: 20
+              memory: 20
+              pods: 20
+            # Pods are evicted from workers above ANY of these, until they drop
+            # below or the underused worker stops being underused.
+            targetThresholds:
+              cpu: 50
+              memory: 50
+              pods: 25
+            evictionLimits:
+              node: 5
+
+      plugins:
+        balance:
+          enabled:
+            - RemoveDuplicates
+            - LowNodeUtilization
+        deschedule:
+          enabled: []

@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: descheduler
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: descheduler
+
+  sources:
+    # Chart minor tracks the Kubernetes minor (0.36 <-> 1.36). Renovate is held
+    # below 0.37 until k3s moves past 1.36; see renovate.json.
+    - repoURL: https://kubernetes-sigs.github.io/descheduler/
+      chart: descheduler
+      targetRevision: 0.36.0
+      helm:
+        releaseName: descheduler
+        valueFiles:
+          - $values/argocd/infrastructure/descheduler/values.yaml
+
+    - repoURL: https://github.com/gregpakes/homelab
+      targetRevision: main
+      ref: values
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

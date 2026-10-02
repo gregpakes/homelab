@@ -9,6 +9,10 @@ controllers:
         supplementalGroups: [44, 992]
       labels:
         app: tdarr-server
+      # The descheduler never evicts this (argocd/infrastructure/descheduler):
+      # moving Tdarr abandons in-progress transcodes.
+      annotations:
+        descheduler.alpha.kubernetes.io/prefer-no-eviction: ""
     initContainers:
       perms:
         image:
@@ -57,6 +61,10 @@ controllers:
         supplementalGroups: [44, 992]
       labels:
         app: tdarr-node
+      # The descheduler never evicts this (argocd/infrastructure/descheduler):
+      # moving Tdarr abandons in-progress transcodes.
+      annotations:
+        descheduler.alpha.kubernetes.io/prefer-no-eviction: ""
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

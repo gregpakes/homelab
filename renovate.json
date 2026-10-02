@@ -69,6 +69,12 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["cloudflare/cloudflared", "ghcr.io/openclaw/openclaw"],
       "versioning": "regex:^(?<major>\\d{4})\\.(?<minor>\\d{1,2})\\.(?<patch>\\d+)$"
+    },
+    {
+      "description": "Descheduler minor versions track Kubernetes minors. Keep it at or below the cluster's k3s minor (1.36, itself capped by Rancher 2.15) and raise this cap together with k3s.",
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["descheduler"],
+      "allowedVersions": "<0.37.0"
     }
   ]
 }

@@ -39,6 +39,10 @@ controllers:
           privileged: true
 
     pod:
+      # The descheduler never evicts this (argocd/infrastructure/descheduler):
+      # moving Plex cuts off anyone mid-stream.
+      annotations:
+        descheduler.alpha.kubernetes.io/prefer-no-eviction: ""
       securityContext:
         fsGroup: 988
         # Match these to your host GIDs for video/render
