@@ -1,18 +1,24 @@
-# Loki (grafana/loki) - Monolithic (single binary) with MinIO (S3) object storage
+# Loki (grafana/loki) - Monolithic (single binary) with filesystem storage on a
+# Longhorn PVC. Chunks, index and the compactor all live on the same volume.
+#
+# This used MinIO (S3) until 2026-10. MinIO's image disappeared from Quay and
+# Docker Hub, and Loki was its only consumer, so it was removed rather than
+# replaced. If something else ever needs S3, Garage is the alternative.
 fullnameOverride: loki
 
 deploymentMode: SingleBinary
 
 singleBinary:
-  replicas: 2
-  extraArgs:
-    - -config.expand-env=true
-  extraEnvFrom:
-    - secretRef:
-        name: loki-s3-credentials
+  # Must stay at 1: the chart refuses more than one replica without object
+  # storage. Longhorn keeps two copies of the volume, which covers what the old
+  # second replica was for.
+  replicas: 1
   persistence:
     enabled: true
     storageClass: longhorn
+    # Fixed by the StatefulSet's volumeClaimTemplate, so changing it here makes
+    # the Argo sync fail. To grow it, expand the PVC (storage-loki-0) directly;
+    # Longhorn supports online expansion.
     size: 10Gi
 
 # Ensure SimpleScalable components stay disabled in SingleBinary mode
@@ -26,22 +32,13 @@ backend:
 loki:
   auth_enabled: false
   commonConfig:
-    replication_factor: 2
+    replication_factor: 1
   limits_config:
     retention_period: 168h # 7d
   storage:
-    type: s3
-    bucketNames:
-      chunks: loki-chunks
-      ruler: loki-ruler
-    s3:
-      endpoint: minio.minio.svc.cluster.local:9000
-      accessKeyId: ${LOKI_S3_ACCESS_KEY_ID}
-      secretAccessKey: ${LOKI_S3_SECRET_ACCESS_KEY}
-      s3ForcePathStyle: true
-      insecure: true
+    type: filesystem
   compactor:
-    # Enables retention deletion; runs within the single-binary pods.
+    # Enables retention deletion; runs within the single-binary pod.
     working_directory: /var/loki/compactor
     compaction_interval: 10m
     retention_enabled: true
@@ -50,9 +47,12 @@ loki:
     delete_request_store: filesystem
   schemaConfig:
     configs:
+      # Changed in place from s3 rather than adding a new period: the old chunks
+      # were only readable through MinIO, and a period that still pointed at s3
+      # would keep the S3 client config mandatory.
       - from: 2024-04-01
         store: tsdb
-        object_store: s3
+        object_store: filesystem
         schema: v13
         index:
           prefix: index_
