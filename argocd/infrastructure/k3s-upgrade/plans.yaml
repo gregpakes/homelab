@@ -16,7 +16,7 @@ metadata:
   name: k3s-server
   namespace: cattle-system
 spec:
-  version: v1.35.9+k3s1
+  version: v1.36.5+k3s1
   concurrency: 1
   serviceAccountName: system-upgrade-controller
   nodeSelector:
@@ -54,7 +54,7 @@ metadata:
   name: k3s-agent
   namespace: cattle-system
 spec:
-  version: v1.35.9+k3s1
+  version: v1.36.5+k3s1
   concurrency: 1
   serviceAccountName: system-upgrade-controller
   nodeSelector:
@@ -65,9 +65,10 @@ spec:
   prepare:
     image: rancher/k3s-upgrade
     args: ["prepare", "k3s-server"]
-  # Longhorn's node drain policy blocks eviction while a node holds a volume's
-  # last healthy replica (defaultReplicaCount is 2), so the drain waits for
-  # rebuilds rather than taking a volume offline.
+  # Longhorn's node drain policy (allow-if-replica-is-stopped) blocks eviction
+  # while a node holds an attached volume's last healthy replica
+  # (defaultReplicaCount is 2), so the drain waits for rebuilds rather than
+  # taking a volume offline. Detached volumes don't block.
   drain:
     force: true
     ignoreDaemonSets: true
@@ -75,7 +76,11 @@ spec:
     skipWaitForDeleteTimeout: 60
     timeout: 30m
   jobActiveDeadlineSecs: 3600
-  # Time for Longhorn replicas to resync before the next worker drains.
-  postCompleteDelay: 5m
+  # Time for Longhorn replicas to rebuild before the next worker drains. Must
+  # exceed Longhorn's replica-replenishment-wait-interval (600s) plus rebuild
+  # time: at 5m, k3s-05's drain evicted the download clients mid-rebuild, their
+  # config volume detached with its only replica on k3s-05, and the drain
+  # deadlocked on Longhorn's instance-manager PDB.
+  postCompleteDelay: 15m
   upgrade:
     image: rancher/k3s-upgrade

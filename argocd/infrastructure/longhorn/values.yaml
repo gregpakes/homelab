@@ -105,6 +105,12 @@ defaultSettings:
   defaultLonghornStaticStorageClass: longhorn
   backupTarget: cifs://172.16.250.191/Backups
   backupTargetCredentialSecret: longhorn-user-smb-backup-secret
+  # Still blocks a drain while a node holds an attached volume's last healthy
+  # replica, but lets it proceed when that replica is stopped (volume detached).
+  # The default, block-if-contains-last-replica, deadlocks node drains: a drain
+  # that detaches a degraded volume leaves it unable to rebuild, so the node
+  # holding its last replica can never drain.
+  nodeDrainPolicy: allow-if-replica-is-stopped
 
 persistence:
   reclaimPolicy: Retain
