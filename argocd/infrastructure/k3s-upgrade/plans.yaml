@@ -1,0 +1,81 @@
+# k3s upgrade Plans, executed by the system-upgrade-controller Rancher
+# already runs in cattle-system.
+#
+# To upgrade: bump `version` in BOTH plans to the same k3s release and merge.
+# Servers go first, one at a time; agents wait for the server plan to finish.
+#
+# - One minor at a time (1.34 -> 1.35 -> 1.36). Kubernetes cannot skip minors.
+# - Stop at 1.36 while Rancher is 2.15.x: Rancher 2.15 supports k3s 1.34-1.36.
+# - Take an etcd snapshot before each bump; a minor can't be rolled back in place.
+#
+# Names must not be k3s-master-plan / k3s-worker-plan: Rancher's k3s-based
+# upgrader owns those names and deletes them when version management is off.
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: k3s-server
+  namespace: cattle-system
+spec:
+  version: v1.34.12+k3s1
+  concurrency: 1
+  serviceAccountName: system-upgrade-controller
+  nodeSelector:
+    matchExpressions:
+      - key: node-role.kubernetes.io/control-plane
+        operator: In
+        values: ["true"]
+  # Servers carry node-role.kubernetes.io/master=true:NoSchedule (k3s.sh).
+  tolerations:
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+    - key: CriticalAddonsOnly
+      operator: Exists
+  # Drain rather than cordon: in-place minor kubelet upgrades are unsupported
+  # upstream. Only DaemonSets and a few tolerating pods run here anyway.
+  drain:
+    force: true
+    ignoreDaemonSets: true
+    deleteEmptydirData: true
+    skipWaitForDeleteTimeout: 60
+    timeout: 30m
+  # The drain runs inside the Job, so the deadline must outlast the drain timeout.
+  # A Job that hits the deadline stops the Plan until the Plan is edited.
+  jobActiveDeadlineSecs: 3600
+  # Give etcd and kube-vip a moment to settle before the next server restarts.
+  postCompleteDelay: 2m
+  upgrade:
+    image: rancher/k3s-upgrade
+---
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: k3s-agent
+  namespace: cattle-system
+spec:
+  version: v1.34.12+k3s1
+  concurrency: 1
+  serviceAccountName: system-upgrade-controller
+  nodeSelector:
+    matchExpressions:
+      - key: node-role.kubernetes.io/control-plane
+        operator: DoesNotExist
+  # Blocks until the k3s-server plan has completed on every server.
+  prepare:
+    image: rancher/k3s-upgrade
+    args: ["prepare", "k3s-server"]
+  # Longhorn's node drain policy blocks eviction while a node holds a volume's
+  # last healthy replica (defaultReplicaCount is 2), so the drain waits for
+  # rebuilds rather than taking a volume offline.
+  drain:
+    force: true
+    ignoreDaemonSets: true
+    deleteEmptydirData: true
+    skipWaitForDeleteTimeout: 60
+    timeout: 30m
+  jobActiveDeadlineSecs: 3600
+  # Time for Longhorn replicas to resync before the next worker drains.
+  postCompleteDelay: 5m
+  upgrade:
+    image: rancher/k3s-upgrade
