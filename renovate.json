@@ -36,6 +36,11 @@
   ],
   "packageRules": [
     {
+      "description": "The controller chart ships the CRDs the scale-set chart renders against, so the two must move in lockstep. Bumping only the scale sets (#322) left Argo unable to diff them: .spec.listenerConfig was not in the 0.14.2 CRD schema.",
+      "matchPackageNames": ["ghcr.io/actions/actions-runner-controller-charts/**"],
+      "groupName": "actions-runner-controller charts"
+    },
+    {
       "matchDatasources": ["helm"],
       "matchPackageNames": ["longhorn"],
       "prPriority": 10
