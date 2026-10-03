@@ -1,0 +1,65 @@
+controllers:
+  main:
+    strategy: Recreate
+    replicas: 1
+    pod:
+      securityContext:
+        fsGroup: 988
+        fsGroupChangePolicy: OnRootMismatch
+    containers:
+      sportarr:
+        image:
+          repository: sportarr/sportarr
+          tag: 4.1.9.1119
+        env:
+          TZ: Europe/London
+          PUID: "1000"
+          PGID: "988"
+          UMASK: "002"
+        probes:
+          liveness:  { enabled: true,  type: TCP, port: 1867 }
+          readiness: { enabled: true,  type: TCP, port: 1867 }
+
+service:
+  web:
+    controller: main
+    type: ClusterIP
+    ports:
+      http:
+        port: 1867
+        targetPort: 1867
+
+ingress:
+  web:
+    enabled: true
+    className: traefik-internal
+    hosts:
+      - host: sportarr.gregpakes.co.uk
+        paths:
+          - path: /
+            service:
+              identifier: web
+              port: http
+
+persistence:
+  config:
+    enabled: true
+    type: persistentVolumeClaim
+    existingClaim: sportarr-config
+    advancedMounts:
+      main:
+        sportarr:
+          - path: /config
+
+  # Same export and mount path as sonarr and the download clients, so completed
+  # downloads need no remote path mapping and imports can hardlink. Point the
+  # library root folder at /downloads/media/sports.
+  downloads:
+    enabled: true
+    type: nfs
+    server: 172.16.250.191
+    path: /var/nfs/shared/Media
+    advancedMounts:
+      main:
+        sportarr:
+          - path: /downloads

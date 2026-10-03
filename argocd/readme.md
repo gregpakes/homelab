@@ -73,7 +73,7 @@ When extra manifests are required (PVCs, ExternalSecrets, Traefik certificates, 
 
 - **Media stack & homelab apps (servarr)**
   - `argocd/apps/plex.yaml` – bjw-s `app-template` chart plus GPU-ready values under `argocd/infrastructure/plex/values.yaml`.
-  - `argocd/apps/servarr/*.yaml` – Bazarr, Cleanarr, Flaresolverr, Jellyseer, Prowlarr, Profilarr, Sonarr, Radarr, and the download clients share the same `app-template` chart.  
+  - `argocd/apps/servarr/*.yaml` – Bazarr, Cleanarr, Flaresolverr, Jellyseer, Prowlarr, Profilarr, Sonarr, Radarr, Sportarr, and the download clients share the same `app-template` chart.  
     - Their folders in `argocd/infrastructure/servarr/<app>/` define PVCs (e.g. `bazarr-config-pv.yaml`, `qbit-config-pvc.yaml`) and ExternalSecrets (e.g. `downloadclients/externalsecrets.yaml`).
   - `argocd/apps/homarr.yaml` & `argocd/infrastructure/homarr/values.yaml` expose dashboards to the rest of the household.
 
