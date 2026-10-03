@@ -84,3 +84,14 @@ spec:
             type: LoadBalancer
             spec:
               loadBalancerIP: 172.16.51.66
+
+  # Same policy as the external Traefik. Without it this app only changed on a
+  # manual sync, so chart bumps and config changes sat unapplied (it drifted a
+  # patch behind, and took ~9h to pick up #313).
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
