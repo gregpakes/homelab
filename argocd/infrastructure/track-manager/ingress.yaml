@@ -52,12 +52,14 @@ spec:
     # headers — the proxy secret included — so they must never be routable
     # from a browser. Every other /oauth2/ path falls through to the
     # authenticated route below, where Track Manager answers 404.
-    - match: >-
-        Host(`lapsmith.gregpakes.co.uk`) && (
-          Path(`/oauth2/start`) || Path(`/oauth2/callback`) ||
-          Path(`/oauth2/sign_in`) || Path(`/oauth2/sign_out`) ||
-          PathPrefix(`/oauth2/static/`)
-        )
+    #
+    # ONE LINE, deliberately. Traefik parses rules with Go's expression
+    # parser, which inserts a `;` after a line ending in `)`. Spread over
+    # several lines (a `>-` block keeps the breaks of its more-indented lines)
+    # the rule fails to parse, Traefik drops this router, /oauth2/callback
+    # falls through to the ForwardAuth route below, and sign-in loops through
+    # GitHub forever.
+    - match: Host(`lapsmith.gregpakes.co.uk`) && (Path(`/oauth2/start`) || Path(`/oauth2/callback`) || Path(`/oauth2/sign_in`) || Path(`/oauth2/sign_out`) || PathPrefix(`/oauth2/static/`))
       kind: Rule
       priority: 100
       services:
