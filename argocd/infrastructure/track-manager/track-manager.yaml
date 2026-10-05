@@ -50,9 +50,9 @@ spec:
       containers:
         - name: track-manager
           # Pinned by hand, like the CI runner images: renovate.json disables
-          # updates for this package. Replace with the tag the image workflow
-          # prints. DO NOT MERGE while this still reads sha-PENDING.
-          image: ghcr.io/gregpakes/lapsmith-track-manager:sha-PENDING
+          # updates for this package. Bump to the tag the `CI · Track Manager
+          # image` workflow prints (this one: gregpakes/LapSmith@81b6ad1).
+          image: ghcr.io/gregpakes/lapsmith-track-manager:sha-81b6ad1
           imagePullPolicy: IfNotPresent
           env:
             - name: TRACK_CATALOG_PUBLIC_ORIGIN

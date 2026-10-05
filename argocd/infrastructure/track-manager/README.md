@@ -52,9 +52,9 @@ browser ─▶ /oauth2/{start,callback,sign_in,sign_out,static/} ─▶ oauth2-p
 5. **Pi-hole**: a local DNS record `lapsmith.gregpakes.co.uk` →
    `172.16.51.66` (the `traefik-internal` LoadBalancer), unless a wildcard
    already covers it.
-6. **Image**: run `CI · Track Manager image` in gregpakes/LapSmith, then
-   replace `sha-PENDING` in `track-manager.yaml` with the tag it prints.
-   Renovate leaves this image alone; every bump is by hand.
+6. **Image**: pinned in `track-manager.yaml`. To update it, run
+   `CI · Track Manager image` in gregpakes/LapSmith and replace the tag with
+   the one it prints. Renovate leaves this image alone; every bump is by hand.
 
 ## Checking it after a sync
 
