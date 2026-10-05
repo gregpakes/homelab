@@ -76,6 +76,12 @@
       "versioning": "regex:^(?<major>\\d{4})\\.(?<minor>\\d{1,2})\\.(?<patch>\\d+)$"
     },
     {
+      "description": "Pinned by hand from the LapSmith `CI · Track Manager image` workflow, like the CI runner images: its sha- tags are not versions, and an image swapped under the operator console should be a decision, not a bot PR.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["ghcr.io/gregpakes/lapsmith-track-manager"],
+      "enabled": false
+    },
+    {
       "description": "Descheduler minor versions track Kubernetes minors. Keep it at or below the cluster's k3s minor (1.36, itself capped by Rancher 2.15) and raise this cap together with k3s.",
       "matchDatasources": ["helm"],
       "matchPackageNames": ["descheduler"],

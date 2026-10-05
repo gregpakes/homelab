@@ -77,6 +77,9 @@ When extra manifests are required (PVCs, ExternalSecrets, Traefik certificates, 
     - Their folders in `argocd/infrastructure/servarr/<app>/` define PVCs (e.g. `bazarr-config-pv.yaml`, `qbit-config-pvc.yaml`) and ExternalSecrets (e.g. `downloadclients/externalsecrets.yaml`).
   - `argocd/apps/homarr.yaml` & `argocd/infrastructure/homarr/values.yaml` expose dashboards to the rest of the household.
 
+- **Operator tools**
+  - `argocd/apps/track-manager.yaml` – The LapSmith Track Manager console on `traefik-internal`, behind oauth2-proxy (GitHub sign-in) with a NetworkPolicy admitting only the internal Traefik. Setup and checks in `argocd/infrastructure/track-manager/README.md`.
+
 - **GPU enablement (optional)**
   - `argocd/apps/intel-device-plugins-operator.yaml` and `intel-gpu-plugin.yaml` are currently commented templates. Uncomment them when the Intel plugin should be reconciled by Argo.
   - Plex and Tdarr instead mount `/dev/dri` from the host directly. See [GPU passthrough](#gpu-passthrough-intel-arc-a310) for the A310 reset quirk and the required Proxmox hookscript.

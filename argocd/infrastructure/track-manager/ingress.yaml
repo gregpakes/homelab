@@ -1,0 +1,76 @@
+# Internal only: the traefik-internal class (172.16.51.66), never the external
+# Traefik — each one's CRD provider only picks up IngressRoutes carrying its
+# own class annotation.
+#
+# Request path for everything except sign-in:
+#   browser → traefik-internal
+#     → strip-identity-headers   drop any client-sent user/secret headers
+#     → oauth2-forward-auth      oauth2-proxy `/`: 302 to GitHub, or 202 plus
+#                                X-Auth-Request-User and the proxy secret,
+#                                which Traefik copies onto the request
+#     → track-manager            checks secret, allowlist, Host and Origin
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-identity-headers
+  namespace: track-manager
+spec:
+  headers:
+    # An empty value removes the header. ForwardAuth already overwrites both
+    # from oauth2-proxy's answer; this makes a client-supplied copy impossible
+    # to pass through even if that answer ever lacked one.
+    customRequestHeaders:
+      X-Auth-Request-User: ""
+      X-Track-Manager-Proxy-Secret: ""
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: oauth2-forward-auth
+  namespace: track-manager
+spec:
+  forwardAuth:
+    address: http://oauth2-proxy.track-manager.svc.cluster.local:4180/
+    trustForwardHeader: true
+    authResponseHeaders:
+      - X-Auth-Request-User
+      - X-Track-Manager-Proxy-Secret
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: track-manager
+  namespace: track-manager
+  annotations:
+    kubernetes.io/ingress.class: traefik-internal
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    # oauth2-proxy's browser-facing sign-in endpoints, and ONLY those. Its
+    # /oauth2/auth and /oauth2/userinfo answer with the injected response
+    # headers — the proxy secret included — so they must never be routable
+    # from a browser. Every other /oauth2/ path falls through to the
+    # authenticated route below, where Track Manager answers 404.
+    - match: >-
+        Host(`lapsmith.gregpakes.co.uk`) && (
+          Path(`/oauth2/start`) || Path(`/oauth2/callback`) ||
+          Path(`/oauth2/sign_in`) || Path(`/oauth2/sign_out`) ||
+          PathPrefix(`/oauth2/static/`)
+        )
+      kind: Rule
+      priority: 100
+      services:
+        - name: oauth2-proxy
+          port: 4180
+    - match: Host(`lapsmith.gregpakes.co.uk`)
+      kind: Rule
+      priority: 10
+      middlewares:
+        - name: strip-identity-headers
+        - name: oauth2-forward-auth
+      services:
+        - name: track-manager
+          port: 4173
+  # Traefik's default TLSStore: the *.gregpakes.co.uk wildcard.
+  tls: {}

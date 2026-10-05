@@ -1,0 +1,137 @@
+# LapSmith Track Manager — the operator console for release control, backend
+# deploys, bug triage, user-data export and account deletion. Built from
+# gregpakes/LapSmith tools/track_catalog_manager/Dockerfile by the manual
+# `CI · Track Manager image` workflow, which prints the tag to pin below.
+#
+# The image refuses to start on 0.0.0.0 unless all four TRACK_CATALOG_* proxy
+# settings are present, and then refuses any request that lacks the proxy
+# secret or an allowlisted user. It needs nothing writable but /tmp.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: track-manager
+  namespace: track-manager
+  labels:
+    app.kubernetes.io/name: track-manager
+    app.kubernetes.io/part-of: track-manager
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  # ONE replica, replaced rather than rolled. Release Control keeps its CSRF
+  # token and its single-flight dispatch guard in process memory: two pods
+  # would each accept a release dispatch, and a page loaded from one would be
+  # refused by the other.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: track-manager
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: track-manager
+        app.kubernetes.io/part-of: track-manager
+      annotations:
+        # Same reason as Recreate: an eviction mid-dispatch drops the run it was
+        # tracking. The descheduler honours this (argocd/infrastructure/descheduler).
+        descheduler.alpha.kubernetes.io/prefer-no-eviction: ""
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: track-manager-ghcr-pull
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: track-manager
+          # Pinned by hand, like the CI runner images: renovate.json disables
+          # updates for this package. Bump to the tag the `CI · Track Manager
+          # image` workflow prints (this one: gregpakes/LapSmith@81b6ad1).
+          image: ghcr.io/gregpakes/lapsmith-track-manager:sha-81b6ad1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TRACK_CATALOG_PUBLIC_ORIGIN
+              value: https://lapsmith.gregpakes.co.uk
+            - name: TRACK_CATALOG_PROXY_USER_HEADER
+              value: x-auth-request-user
+            - name: TRACK_CATALOG_ALLOWED_USERS
+              value: gregpakes
+            - name: TRACK_CATALOG_PROXY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: track-manager-proxy
+                  key: secret
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: track-manager-credentials
+                  key: github-token
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /var/run/secrets/lapsmith/firebase-service-account.json
+            # The root filesystem is read-only; gh and node keep any state
+            # under /tmp.
+            - name: HOME
+              value: /tmp
+          ports:
+            - name: http
+              containerPort: 4173
+          # /healthz is the one path answered before the access gate, and it
+          # says nothing but {"ok":true}.
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: firebase
+              mountPath: /var/run/secrets/lapsmith
+              readOnly: true
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 512Mi
+        - name: firebase
+          secret:
+            secretName: track-manager-credentials
+            defaultMode: 0440
+            items:
+              - key: firebase-service-account.json
+                path: firebase-service-account.json
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: track-manager
+  namespace: track-manager
+  labels:
+    app.kubernetes.io/name: track-manager
+spec:
+  selector:
+    app.kubernetes.io/name: track-manager
+  ports:
+    - name: http
+      port: 4173
+      targetPort: http

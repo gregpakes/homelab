@@ -1,0 +1,173 @@
+# oauth2-proxy: signs the operator in with GitHub and answers Traefik's
+# ForwardAuth check for every Track Manager request.
+#
+# Static-upstream mode (oauth2-proxy docs, "ForwardAuth with static upstreams"):
+# Traefik's ForwardAuth calls this service's `/`. A signed-in session gets a
+# 202 carrying the injected response headers below, which Traefik copies onto
+# the request it forwards to Track Manager; anyone else gets a 302 to GitHub.
+#
+# Alpha config, not flags, because the proxy secret has to come from a file:
+# flags and the Traefik headers middleware only take literal values. With
+# --alpha-config the provider, upstream and header flags are REMOVED (passing
+# one is a startup error), so those live in the ConfigMap; cookie and redirect
+# settings stay as flags.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oauth2-proxy-alpha
+  namespace: track-manager
+data:
+  alpha.yaml: |
+    server:
+      bindAddress: "0.0.0.0:4180"
+    upstreamConfig:
+      upstreams:
+        - id: forward-auth
+          path: /
+          static: true
+          staticCode: 202
+    providers:
+      - id: github
+        provider: github
+        # envsubst at load time; not OAUTH2_PROXY_CLIENT_ID, which is a
+        # removed legacy option under --alpha-config and would refuse to start.
+        clientID: ${GITHUB_OAUTH_CLIENT_ID}
+        clientSecretFile: /etc/oauth2-proxy/github/client-secret
+        githubConfig:
+          # With no org/team/repo, ONLY these logins may sign in: anyone else
+          # fails with "missing github user" (providers/github.go). Track
+          # Manager checks its own allowlist too (TRACK_CATALOG_ALLOWED_USERS).
+          users:
+            - gregpakes
+    # Response headers only: they reach Traefik on the ForwardAuth hop and
+    # never the browser, because the IngressRoute exposes only the sign-in
+    # paths of /oauth2/ — not /oauth2/auth or /oauth2/userinfo, which would
+    # return these headers to the browser.
+    injectResponseHeaders:
+      - name: X-Auth-Request-User
+        values:
+          - claimSource:
+              claim: user
+      - name: X-Track-Manager-Proxy-Secret
+        values:
+          - secretSource:
+              fromFile: /etc/oauth2-proxy/proxy/secret
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth2-proxy
+  namespace: track-manager
+  labels:
+    app.kubernetes.io/name: oauth2-proxy
+    app.kubernetes.io/part-of: track-manager
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: oauth2-proxy
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: oauth2-proxy
+        app.kubernetes.io/part-of: track-manager
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: oauth2-proxy
+          image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.5
+          imagePullPolicy: IfNotPresent
+          args:
+            - --alpha-config=/etc/oauth2-proxy/alpha/alpha.yaml
+            - --reverse-proxy=true
+            - --email-domain=*
+            - --redirect-url=https://lapsmith.gregpakes.co.uk/oauth2/callback
+            - --whitelist-domain=lapsmith.gregpakes.co.uk
+            - --skip-provider-button=true
+            - --cookie-name=_track_manager_oauth2
+            - --cookie-secure=true
+            - --cookie-samesite=lax
+            - --cookie-expire=168h
+            - --silence-ping-logging=true
+          env:
+            - name: GITHUB_OAUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: track-manager-oauth2-proxy
+                  key: client-id
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: track-manager-oauth2-proxy
+                  key: cookie-secret
+          ports:
+            - name: http
+              containerPort: 4180
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: alpha
+              mountPath: /etc/oauth2-proxy/alpha
+              readOnly: true
+            - name: github
+              mountPath: /etc/oauth2-proxy/github
+              readOnly: true
+            - name: proxy
+              mountPath: /etc/oauth2-proxy/proxy
+              readOnly: true
+      volumes:
+        - name: alpha
+          configMap:
+            name: oauth2-proxy-alpha
+        - name: github
+          secret:
+            secretName: track-manager-oauth2-proxy
+            items:
+              - key: client-secret
+                path: client-secret
+        - name: proxy
+          secret:
+            secretName: track-manager-proxy
+            items:
+              - key: secret
+                path: secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oauth2-proxy
+  namespace: track-manager
+  labels:
+    app.kubernetes.io/name: oauth2-proxy
+spec:
+  selector:
+    app.kubernetes.io/name: oauth2-proxy
+  ports:
+    - name: http
+      port: 4180
+      targetPort: http
