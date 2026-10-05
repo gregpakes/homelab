@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: track-manager
+  namespace: argocd
+  annotations:
+    # After Traefik, cert-manager and the ClusterSecretStore.
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: track-manager
+  # Plain manifests: the LapSmith Track Manager operator console and the
+  # oauth2-proxy that signs its operator in. See
+  # argocd/infrastructure/track-manager/README.md for the setup it needs.
+  source:
+    repoURL: https://github.com/gregpakes/homelab
+    targetRevision: main
+    path: argocd/infrastructure/track-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

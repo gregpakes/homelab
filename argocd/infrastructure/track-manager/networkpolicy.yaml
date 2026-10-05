@@ -1,0 +1,51 @@
+# Only the internal Traefik may open a connection to anything in this
+# namespace. The first NetworkPolicy in this cluster; k3s enforces them with
+# its embedded kube-router controller unless started with
+# --disable-network-policy, which clusters/deployment/k3s.sh does not pass.
+#
+# This is the SECOND fence. The first is the proxy secret: Track Manager
+# refuses any request without it, so a pod that slipped past this policy still
+# could not forge the user header. Kubelet probes come from the pod's own node,
+# which kube-router admits ahead of policy; if probes start failing when this
+# lands, check that first.
+#
+# Selector labels are the Traefik chart's own (traefik.labelselector in chart
+# 41.x): name `traefik`, instance `<release>-<namespace>`. The external
+# Traefik is `traefik-traefik` and is deliberately not admitted.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: track-manager
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-traefik-internal
+  namespace: track-manager
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values: ["track-manager", "oauth2-proxy"]
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+              app.kubernetes.io/instance: traefik-internal-traefik
+      ports:
+        - protocol: TCP
+          port: 4173
+        - protocol: TCP
+          port: 4180
