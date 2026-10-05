@@ -58,7 +58,7 @@ spec:
           # package alone (renovate.json) so the two never race. The workflow
           # rewrites the single `image: …lapsmith-track-manager:sha-…` line
           # below: keep it on one line, in that form.
-          image: ghcr.io/gregpakes/lapsmith-track-manager:sha-81b6ad1
+          image: ghcr.io/gregpakes/lapsmith-track-manager:sha-2d6cd61
           imagePullPolicy: IfNotPresent
           env:
             - name: TRACK_CATALOG_PUBLIC_ORIGIN
