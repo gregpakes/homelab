@@ -24,6 +24,7 @@ browser ─▶ /oauth2/{start,callback,sign_in,sign_out,static/} ─▶ oauth2-p
 | `externalsecrets.yaml` | All credentials, from 1Password, split per pod |
 | `oauth2-proxy.yaml` | Alpha config, Deployment, Service |
 | `track-manager.yaml` | Deployment (1 replica, Recreate), Service |
+| `draft-pvc.yaml` | Longhorn volume for the catalog draft, mounted at `/data` |
 | `ingress.yaml` | Middlewares and the IngressRoute |
 | `networkpolicy.yaml` | Only `traefik-internal` may reach either pod |
 
@@ -34,9 +35,11 @@ browser ─▶ /oauth2/{start,callback,sign_in,sign_out,static/} ─▶ oauth2-p
    `https://lapsmith.gregpakes.co.uk/oauth2/callback`. Sign-in asks for
    `user:email` and `read:org`.
 2. **Fine-grained GitHub token**, repository `gregpakes/LapSmith` only:
-   Actions read and write, Contents read, Variables read, Environments read.
-   This token can dispatch store releases and backend deploys — give it an
-   expiry and keep it to this one repository.
+   Actions read and write, Contents read and write, Pull requests read and
+   write, Variables read, Environments read. This token can dispatch store
+   releases and backend deploys, and publishing the catalog creates a branch
+   and a pull request with it — give it an expiry and keep it to this one
+   repository.
 3. **Firebase service-account key** for `track-app-13884` with the access
    Track Manager's admin pages need. Prefer a dedicated account for the
    cluster over reusing a local key, so it can be revoked on its own.
@@ -52,9 +55,12 @@ browser ─▶ /oauth2/{start,callback,sign_in,sign_out,static/} ─▶ oauth2-p
 5. **Pi-hole**: a local DNS record `lapsmith.gregpakes.co.uk` →
    `172.16.51.66` (the `traefik-internal` LoadBalancer), unless a wildcard
    already covers it.
-6. **Image**: pinned in `track-manager.yaml`. To update it, run
-   `CI · Track Manager image` in gregpakes/LapSmith and replace the tag with
-   the one it prints. Renovate leaves this image alone; every bump is by hand.
+6. **Image**: deployed automatically. The LapSmith `CI · Track Manager image`
+   workflow builds on every change to Track Manager and commits the new tag to
+   `track-manager.yaml` here. It needs a LapSmith Actions secret
+   `HOMELAB_DEPLOY_TOKEN`: a fine-grained token on **gregpakes/homelab only**
+   with Contents read and write. Without it the image still builds, but the
+   run fails at the deploy step and nothing changes here.
 
 ## Checking it after a sync
 
@@ -67,8 +73,10 @@ browser ─▶ /oauth2/{start,callback,sign_in,sign_out,static/} ─▶ oauth2-p
   `code=operator_not_authenticated` means the user header is not.
 - Release Control loads its board. A `github_auth_required` error means the
   `github-token` field is missing or lacks a permission above.
-- Catalog edits are refused on purpose (`catalog_read_only`): the image is not a
-  working tree. Edit and publish the catalog from a local checkout.
+- Catalog: the badge beside **Publish…** reads *In sync with main*. Publishing
+  opens a pull request on gregpakes/LapSmith (`catalog/publish-v<N>-…`); merge
+  it to deploy. A `403` from GitHub when publishing means the token lacks
+  Contents or Pull requests write.
 
 An expired oauth2-proxy session (7 days) shows up as a failed fetch on an open
 page, because the 302 to GitHub cannot be followed cross-origin by `fetch`.

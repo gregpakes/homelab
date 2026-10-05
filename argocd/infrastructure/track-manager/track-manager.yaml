@@ -1,11 +1,13 @@
 # LapSmith Track Manager — the operator console for release control, backend
 # deploys, bug triage, user-data export and account deletion. Built from
-# gregpakes/LapSmith tools/track_catalog_manager/Dockerfile by the manual
-# `CI · Track Manager image` workflow, which prints the tag to pin below.
+# gregpakes/LapSmith tools/track_catalog_manager/Dockerfile by the
+# `CI · Track Manager image` workflow, which also deploys it: see the image line.
 #
 # The image refuses to start on 0.0.0.0 unless all four TRACK_CATALOG_* proxy
 # settings are present, and then refuses any request that lacks the proxy
-# secret or an allowlisted user. It needs nothing writable but /tmp.
+# secret or an allowlisted user. It writes only to /tmp and to /data, the
+# catalog draft (the volume in draft-pvc.yaml), and refuses to start if /data
+# is not writable.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -49,9 +51,13 @@ spec:
           type: RuntimeDefault
       containers:
         - name: track-manager
-          # Pinned by hand, like the CI runner images: renovate.json disables
-          # updates for this package. Bump to the tag the `CI · Track Manager
-          # image` workflow prints (this one: gregpakes/LapSmith@81b6ad1).
+          # DEPLOYED BY CI. Every image the LapSmith `CI · Track Manager image`
+          # workflow builds from main — after its tests and fail-closed checks
+          # pass — is committed here by github-actions[bot] and synced by Argo.
+          # A hand edit is overwritten by the next build. Renovate leaves this
+          # package alone (renovate.json) so the two never race. The workflow
+          # rewrites the single `image: …lapsmith-track-manager:sha-…` line
+          # below: keep it on one line, in that form.
           image: ghcr.io/gregpakes/lapsmith-track-manager:sha-81b6ad1
           imagePullPolicy: IfNotPresent
           env:
@@ -109,6 +115,8 @@ spec:
             - name: firebase
               mountPath: /var/run/secrets/lapsmith
               readOnly: true
+            - name: draft
+              mountPath: /data
       volumes:
         - name: tmp
           emptyDir:
@@ -120,6 +128,11 @@ spec:
             items:
               - key: firebase-service-account.json
                 path: firebase-service-account.json
+        # The catalog draft: edits between saves, until a publish opens a pull
+        # request. Losing it loses unpublished edits, never anything on main.
+        - name: draft
+          persistentVolumeClaim:
+            claimName: track-manager-draft
 ---
 apiVersion: v1
 kind: Service
