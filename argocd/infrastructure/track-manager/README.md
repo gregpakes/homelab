@@ -24,7 +24,6 @@ browser ─▶ /oauth2/{start,callback,sign_in,sign_out,static/} ─▶ oauth2-p
 | `externalsecrets.yaml` | All credentials, from 1Password, split per pod |
 | `oauth2-proxy.yaml` | Alpha config, Deployment, Service |
 | `track-manager.yaml` | Deployment (1 replica, Recreate), Service |
-| `draft-pvc.yaml` | Longhorn volume for the catalog draft, mounted at `/data` |
 | `ingress.yaml` | Middlewares and the IngressRoute |
 | `networkpolicy.yaml` | Only `traefik-internal` may reach either pod |
 

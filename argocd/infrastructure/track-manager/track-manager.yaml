@@ -6,8 +6,7 @@
 # The image refuses to start on 0.0.0.0 unless all four TRACK_CATALOG_* proxy
 # settings are present, and then refuses any request that lacks the proxy
 # secret or an allowlisted user. It writes only to /tmp and to /data, the
-# catalog draft (the volume in draft-pvc.yaml), and refuses to start if /data
-# is not writable.
+# catalog draft, and refuses to start if /data is not writable.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -130,9 +129,17 @@ spec:
                 path: firebase-service-account.json
         # The catalog draft: edits between saves, until a publish opens a pull
         # request. Losing it loses unpublished edits, never anything on main.
+        #
+        # TEMPORARILY pod-local (emptyDir), not Longhorn: on 2026-10-05
+        # Longhorn's admission webhook stopped answering, so a new Longhorn
+        # claim could not bind and the pod never scheduled. Here, a pod
+        # restart drops UNPUBLISHED edits (the badge shows them); everything
+        # published is a pull request on GitHub. Move back to a Longhorn claim
+        # once its webhook is healthy — in the Deployment's sync wave, "5",
+        # because longhorn binds WaitForFirstConsumer.
         - name: draft
-          persistentVolumeClaim:
-            claimName: track-manager-draft
+          emptyDir:
+            sizeLimit: 256Mi
 ---
 apiVersion: v1
 kind: Service
