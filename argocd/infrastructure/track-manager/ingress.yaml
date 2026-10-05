@@ -53,7 +53,7 @@ spec:
     # from a browser. Every other /oauth2/ path falls through to the
     # authenticated route below, where Track Manager answers 404.
     - match: >-
-        Host(`track-manager.gregpakes.co.uk`) && (
+        Host(`lapsmith.gregpakes.co.uk`) && (
           Path(`/oauth2/start`) || Path(`/oauth2/callback`) ||
           Path(`/oauth2/sign_in`) || Path(`/oauth2/sign_out`) ||
           PathPrefix(`/oauth2/static/`)
@@ -63,7 +63,7 @@ spec:
       services:
         - name: oauth2-proxy
           port: 4180
-    - match: Host(`track-manager.gregpakes.co.uk`)
+    - match: Host(`lapsmith.gregpakes.co.uk`)
       kind: Rule
       priority: 10
       middlewares:

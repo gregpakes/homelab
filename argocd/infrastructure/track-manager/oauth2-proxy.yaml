@@ -87,8 +87,8 @@ spec:
             - --alpha-config=/etc/oauth2-proxy/alpha/alpha.yaml
             - --reverse-proxy=true
             - --email-domain=*
-            - --redirect-url=https://track-manager.gregpakes.co.uk/oauth2/callback
-            - --whitelist-domain=track-manager.gregpakes.co.uk
+            - --redirect-url=https://lapsmith.gregpakes.co.uk/oauth2/callback
+            - --whitelist-domain=lapsmith.gregpakes.co.uk
             - --skip-provider-button=true
             - --cookie-name=_track_manager_oauth2
             - --cookie-secure=true

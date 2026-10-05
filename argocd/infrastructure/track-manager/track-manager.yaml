@@ -56,7 +56,7 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: TRACK_CATALOG_PUBLIC_ORIGIN
-              value: https://track-manager.gregpakes.co.uk
+              value: https://lapsmith.gregpakes.co.uk
             - name: TRACK_CATALOG_PROXY_USER_HEADER
               value: x-auth-request-user
             - name: TRACK_CATALOG_ALLOWED_USERS

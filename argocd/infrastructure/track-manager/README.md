@@ -2,7 +2,7 @@
 
 The LapSmith operator console (release control, backend deploys, bug triage,
 user-data export, account deletion), hosted on `traefik-internal` at
-`https://track-manager.gregpakes.co.uk` behind oauth2-proxy (GitHub sign-in).
+`https://lapsmith.gregpakes.co.uk` behind oauth2-proxy (GitHub sign-in).
 
 Track Manager has no login of its own. The app side of this design — the
 access gate, its two modes, and why each check exists — is documented in
@@ -30,8 +30,8 @@ browser ─▶ /oauth2/{start,callback,sign_in,sign_out,static/} ─▶ oauth2-p
 ## One-time setup
 
 1. **GitHub OAuth App** (github.com → Settings → Developer settings → OAuth
-   Apps): homepage `https://track-manager.gregpakes.co.uk`, callback
-   `https://track-manager.gregpakes.co.uk/oauth2/callback`. Sign-in asks for
+   Apps): homepage `https://lapsmith.gregpakes.co.uk`, callback
+   `https://lapsmith.gregpakes.co.uk/oauth2/callback`. Sign-in asks for
    `user:email` and `read:org`.
 2. **Fine-grained GitHub token**, repository `gregpakes/LapSmith` only:
    Actions read and write, Contents read, Variables read, Environments read.
@@ -49,7 +49,7 @@ browser ─▶ /oauth2/{start,callback,sign_in,sign_out,static/} ─▶ oauth2-p
    ```
 
    The registry pull reuses the existing `github-ghcr-pull` item.
-5. **Pi-hole**: a local DNS record `track-manager.gregpakes.co.uk` →
+5. **Pi-hole**: a local DNS record `lapsmith.gregpakes.co.uk` →
    `172.16.51.66` (the `traefik-internal` LoadBalancer), unless a wildcard
    already covers it.
 6. **Image**: run `CI · Track Manager image` in gregpakes/LapSmith, then
@@ -61,7 +61,7 @@ browser ─▶ /oauth2/{start,callback,sign_in,sign_out,static/} ─▶ oauth2-p
 - Opening the site signs you in with GitHub, then shows the catalog. Any other
   GitHub account is refused by oauth2-proxy before Track Manager sees it.
 - `kubectl -n track-manager logs deploy/track-manager` starts with
-  `[operator-access] … access mode=proxy origin=https://track-manager.gregpakes.co.uk`.
+  `[operator-access] … access mode=proxy origin=https://lapsmith.gregpakes.co.uk`.
   `rejected … code=untrusted_proxy` means the secret is not arriving (check the
   `track-manager-proxy` Secret and the ForwardAuth `authResponseHeaders`);
   `code=operator_not_authenticated` means the user header is not.
