@@ -10,7 +10,7 @@ controllers:
       portainer:
         image:
           repository: portainer/portainer-ce
-          tag: 2.45.1
+          tag: 2.45.2
         env:
           TZ: Europe/London
         probes:
