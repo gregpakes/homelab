@@ -15,6 +15,9 @@ controllers:
           tag: release-2.9.2
         env:
           PORT: 8080
+          # Loads the configMap below, which turns off Nagle's algorithm on
+          # every socket Termix opens.
+          NODE_OPTIONS: --require /app/preload/nodelay.cjs
         ports:
           - name: http
             containerPort: 8080
@@ -47,7 +50,30 @@ metrics:
     additionalLabels:
       release: kube-prometheus-stack
 
+# Termix's ssh2 client never calls setNoDelay, so with Nagle on and the
+# host's delayed ACK every SSH round trip stalls ~40ms: each keystroke echo
+# took 42ms instead of 1.5ms, and a login takes several round trips. Measured
+# from inside the pod against k3s-admin on 2026-10-10. Drop this once Termix
+# sets TCP_NODELAY itself.
+configMaps:
+  nodelay:
+    data:
+      nodelay.cjs: |
+        const net = require("node:net");
+        const connect = net.Socket.prototype.connect;
+        net.Socket.prototype.connect = function (...args) {
+          this.setNoDelay(true);
+          return connect.apply(this, args);
+        };
+
 persistence:
+  nodelay:
+    type: configMap
+    identifier: nodelay
+    globalMounts:
+      - path: /app/preload/nodelay.cjs
+        subPath: nodelay.cjs
+        readOnly: true
   data:
     enabled: true
     existingClaim: termix-data
