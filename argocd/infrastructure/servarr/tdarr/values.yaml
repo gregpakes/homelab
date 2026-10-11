@@ -45,7 +45,7 @@ controllers:
       tdarr:
         image:
           repository: docker.io/haveagitgat/tdarr
-          tag: 2.96.01
+          tag: 3.00.00
         env:
           TZ: Europe/London
           PUID: "1000"
