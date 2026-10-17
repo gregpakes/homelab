@@ -1,0 +1,51 @@
+# Rendered by install.sh from docker/hosts/@NODE_NAME@/keepalived.env.
+# Edit the template or the env file in git and re-run install.sh, not this file.
+
+global_defs {
+    router_id @NODE_NAME@
+    # Scripts run as keepalived_script (install.sh creates it), and only if no
+    # part of their path is writable by a non-root user.
+    enable_script_security
+}
+
+vrrp_script chk_technitium {
+    script "/etc/keepalived/check_technitium.sh"
+    interval 1
+    timeout 2
+    # Two misses drop this node to FAULT and release the VIP; three passes in a
+    # row before it may hold the VIP again.
+    fall 2
+    rise 3
+}
+
+vrrp_instance VI_DNS {
+    # Both nodes start as BACKUP so preempt_delay applies: after an outage dns1
+    # only takes the VIP back once it has been healthy for 60s, which keeps a
+    # flapping node from bouncing the VIP. Failover to the peer is not delayed.
+    state BACKUP
+    interface @INTERFACE@
+    virtual_router_id @VRID@
+    priority @PRIORITY@
+    advert_int 1
+    preempt_delay 60
+
+    # Unicast, so nothing depends on multicast across the UniFi switches, and
+    # adverts from anything but the peer are ignored.
+    unicast_src_ip @NODE_IP@
+    unicast_peer {
+        @PEER_IP@
+    }
+    check_unicast_src
+
+    garp_master_delay 1
+    garp_master_repeat 3
+    garp_master_refresh 30
+
+    virtual_ipaddress {
+        @VIP@/@VIP_PREFIX@ dev @INTERFACE@
+    }
+
+    track_script {
+        chk_technitium
+    }
+}

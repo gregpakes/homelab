@@ -15,11 +15,14 @@ docker/
 
 Each host gets its own directory. Each app under a host is self-contained with its own `docker-compose.yml`.
 
+A stack deployed to more than one host lives once under `docker/stacks/<app>/` instead, with the per-host differences in Portainer env vars or in the host's own directory.
+
 ## Hosts
 
 | Host | Role |
 |---|---|
 | `infra-pi` | Infrastructure / telephony |
+| `dns1`, `dns2` | Technitium DNS HA pair behind a keepalived VIP - see `stacks/technitium/README.md` |
 
 ## Deploying
 
