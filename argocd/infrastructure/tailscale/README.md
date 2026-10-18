@@ -17,15 +17,21 @@ with no ports opened on the router.
 - `tailscale-operator` Helm chart, namespace `tailscale`.
 - A `Connector` running a subnet router that advertises **host routes only**:
   - `172.16.51.70/32` - Plex
-  - `172.16.51.67/32` - Pi-hole, as the tailnet nameserver
+  - `172.16.51.67/32` - Pi-hole, as the split-DNS nameserver for `gregpakes.co.uk`
+  - `172.16.51.66/32` - Traefik internal, for `lapsmith` and the other
+    `traefik-internal` hostnames
 
 Plex keeps its LAN IP, so the existing `ALLOWED_NETWORKS: 172.16.0.0/16` in
 `../plex/values.yaml` already treats tailnet clients as local and no bitrate cap is
 applied. **No change to the Plex app is needed.**
 
 The rest of `172.16.51.0/24` - the k3s API VIP on `.50`, the nodes on `.201-.205`,
-both Traefik LBs on `.65`/`.66` - is deliberately not advertised. Widen
+the external Traefik LB on `.65` - is deliberately not advertised. Widen
 `advertiseRoutes` in `connector.yaml` if that changes, and write an ACL first.
+
+A name resolving over the tailnet is not the same as it being reachable: Pi-hole
+answers for every internal hostname, but only the three hosts above are routed. A
+name that points anywhere else resolves and then times out.
 
 ## Client support
 
@@ -76,17 +82,42 @@ Advertised routes are inert until approved. Either tick them under **Machines ->
   "routes": {
     "172.16.51.70/32": ["tag:k8s"],
     "172.16.51.67/32": ["tag:k8s"],
+    "172.16.51.66/32": ["tag:k8s"],
   },
 },
 ```
 
-### 4. Pi-hole as tailnet DNS
+`.66` fronts ArgoCD, Longhorn, Rancher and the rest, so don't leave it under the
+default allow-all grant. Grant the routed hosts to tailnet members only, so a tagged
+device (the operator, the router itself, anything tagged later) gets nothing:
 
-**DNS -> Nameservers -> Global nameserver** -> `172.16.51.67`.
+```jsonc
+"grants": [
+  {
+    "src": ["autogroup:member"],
+    "dst": ["172.16.51.70/32", "172.16.51.67/32", "172.16.51.66/32"],
+    "ip":  ["*"],
+  },
+],
+```
 
-Leave **Override local DNS** off. With it on, every tailnet device depends on the
-subnet router for all name resolution - if the cluster or the Connector is down,
-remote devices lose DNS entirely, not just internal names.
+This only narrows anything once the default `{"src": ["*"], "dst": ["*"], "ip":
+["*"]}` grant is removed; re-add whatever device-to-device access you still want
+alongside it.
+
+### 4. Pi-hole as split DNS for gregpakes.co.uk
+
+**DNS -> Nameservers -> Add nameserver -> Custom** -> `172.16.51.67`, tick **Restrict
+to domain** and enter `gregpakes.co.uk`.
+
+Use split DNS, not a global nameserver. With **Override local DNS** off (keep it
+off), clients keep their local resolver and a global nameserver is only a fallback,
+so internal names still don't resolve away from home - `tailscale dns status`
+shows "no resolvers configured". Turning override on would make it work, but every tailnet
+device would then depend on the subnet router for all name resolution - if the
+cluster or the Connector is down, remote devices lose DNS entirely, not just
+internal names. Split DNS sends only `*.gregpakes.co.uk` to Pi-hole; Pi-hole
+forwards the public names in that zone upstream, so those keep working too.
 
 Pi-hole sees these queries arriving from the router pod's `10.42.x.x` address
 because Tailscale SNATs subnet routes. If replies do not come back, check Pi-hole's
@@ -100,6 +131,9 @@ From a tailnet device, off the LAN:
 tailscale status          # ts-plex-subnet-router present, routes listed
 tailscale ping 172.16.51.70
 curl -sI http://172.16.51.70:32400/identity
+tailscale dns status      # Split DNS Routes lists gregpakes.co.uk. -> 172.16.51.67
+dig +short lapsmith.gregpakes.co.uk     # 172.16.51.66, via the system resolver
+curl -sI https://lapsmith.gregpakes.co.uk/   # 302 to GitHub sign-in
 ```
 
 `tailscale status` shows `direct` for a working NAT-traversed path and `relay
