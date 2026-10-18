@@ -35,9 +35,9 @@ proxyConfig:
   defaultTags: "tag:k8s"
 
 # Not exposing the Kubernetes API over the tailnet. The Connector advertises
-# 172.16.51.70/32 and 172.16.51.67/32 only; the API VIP on 172.16.51.50 is
-# deliberately not routed, so leaving this off keeps the cluster off the tailnet
-# entirely rather than relying on ACLs to keep it there.
+# 172.16.51.70/32, 172.16.51.67/32 and 172.16.51.66/32 only; the API VIP on
+# 172.16.51.50 is deliberately not routed, so leaving this off keeps the cluster off
+# the tailnet entirely rather than relying on ACLs to keep it there.
 apiServerProxyConfig:
   mode: "false"
   allowImpersonation: "false"

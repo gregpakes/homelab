@@ -1,11 +1,16 @@
-# Subnet router exposing two single-host routes to the tailnet.
+# Subnet router exposing three single-host routes to the tailnet.
 #
 # Host routes rather than the whole 172.16.51.0/24: that VLAN also carries the k3s
-# API VIP (.50), all five nodes (.201-.205) and both Traefik LBs (.65/.66, which
-# front ArgoCD, Longhorn, Rancher, Portainer, Grafana and the servarr stack).
+# API VIP (.50), all five nodes (.201-.205) and the external Traefik LB (.65).
 # Advertising the /24 would put all of that on the tailnet and leave only the
 # Tailscale ACL - which lives in the admin console, not in this repo - between a
 # compromised tailnet device and the cluster. Widen the CIDR here if that changes.
+#
+# The internal Traefik LB (.66) IS routed, so the traefik-internal hostnames
+# (lapsmith, ArgoCD, Longhorn, Rancher, Portainer, Grafana, the servarr stack)
+# work while away. That puts every one of those UIs one hop from any tailnet
+# device, so the policy file should grant .66 to tailnet members only - see
+# README.md here.
 #
 # Why a subnet route instead of exposing the Service with a tailnet hostname: Plex
 # keeps its 172.16.51.70 identity, so it stays inside the ALLOWED_NETWORKS
@@ -34,6 +39,11 @@ spec:
       # Plex - MetalLB LoadBalancer (infrastructure/plex/values.yaml)
       - 172.16.51.70/32
       # Pi-hole - MetalLB LoadBalancer (infrastructure/pihole/service.yaml).
-      # Routed so it can serve as the tailnet nameserver, which is what makes
-      # plex.gregpakes.co.uk and the other internal names resolve while away.
+      # Routed so it can serve as the tailnet's split-DNS nameserver for
+      # gregpakes.co.uk, which is what makes the internal names resolve while
+      # away. Resolving is not reaching: each name's target must be routed too.
       - 172.16.51.67/32
+      # Traefik internal - MetalLB LoadBalancer for the traefik-internal class.
+      # Pi-hole points lapsmith.gregpakes.co.uk and the other internal-only
+      # hostnames here.
+      - 172.16.51.66/32
