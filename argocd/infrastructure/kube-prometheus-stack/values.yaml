@@ -60,8 +60,72 @@ alertmanager:
         pushover_configs:
           - user_key_file: /etc/alertmanager/secrets/alert-manager-pushover/user_key
             token_file: /etc/alertmanager/secrets/alert-manager-pushover/token
-            title: '{{ .CommonLabels.alertname }}'
-            message: '{{ .CommonAnnotations.summary }}'
+            # Templates live in templateFiles below. Without an explicit
+            # priority Alertmanager sends every firing alert as emergency (2),
+            # which repeats every minute until acknowledged.
+            title: '{{ template "pushover.homelab.title" . }}'
+            message: '{{ template "pushover.homelab.message" . }}'
+            priority: '{{ template "pushover.homelab.priority" . }}'
+            url: '{{ template "pushover.homelab.url" . }}'
+            url_title: Runbook
+            html: true
+
+  # Mounted at /etc/alertmanager/config/, which the chart's default
+  # `templates:` glob already loads. Test locally with
+  # `amtool template render --template.glob=... --template.data=...`.
+  templateFiles:
+    pushover.tmpl: |-
+      {{/* Pushover title: status, alert name (or count when the group mixes alerts), namespace. */}}
+      {{ define "pushover.homelab.title" -}}
+      {{ $alerts := .Alerts.Firing }}{{ if eq .Status "resolved" }}{{ $alerts = .Alerts.Resolved }}{{ end -}}
+      {{ if eq .Status "firing" }}FIRING{{ else }}RESOLVED{{ end }}:
+      {{- if .CommonLabels.alertname }} {{ .CommonLabels.alertname }}{{ if gt (len $alerts) 1 }} ×{{ len $alerts }}{{ end }}
+      {{- else }} {{ len $alerts }} alerts{{ end }}
+      {{- with .GroupLabels.namespace }} · {{ . }}{{ end }}
+      {{- end }}
+
+      {{/* One alert: bold name and severity, the rule's description (it names the
+           pod/node/instance), and when it started. Rules add "on cluster <label>",
+           which is empty here, so drop it. */}}
+      {{ define "pushover.homelab.alert" -}}
+      <b>{{ .Labels.alertname }}</b>{{ with .Labels.severity }} ({{ . }}){{ end }}
+      {{ with .Annotations.description }}{{ reReplaceAll ` on cluster (\.|$)` "$1" . | trimSpace }}{{ else }}{{ .Annotations.summary }}{{ end }}
+      Since {{ .StartsAt | tz "Europe/London" | date "Mon 2 Jan 15:04" }}
+      {{- if eq .Status "resolved" }}, resolved {{ .EndsAt | tz "Europe/London" | date "Mon 2 Jan 15:04" }}{{ end }}
+      {{- end }}
+
+      {{/* Alertmanager cuts Pushover messages at 1024 characters, so list at most five alerts. */}}
+      {{ define "pushover.homelab.message" -}}
+      {{ range $i, $a := .Alerts.Firing }}{{ if lt $i 5 }}{{ if $i }}
+
+      {{ end }}{{ template "pushover.homelab.alert" $a }}{{ end }}{{ end }}
+      {{- if gt (len .Alerts.Firing) 5 }}
+
+      …and more: {{ len .Alerts.Firing }} firing in total.{{ end }}
+      {{- if and .Alerts.Firing .Alerts.Resolved }}
+
+      <b>Resolved:</b>{{ range .Alerts.Resolved }} {{ .Labels.alertname }}{{ end }}
+      {{- else if .Alerts.Resolved }}
+      {{- range $i, $a := .Alerts.Resolved }}{{ if lt $i 5 }}{{ if $i }}
+
+      {{ end }}{{ template "pushover.homelab.alert" $a }}{{ end }}{{ end }}
+      {{- end }}
+      {{- end }}
+
+      {{/* Critical alerts go out at high priority (bypasses quiet hours), anything
+           else firing at normal priority, and resolved notifications silently. */}}
+      {{ define "pushover.homelab.priority" -}}
+      {{ $p := "-1" }}
+      {{- if eq .Status "firing" }}{{ $p = "0" }}
+      {{- range .Alerts.Firing }}{{ if eq .Labels.severity "critical" }}{{ $p = "1" }}{{ end }}{{ end }}
+      {{- end }}
+      {{- $p }}
+      {{- end }}
+
+      {{/* Link the runbook of the first firing alert, when the rule has one. */}}
+      {{ define "pushover.homelab.url" -}}
+      {{ with .Alerts.Firing }}{{ with (index . 0).Annotations.runbook_url }}{{ . }}{{ end }}{{ end }}
+      {{- end }}
 
 # Grafana
 grafana:
