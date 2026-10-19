@@ -3,9 +3,10 @@
 # Repo: https://homarr-labs.github.io/charts
 
 # --- Deployment strategy ---
-# Recreate avoids PVC multi-attach errors on RWO volumes during updates
-strategy:
-  type: Recreate
+# Recreate avoids PVC multi-attach errors on RWO volumes during updates.
+# The chart key is `strategyType`; a `strategy:` block is silently ignored and
+# leaves the Deployment on RollingUpdate.
+strategyType: Recreate
 
 # --- Environment ---
 env:
