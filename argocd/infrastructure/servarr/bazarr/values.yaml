@@ -6,6 +6,49 @@ controllers:
         fsGroup: 988
         fsGroupChangePolicy: OnRootMismatch
     replicas: 1
+    initContainers:
+      # Settings git owns, re-applied on every start. Bazarr rewrites config.yaml
+      # itself, so this patches only these keys; other UI settings are kept.
+      config:
+        image:
+          repository: mikefarah/yq
+          tag: 4.54.1
+        # optional: with no secret the script leaves the keys and logins alone
+        envFrom:
+          - secretRef: { name: bazarr-secrets, optional: true }
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            set -eu
+            f=/config/config/config.yaml
+            # On a fresh volume Bazarr writes its defaults; the next start patches them
+            [ -f "$f" ] || exit 0
+
+            expr='.general.enabled_providers = ["opensubtitlescom"]
+              | .general.use_sonarr = true
+              | .sonarr.ip = "sonarr.servarr.svc.cluster.local" | .sonarr.port = 8989
+              | .sonarr.ssl = false | .sonarr.base_url = ""
+              | .general.use_radarr = true
+              | .radarr.ip = "radarr.servarr.svc.cluster.local" | .radarr.port = 8989
+              | .radarr.ssl = false | .radarr.base_url = ""'
+            if [ -n "${SONARR_API_KEY:-}" ]; then
+              expr="$expr | .sonarr.apikey = strenv(SONARR_API_KEY)"
+            fi
+            if [ -n "${RADARR_API_KEY:-}" ]; then
+              expr="$expr | .radarr.apikey = strenv(RADARR_API_KEY)"
+            fi
+            if [ -n "${OPENSUBTITLESCOM_USERNAME:-}" ] && [ -n "${OPENSUBTITLESCOM_PASSWORD:-}" ]; then
+              expr="$expr | .opensubtitlescom.username = strenv(OPENSUBTITLESCOM_USERNAME)"
+              expr="$expr | .opensubtitlescom.password = strenv(OPENSUBTITLESCOM_PASSWORD)"
+            fi
+
+            yq "$expr" "$f" > /tmp/config.yaml
+            # cat into the existing file keeps its owner and mode
+            cat /tmp/config.yaml > "$f"
+        # Bazarr's PUID/PGID, the owner of its config
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 988
     containers:
       bazarr:
         image:
