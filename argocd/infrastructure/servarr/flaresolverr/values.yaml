@@ -11,13 +11,15 @@ controllers:
           LOG_LEVEL: "info"
           CAPTCHA_SOLVER: "none"   # or 'hcaptcha-solver' if you add support later
           PORT: "8191"
+        # Each request starts its own Chromium under Xvfb. At 500m/512Mi a plain ping took 85s
+        # (tab crashes, script timeouts), past Prowlarr's 65s proxy timeout.
         resources:
           requests:
-            cpu: 100m
-            memory: 256Mi
+            cpu: 250m
+            memory: 1Gi
           limits:
-            cpu: 500m
-            memory: 512Mi
+            cpu: 2000m
+            memory: 2Gi
 
 service:
   app:
@@ -45,4 +47,4 @@ service:
 # Flaresolverr is stateless, so this is fine.
 persistence: {}
 
-# Probes: the chart's defaults (TCP on the service port) already apply to the app container
+# Probes: none. app-template 4 ships no default probes, so the container renders without any.
