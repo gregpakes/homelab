@@ -1,3 +1,17 @@
+# Configarr doesn't support Sportarr, so its settings live in its database under /config,
+# edited in the UI, and are recorded here (read 2026-10-21, Sportarr 4.1.10).
+#
+# Root folder: /downloads/media/sports
+# Download clients: NZBGet (priority 1) and qBittorrent (priority 2), both removing
+#   completed and failed downloads. Sportarr's API doesn't return their connection
+#   settings, so check those in the UI.
+# Notification: Plex Media Server at http://172.16.51.70:32400 (no TLS), updating the
+#   library with a partial scan. Its Plex token exists only in Sportarr's database.
+# Quality profiles: WEB-1080p (Alternative) allows SDTV up to WEB 1080p, and
+#   WEB-2160p (Alternative) adds HDTV, Bluray and WEB 2160p. Both allow upgrades.
+# Custom formats: 97, none scored in either profile.
+# Indexers come from Prowlarr, which syncs to Sportarr as a Sonarr-type app
+#   (configarr/config.yml).
 controllers:
   main:
     strategy: Recreate
