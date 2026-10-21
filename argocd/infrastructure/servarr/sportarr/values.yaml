@@ -6,6 +6,25 @@ controllers:
       securityContext:
         fsGroup: 988
         fsGroupChangePolicy: OnRootMismatch
+    initContainers:
+      # Sportarr only checks the API key in config.xml (its Sportarr__ApiKey env is not
+      # used for auth), so pin the key there from 1Password on every start.
+      apikey:
+        image:
+          repository: alpine
+          tag: "3.24"
+        # optional: with no secret the script leaves config.xml alone
+        envFrom:
+          - secretRef: { name: sportarr-secrets, optional: true }
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            f=/config/config.xml
+            if [ -n "$SPORTARR_API_KEY" ] && [ -f "$f" ] && grep -q '<ApiKey>' "$f"; then
+              sed "s|<ApiKey>[^<]*</ApiKey>|<ApiKey>${SPORTARR_API_KEY}</ApiKey>|" "$f" > /tmp/config.xml
+              # cat into the existing file keeps its owner and mode
+              cat /tmp/config.xml > "$f"
+            fi
     containers:
       sportarr:
         image:
@@ -16,6 +35,8 @@ controllers:
           PUID: "1000"
           PGID: "988"
           UMASK: "002"
+          Sportarr__Port: "1867"
+          Sportarr__BindAddress: "*"
         probes:
           liveness:  { enabled: true,  type: TCP, port: 1867 }
           readiness: { enabled: true,  type: TCP, port: 1867 }
@@ -48,6 +69,8 @@ persistence:
     existingClaim: sportarr-config
     advancedMounts:
       main:
+        apikey:
+          - path: /config
         sportarr:
           - path: /config
 

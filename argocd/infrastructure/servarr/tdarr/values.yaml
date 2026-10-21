@@ -88,19 +88,8 @@ controllers:
         securityContext:
           runAsUser: 0
           runAsGroup: 0
-
-      flow-plugins:
-        image:
-          repository: alpine
-          tag: "3.24"
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            mkdir -p /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/Custom/hasNonEnglishTracks/1.0.0 &&
-            cp /plugin-src/hasNonEnglishTracks.js /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/Custom/hasNonEnglishTracks/1.0.0/index.js
-        securityContext:
-          runAsUser: 0
-          runAsGroup: 0
+      # No flow-plugins copy here: the node has no /app/server volume, so a copy was
+      # thrown away with the init container. Nodes get plugins from the server.
 
       ffsubsync:
         image:
@@ -301,10 +290,6 @@ persistence:
     name: tdarr-flow-plugins
     advancedMounts:
       server:
-        flow-plugins:
-          - path: /plugin-src
-            readOnly: true
-      node:
         flow-plugins:
           - path: /plugin-src
             readOnly: true
