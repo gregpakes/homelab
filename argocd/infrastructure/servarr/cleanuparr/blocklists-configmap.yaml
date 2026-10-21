@@ -1,0 +1,36 @@
+# Malware Blocker lists kept in git, mounted into Cleanuparr at /blocklists (values.yaml)
+# and re-read every 5 minutes. Cleanuparr's own lists are for Sonarr and Radarr: the
+# default blacklist blocks .flac, .mp3, .cue, .log and .jpg, so it can't be used for music.
+#
+# lidarr-whitelist.txt: only files matching a line are downloaded. Cleanuparr skips every
+# other file in a Lidarr torrent, and removes the torrent (blocklist + search) when nothing
+# in it is allowed, as with a fake album that is only an .exe and a .zip. Patterns are
+# case-insensitive. .wv and .ape are left out: Lidarr's profiles no longer allow them,
+# because they are usually single-file album images that Lidarr can't split. This relies on
+# qBittorrent's "Append .!qB extension to incomplete files" staying off (its default):
+# with it on, every partly downloaded file would miss the list and be skipped.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cleanuparr-blocklists
+  namespace: servarr
+data:
+  lidarr-whitelist.txt: |
+    *.flac
+    *.mp3
+    *.m4a
+    *.aac
+    *.ogg
+    *.cue
+    *.log
+    *.jpg
+    *.jpeg
+    *.png
+    *.txt
+    *.nfo
+    *.m3u
+    *.m3u8
+    *.sfv
+    *.md5
+    *.accurip
+    *.pdf
