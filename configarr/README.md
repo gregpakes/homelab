@@ -144,6 +144,6 @@ op run --env-file configarr/local.env -- docker run --rm -e DRY_RUN=true -e TELE
 
 1. Merged with `DRY_RUN: "true"`, so the job only logged what it would change (#406).
 2. After Radarr and Sonarr backups, `DRY_RUN: "false"` and Profilarr scaled to zero in the same change, so the two never fight (#407).
-3. Add Lidarr (#408), then Prowlarr, each dry-run first.
-4. Retire Profilarr.
+3. Add Lidarr (#408), then Prowlarr (#409), each dry-run first.
+4. Remove Profilarr's Argo app, values and storage. A `/config` tarball was taken first.
 5. After about two weeks of clean runs, turn on `delete_unmanaged_custom_formats`, `delete_unmanaged_quality_profiles` and `download_clients.delete_unmanaged`.
