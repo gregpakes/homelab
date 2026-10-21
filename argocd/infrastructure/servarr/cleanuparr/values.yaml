@@ -37,9 +37,10 @@
 #   Delete Private from Client on. Ignore Private, no-content-ID and "Delete if any file is
 #   blocked" off, so a torrent is removed only when every file in it is blocked; otherwise
 #   the blocked files are set to skip in qBittorrent.
-#   Sonarr, Radarr: Blacklist https://raw.githubusercontent.com/Cleanuparr/Cleanuparr/refs/heads/main/blacklist
-#     That list also blocks .rar, .r00-.r04, .zip and .7z, so a scene rar torrent loses its
-#     first volumes before Unpackerr sees it (suspected for Star Wars II, 2026-10-21).
+#   Sonarr, Radarr: Blacklist /blocklists/sonarr-radarr-blacklist.txt (blocklists-configmap.yaml)
+#     Cleanuparr's default list without the archive types Unpackerr extracts. The upstream
+#     list blocks .rar, .r00-.r04, .zip and .7z, so a scene rar torrent lost its first
+#     volumes before Unpackerr saw it (suspected for Star Wars II, 2026-10-21).
 #   Lidarr: Whitelist /blocklists/lidarr-whitelist.txt (blocklists-configmap.yaml)
 #   Readarr, Whisparr, Sportarr, LazyLibrarian: off
 controllers:
