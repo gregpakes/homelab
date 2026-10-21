@@ -1,0 +1,63 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/app-template-4.5.0/charts/other/app-template/values.schema.json
+
+# Scene releases arrive as .rar/.r00 sets. NZBGet only unpacks the outer usenet layer
+# and Radarr/Sonarr never extract archives, so without this they sit in the queue
+# forever with "Found archive file, might need to be extracted".
+controllers:
+  main:
+    strategy: Recreate
+    replicas: 1
+    pod:
+      securityContext:
+        # Same owner as NZBGet/qBittorrent output, so the arrs can hardlink and Tdarr can replace
+        runAsUser: 1000
+        runAsGroup: 988
+        fsGroup: 988
+        fsGroupChangePolicy: OnRootMismatch
+    containers:
+      unpackerr:
+        image:
+          repository: ghcr.io/unpackerr/unpackerr
+          tag: 0.16.1
+        env:
+          TZ: Europe/London
+
+          UN_RADARR_0_URL: http://radarr:8989
+          UN_RADARR_0_API_KEY:
+            valueFrom: { secretKeyRef: { name: unpackerr-secrets, key: RADARR_API_KEY } }
+          UN_RADARR_0_PATHS_0: /downloads
+          # Default is torrents only, which would skip every NZBGet download
+          UN_RADARR_0_PROTOCOLS: torrent,TorrentDownloadProtocol,usenet,UsenetDownloadProtocol
+          # Per-archive cap; the 75GB default is too close to the largest 2160p encodes (~61GB)
+          # and a hit fails the item without retrying
+          UN_RADARR_0_MAX_BYTES: 150GB
+
+          UN_SONARR_0_URL: http://sonarr:8989
+          UN_SONARR_0_API_KEY:
+            valueFrom: { secretKeyRef: { name: unpackerr-secrets, key: SONARR_API_KEY } }
+          UN_SONARR_0_PATHS_0: /downloads
+          UN_SONARR_0_PROTOCOLS: torrent,TorrentDownloadProtocol,usenet,UsenetDownloadProtocol
+        # No web server, so nothing to probe
+        probes:
+          liveness: { enabled: false }
+          readiness: { enabled: false }
+          startup: { enabled: false }
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+
+persistence:
+  # Mounted at the same path as Radarr/Sonarr so the paths in their queue resolve here
+  downloads:
+    enabled: true
+    type: nfs
+    server: 172.16.250.191
+    path: /var/nfs/shared/Media
+    advancedMounts:
+      main:
+        unpackerr:
+          - path: /downloads
