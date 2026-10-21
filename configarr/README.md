@@ -65,6 +65,35 @@ Also:
 - The `may be required` warnings for `url_base`, `api_key` and `*_imported_category` are cosmetic. Those fields are empty on the server, and declaring them as empty would itself be a change.
 - Every run clones the TRaSH-Guides and Recyclarr repos into `/app/repos` before it starts. Nothing from them is used, but the job needs internet access.
 
+## When a run fails
+
+`STOP_ON_ERROR` and `CONFIGARR_ENFORCE_CONFIG_VALIDATION` are on, so any of these
+fail the Job instead of being logged and skipped:
+- an arr that errors or can't be reached
+- a quality, custom format or quality size the server doesn't have
+- an invalid download-client field
+
+These are what an arr upgrade tends to break. The failed Job fires
+kube-prometheus-stack's `KubeJobFailed` alert to Pushover after 15 minutes. It
+repeats every 12 hours until the Job is gone, and `ttlSecondsAfterFinished`
+removes it after a day. Logs are in Loki, or for that day:
+
+```bash
+kubectl -n servarr get pods -l app.kubernetes.io/name=configarr
+```
+
+```bash
+kubectl -n servarr logs <failed-pod>
+```
+
+Runs go Sonarr first, then Radarr, so a Sonarr failure also skips that hour's
+Radarr run.
+
+After an arr upgrade, the next `:17` run's Diff Report should still say "up to
+date". A major version (Sonarr v5, for example) changes the API under Configarr:
+re-export and dry-run before merging that image bump. Do the same for Configarr's
+own version bumps, since its diff logic changes between releases.
+
 ## Checking a change before it goes live
 
 **Without any keys.** This replays saved API responses to the real Configarr
@@ -73,6 +102,7 @@ image. `RAW` is a directory written by `export-arr-config.py --raw-dir`:
 ```bash
 python3 scripts/arr-api-replay.py "$RAW" --port 8765 &
 docker run --rm -e DRY_RUN=true -e TELEMETRY_ENABLED=false \
+  -e STOP_ON_ERROR=true -e CONFIGARR_ENFORCE_CONFIG_VALIDATION=true \
   -e RADARR_URL=http://host.docker.internal:8765/radarr -e RADARR_API_KEY=replay \
   -e SONARR_URL=http://host.docker.internal:8765/sonarr -e SONARR_API_KEY=replay \
   -e NZBGET_USERNAME=nzbget -e NZBGET_PASSWORD=replay \
@@ -87,6 +117,7 @@ wasn't saved, and `WRITE` for anything that would have changed an arr.
 
 ```bash
 op run --env-file configarr/local.env -- docker run --rm -e DRY_RUN=true -e TELEMETRY_ENABLED=false \
+  -e STOP_ON_ERROR=true -e CONFIGARR_ENFORCE_CONFIG_VALIDATION=true \
   -e RADARR_URL=https://radarr.gregpakes.co.uk -e SONARR_URL=https://sonarr.gregpakes.co.uk \
   -e RADARR_API_KEY -e SONARR_API_KEY -e NZBGET_USERNAME -e NZBGET_PASSWORD \
   -e QBITTORRENT_USERNAME -e QBITTORRENT_PASSWORD \
