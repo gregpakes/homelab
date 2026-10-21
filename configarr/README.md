@@ -1,0 +1,102 @@
+# Configarr
+
+[Configarr](https://configarr.de) runs as an hourly CronJob (`:17` past the hour) and
+pushes the settings declared here into Radarr and Sonarr. Git wins: a UI change to
+anything declared here is reverted by the next run.
+
+| File | What it holds |
+| --- | --- |
+| `config.yml` | Instances, API keys and download-client logins (`!env`), the download clients and their completed-download settings |
+| `templates/homelab-radarr.yml` | Radarr's 126 custom formats, 6 quality profiles, quality sizes, naming, media management, root folders and delay profile |
+| `templates/homelab-sonarr.yml` | The same for Sonarr: 119 custom formats, 5 profiles |
+| `kustomization.yaml` | Turns the three files into ConfigMaps, which the CronJob mounts at `/app/config` |
+| `local.env` | `op://` references for running the exporter or Configarr by hand |
+
+The CronJob is `argocd/infrastructure/servarr/configarr/values.yaml`. Its Secret,
+`configarr-secrets`, comes from the 1Password items `servarr-api-keys`, `nzbget`
+and `qbittorrent` (`externalsecret.yaml` there).
+
+## Why it lives here and not in `argocd/`
+
+The configarr Application syncs `argocd/infrastructure/servarr/configarr` as a
+plain directory. Argo parses every `.yaml`/`.yml` file in such a directory as a
+Kubernetes manifest. A Configarr template has no `kind`, so it would fail the
+whole app with `Object 'Kind' is missing`, as `tdarr/README.md` describes. This folder is
+a separate kustomize source instead, and Argo only reads what `kustomization.yaml` lists.
+
+## Where the templates came from
+
+`scripts/export-arr-config.py` wrote both templates on 2026-10-21 from the live
+apps. Profilarr's last sync was 2025-11-07, so those were the profiles it left
+behind, frozen since. The export was checked against a Configarr dry run until
+nothing would change, apart from one thing noted below. **The templates are now
+the source of truth. Edit them, not the UI.**
+
+Re-running the exporter overwrites the templates with whatever the UI holds at
+that moment. That is only useful to capture a UI change on purpose before
+Configarr reverts it.
+
+## Changing something
+
+1. Edit the template or `config.yml`, and commit.
+2. Argo updates the ConfigMaps. The next hourly run applies the change.
+3. To apply it straight away: `kubectl -n servarr create job --from=cronjob/configarr configarr-manual-$(date +%s)`.
+   Read the result with `kubectl -n servarr logs job/<name>`. The run ends with a
+   "Diff Report" per instance.
+
+A new custom format needs two entries:
+- a `customFormatDefinitions` item with a new `hl-<arr>-<slug>` id
+- a `custom_formats` item that gives its score in **every** profile, `0` included
+
+A profile's `qualities` are the API's `items` in reverse, highest priority
+first. The members inside a group are reversed the same way, because Configarr
+flips both levels back.
+
+## What Configarr 1.35.0 does not enforce
+
+These come from reading its diff code. A UI change to any of them survives until something else forces a rewrite:
+- **Which qualities are allowed in a profile.** Only the order of qualities is compared. The `enabled: false` flags are applied only when the order differs too.
+- **"Unlimited" quality sizes.** The API returns those as null, and Configarr cannot declare null, so those keys are left out of `quality_definition`.
+- **Download-client passwords.** The arrs only return `********`, so with `update_password: false` a password is set when a client is created and never compared after that.
+
+Also:
+- Profiles with upgrades off always get `cutoffFormatScore: 1`. Radarr's **Any** and **Ultra-HD** had 0, so the first live run writes 1 there. Radarr doesn't use the field for grabbing while upgrades are off.
+- Root folders that aren't listed are **deleted**, so every root folder must stay listed.
+- The `may be required` warnings for `url_base`, `api_key` and `*_imported_category` are cosmetic. Those fields are empty on the server, and declaring them as empty would itself be a change.
+- Every run clones the TRaSH-Guides and Recyclarr repos into `/app/repos` before it starts. Nothing from them is used, but the job needs internet access.
+
+## Checking a change before it goes live
+
+**Without any keys.** This replays saved API responses to the real Configarr
+image. `RAW` is a directory written by `export-arr-config.py --raw-dir`:
+
+```bash
+python3 scripts/arr-api-replay.py "$RAW" --port 8765 &
+docker run --rm -e DRY_RUN=true -e TELEMETRY_ENABLED=false \
+  -e RADARR_URL=http://host.docker.internal:8765/radarr -e RADARR_API_KEY=replay \
+  -e SONARR_URL=http://host.docker.internal:8765/sonarr -e SONARR_API_KEY=replay \
+  -e NZBGET_USERNAME=nzbget -e NZBGET_PASSWORD=replay \
+  -e QBITTORRENT_USERNAME=admin -e QBITTORRENT_PASSWORD=replay \
+  -v "$PWD/configarr:/app/config:ro" ghcr.io/raydak-labs/configarr:1.35.0
+```
+
+The replay server answers GETs only. It logs `MISSING` for an endpoint that
+wasn't saved, and `WRITE` for anything that would have changed an arr.
+
+**Against the live apps.** Run from the repo root. It needs 1Password:
+
+```bash
+op run --env-file configarr/local.env -- docker run --rm -e DRY_RUN=true -e TELEMETRY_ENABLED=false \
+  -e RADARR_URL=https://radarr.gregpakes.co.uk -e SONARR_URL=https://sonarr.gregpakes.co.uk \
+  -e RADARR_API_KEY -e SONARR_API_KEY -e NZBGET_USERNAME -e NZBGET_PASSWORD \
+  -e QBITTORRENT_USERNAME -e QBITTORRENT_PASSWORD \
+  -v "$PWD/configarr:/app/config:ro" ghcr.io/raydak-labs/configarr:1.35.0
+```
+
+## Rollout
+
+1. Merged with `DRY_RUN: "true"`: the job only logs what it would change.
+2. After taking Radarr and Sonarr backups (System > Backup), set `DRY_RUN: "false"` and scale Profilarr to zero in the same change, so the two never fight.
+3. Add Lidarr and then Prowlarr, each dry-run first.
+4. Retire Profilarr.
+5. After about two weeks of clean runs, turn on `delete_unmanaged_custom_formats`, `delete_unmanaged_quality_profiles` and `download_clients.delete_unmanaged`.

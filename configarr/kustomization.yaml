@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: servarr
+
+# Fixed names so the CronJob's projected volume can reference them. A changed
+# file updates its ConfigMap in place and the next hourly run picks it up.
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: configarr-config
+    files:
+      - config.yml
+  - name: configarr-template-radarr
+    files:
+      - templates/homelab-radarr.yml
+  - name: configarr-template-sonarr
+    files:
+      - templates/homelab-sonarr.yml

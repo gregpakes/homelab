@@ -1,0 +1,123 @@
+# Configarr enforces what this file and templates/ declare, every hour (the
+# configarr CronJob in argocd/infrastructure/servarr/configarr). Read README.md
+# before editing. `!env` values come from the configarr-secrets Secret (1Password
+# via External Secrets) in the cluster, or from local.env when run by hand.
+localConfigTemplatesPath: /app/config/templates
+telemetry: false
+
+radarr:
+  radarr:
+    base_url: !env RADARR_URL
+    api_key: !env RADARR_API_KEY
+    # Custom formats, profiles, sizes, naming, media management, root folders, delay profile.
+    include:
+      - template: homelab-radarr
+    # Deletions stay off until about two weeks of hourly runs have been clean (plan step 3f).
+    delete_unmanaged_custom_formats:
+      enabled: false
+    delete_unmanaged_quality_profiles:
+      enabled: false
+    download_clients:
+      # The arrs only ever return "********", so passwords are set when a client
+      # is created and never compared or rewritten afterwards.
+      update_password: false
+      delete_unmanaged:
+        enabled: false
+      config:
+        enable_completed_download_handling: true
+        auto_redownload_failed: true
+        auto_redownload_failed_from_interactive_search: true
+        check_for_finished_download_interval: 1
+        download_client_working_folders: _UNPACK_|_FAILED_
+      data:
+        - name: NZBGet
+          type: Nzbget
+          enable: true
+          priority: 1
+          remove_completed_downloads: true
+          remove_failed_downloads: true
+          fields:
+            host: download-clients-nzbgetui.servarr.svc.cluster.local
+            port: 6789
+            use_ssl: false
+            username: !env NZBGET_USERNAME
+            password: !env NZBGET_PASSWORD
+            movie_category: Movies
+            recent_movie_priority: 0
+            older_movie_priority: 0
+            add_paused: false
+        - name: qBittorrent
+          type: QBittorrent
+          enable: true
+          priority: 5
+          remove_completed_downloads: true
+          remove_failed_downloads: true
+          fields:
+            host: download-clients-webui.servarr.svc.cluster.local
+            port: 8080
+            use_ssl: false
+            username: !env QBITTORRENT_USERNAME
+            password: !env QBITTORRENT_PASSWORD
+            movie_category: radarr
+            recent_movie_priority: 0
+            older_movie_priority: 0
+            initial_state: 0
+            sequential_order: false
+            first_and_last: false
+            content_layout: 0
+
+sonarr:
+  sonarr:
+    base_url: !env SONARR_URL
+    api_key: !env SONARR_API_KEY
+    include:
+      - template: homelab-sonarr
+    delete_unmanaged_custom_formats:
+      enabled: false
+    delete_unmanaged_quality_profiles:
+      enabled: false
+    download_clients:
+      update_password: false
+      delete_unmanaged:
+        enabled: false
+      config:
+        enable_completed_download_handling: true
+        auto_redownload_failed: true
+        auto_redownload_failed_from_interactive_search: true
+        download_client_working_folders: _UNPACK_|_FAILED_
+      data:
+        - name: NZBGet
+          type: Nzbget
+          enable: true
+          priority: 1
+          remove_completed_downloads: true
+          remove_failed_downloads: true
+          fields:
+            host: download-clients-nzbgetui.servarr.svc.cluster.local
+            port: 6789
+            use_ssl: false
+            username: !env NZBGET_USERNAME
+            password: !env NZBGET_PASSWORD
+            tv_category: Series
+            recent_tv_priority: 0
+            older_tv_priority: 0
+            add_paused: false
+        - name: qBittorrent
+          type: QBittorrent
+          enable: true
+          priority: 5
+          remove_completed_downloads: true
+          remove_failed_downloads: true
+          fields:
+            host: download-clients-webui.servarr.svc.cluster.local
+            port: 8080
+            use_ssl: false
+            username: !env QBITTORRENT_USERNAME
+            password: !env QBITTORRENT_PASSWORD
+            tv_category: tv-sonarr
+            recent_tv_priority: 0
+            older_tv_priority: 0
+            initial_state: 0
+            sequential_order: false
+            first_and_last: false
+            content_layout: 0
