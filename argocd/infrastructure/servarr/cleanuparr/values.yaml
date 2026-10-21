@@ -12,11 +12,13 @@
 #       not found in the grabbed release
 #       was unexpected considering
 #       Unable to parse
+#       Couldn't find similar album       (Lidarr, added 2026-10-21)
 #       Album match is not close enough   (Lidarr, added 2026-10-21)
 #       Has missing tracks                (Lidarr, added 2026-10-21)
 #     Lidarr never retries an album whose import failed; removing the download with a
-#     blocklist makes it search for another release, so these two keep Home Assistant's
-#     music requests flowing without a manual import.
+#     blocklist makes it search for another release, so these three keep Home Assistant's
+#     music requests flowing without a manual import. "Couldn't find similar album" is
+#     mostly whole-album image rips (one .wv/.ape file plus a cue), which Lidarr can't split.
 #     "Found archive file" is left out on purpose: Unpackerr extracts those.
 #     Skip if Not Found in Client: off. qBittorrent is the only client Cleanuparr supports here
 #       (no NZBGet), so with this on every usenet download skipped the check.

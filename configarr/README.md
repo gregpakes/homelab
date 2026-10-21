@@ -6,7 +6,7 @@ wins: a UI change to anything declared here is reverted by the next run.
 
 | File | What it holds |
 | --- | --- |
-| `config.yml` | Instances, API keys and download-client logins (`!env`), the download clients and their completed-download settings, Lidarr's naming, media management, root folder and delay profile, and Prowlarr's indexers, FlareSolverr proxy, sync profile and app links |
+| `config.yml` | Instances, API keys and download-client logins (`!env`), the download clients and their completed-download settings, Lidarr's naming, media management, root folder, delay profile and release profile, and Prowlarr's indexers, FlareSolverr proxy, sync profile and app links |
 | `templates/homelab-radarr.yml` | Radarr's 126 custom formats, 6 quality profiles, quality sizes, naming, media management, root folders and delay profile |
 | `templates/homelab-sonarr.yml` | The same for Sonarr: 119 custom formats, 5 profiles |
 | `kustomization.yaml` | Turns the three files into ConfigMaps, which the CronJob mounts at `/app/config` |

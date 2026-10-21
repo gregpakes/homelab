@@ -127,7 +127,8 @@ lidarr:
     base_url: !env LIDARR_URL
     api_key: !env LIDARR_API_KEY
     # Lidarr's quality and metadata profiles stay in the UI. Everything below
-    # matches the live values read on 2026-10-21.
+    # matches the live values read on 2026-10-21, apart from the release profile,
+    # which was added from git.
     media_naming_api:
       renameTracks: true
       replaceIllegalCharacters: true
@@ -181,6 +182,14 @@ lidarr:
         bypassIfAboveCustomFormatScore: false
         minimumCustomFormatScore: 0
         order: 2147483647
+    # The complete list: a release profile that isn't listed here is deleted. VLS is the
+    # scene tag for a vinyl single, which Lidarr otherwise grabs for the album of the same
+    # name (Michael Jackson's "Bad" single, 2026-10-21). Lidarr profiles have no name, so
+    # Configarr matches on content, and any edit here is a delete and re-create.
+    release_profiles:
+      - enabled: true
+        ignored:
+          - '/\bVLS\b/i'
     download_clients:
       update_password: false
       delete_unmanaged:
