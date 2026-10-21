@@ -1,0 +1,130 @@
+# Copy of the Home Assistant automation "Voice: play music fast via Music Assistant" (automation.voice_play_music_fast_via_music_assistant),
+# written by scripts/export-ha-config.py. Home Assistant is the live copy:
+# change it there, then re-export. home-assistant/README.md says how to restore it.
+id: '1792566409191'
+alias: 'Voice: play music fast via Music Assistant'
+description: >-
+  Handles "play ..." without the LLM when the request exactly names an artist, song, album or playlist
+  and the speaking device's room (or the named room) has a Music Assistant player. Everything else is
+  handed to the Haiku agent, so no request is dropped. Your own library (Lidarr downloads) is searched
+  before Spotify.
+triggers:
+  - trigger: conversation
+    command:
+      - play {query} (in|on) [the] {room}
+      - play {title} by {artist}
+      - play {query}
+actions:
+  - variables:
+      query: >-
+        {{ (trigger.slots.get('query') or trigger.slots.get('title') or '') | regex_replace('[.!?,]+$',
+        '') | trim }}
+      artist: '{{ (trigger.slots.get(''artist'') or '''') | regex_replace(''[.!?,]+$'', '''') | trim }}'
+      room: '{{ (trigger.slots.get(''room'') or '''') | regex_replace(''[.!?,]+$'', '''') | trim }}'
+      target_area: >-
+        {{ area_id(room) if room else (area_id(trigger.device_id) if trigger.device_id else none) }}
+      player: >-
+        {% set ma = integration_entities('music_assistant') | select('match', 'media_player\.') | list
+        %}{{ (area_entities(target_area) | select('in', ma) | reject('is_state', 'unavailable') | list
+        | first | default('')) if target_area else '' }}
+      llm_text: >-
+        {{ trigger.sentence }}{{ ' (asked in the ' ~ area_name(target_area) ~ ')' if target_area and not
+        room else '' }}
+      results: {}
+  - alias: 'No Music Assistant player for this room: hand to the LLM'
+    if:
+      - '{{ not player }}'
+    then:
+      - action: conversation.process
+        data:
+          agent_id: conversation.anthropic_claude_haiku_5_5
+          text: '{{ llm_text }}'
+          language: en
+        response_variable: llm
+      - set_conversation_response: '{{ llm.response.speech.plain.speech }}'
+      - stop: Handed to the LLM
+  - action: music_assistant.search
+    continue_on_error: true
+    data:
+      config_entry_id: 01JR2GCACNTPEPJYMKJ6X6GC34
+      name: '{{ query }}'
+      artist: '{{ artist }}'
+      media_type: '{{ [''track'', ''album''] if artist else [''artist'', ''playlist'', ''track'', ''album'']
+        }}'
+      limit: 5
+      library_only: true
+    response_variable: results
+    alias: Search your own library first (local database, no Spotify calls)
+  - variables:
+      pick: >-
+        {%- set norm = query | lower | regex_replace('^the ', '') | trim -%}{%- set ns = namespace(item=none)
+        -%}{%- for kind in (['tracks', 'albums'] if artist else ['artists', 'playlists', 'tracks', 'albums'])
+        -%}{%- for i in results.get(kind, []) -%}{%- if ns.item is none and (i.name | lower | regex_replace('^the
+        ', '') | trim) == norm and (not artist or artist | lower in (i.get('artists', []) | map(attribute='name')
+        | map('lower') | list)) -%}{%- set ns.item = i -%}{%- endif -%}{%- endfor -%}{%- endfor -%}{{
+        {'uri': ns.item.uri, 'media_type': ns.item.media_type, 'name': ns.item.name, 'artist': ns.item.name
+        if ns.item.media_type == 'artist' else ((ns.item.get('artists') or [{}])[0].get('name', '')),
+        'album': (ns.item.get('album') or {}).get('name', '')} if ns.item is not none else {} }}
+  - alias: 'No exact match in your library: try Spotify'
+    if:
+      - '{{ not pick }}'
+    then:
+      - action: music_assistant.search
+        continue_on_error: true
+        data:
+          config_entry_id: 01JR2GCACNTPEPJYMKJ6X6GC34
+          name: '{{ query }}'
+          artist: '{{ artist }}'
+          media_type: '{{ [''track'', ''album''] if artist else [''artist'', ''playlist'', ''track'',
+            ''album''] }}'
+          limit: 5
+        response_variable: results
+        alias: 'Not in your library: search Spotify'
+      - variables:
+          pick: >-
+            {%- set norm = query | lower | regex_replace('^the ', '') | trim -%}{%- set ns = namespace(item=none)
+            -%}{%- for kind in (['tracks', 'albums'] if artist else ['artists', 'playlists', 'tracks',
+            'albums']) -%}{%- for i in results.get(kind, []) -%}{%- if ns.item is none and (i.name | lower
+            | regex_replace('^the ', '') | trim) == norm and (not artist or artist | lower in (i.get('artists',
+            []) | map(attribute='name') | map('lower') | list)) -%}{%- set ns.item = i -%}{%- endif -%}{%-
+            endfor -%}{%- endfor -%}{{ {'uri': ns.item.uri, 'media_type': ns.item.media_type, 'name':
+            ns.item.name, 'artist': ns.item.name if ns.item.media_type == 'artist' else ((ns.item.get('artists')
+            or [{}])[0].get('name', '')), 'album': (ns.item.get('album') or {}).get('name', '')} if ns.item
+            is not none else {} }}
+  - alias: 'No exact match: hand to the LLM'
+    if:
+      - '{{ not pick }}'
+    then:
+      - action: conversation.process
+        data:
+          agent_id: conversation.anthropic_claude_haiku_5_5
+          text: '{{ llm_text }}'
+          language: en
+        response_variable: llm
+      - set_conversation_response: '{{ llm.response.speech.plain.speech }}'
+      - stop: Handed to the LLM
+  - alias: Start playback in the background so the reply is not held up
+    action: script.turn_on
+    target:
+      entity_id: script.voice_start_music_assistant_playback
+    data:
+      variables:
+        player: '{{ player }}'
+        media_id: '{{ pick.uri }}'
+        media_type: '{{ pick.media_type }}'
+  - alias: Send artists, albums and songs to Lidarr in the background
+    if:
+      - '{{ pick.media_type in [''artist'', ''album'', ''track''] }}'
+    then:
+      - action: script.turn_on
+        target:
+          entity_id: script.voice_send_music_request_to_lidarr
+        data:
+          variables:
+            kind: '{{ pick.media_type }}'
+            name: '{{ pick.name }}'
+            artist: '{{ pick.artist }}'
+            album: '{{ pick.album }}'
+  - set_conversation_response: Playing {{ pick.name }}
+mode: parallel
+max: 5

@@ -1,0 +1,54 @@
+# Copy of the Home Assistant automation "Music: download albums played from Spotify" (automation.music_download_albums_played_from_spotify),
+# written by scripts/export-ha-config.py. Home Assistant is the live copy:
+# change it there, then re-export. home-assistant/README.md says how to restore it.
+id: '1792602065968'
+alias: 'Music: download albums played from Spotify'
+description: >-
+  Whenever a Music Assistant player has been playing a Spotify track for 30 seconds, sends the album it's
+  on to Lidarr (via the Lidarr request script), so it's available locally next time. Skipped tracks (under
+  30 s) and further tracks from the same album are ignored.
+triggers:
+  - trigger: state
+    entity_id:
+      - media_player.kitchen_2
+      - media_player.everywhere_2
+      - media_player.greg_s_samsung_soundbar_q900a_2
+      - media_player.alexa_dining_room_2
+      - media_player.downstairs_2
+      - media_player.alexa_kitchen_2
+      - media_player.alexa_living_room
+      - media_player.show_2
+      - media_player.greg_s_sonos_era_100_2
+      - media_player.kitchen_4
+      - media_player.camille_s_echo_spot_2
+      - media_player.sloane_s_echo_spot
+    attribute: media_content_id
+    for: 00:00:30
+    note: >-
+      Track changes keep the player 'playing', so the purpose-specific media_player triggers don't fire;
+      the attribute trigger with for: 30s also ignores skipped tracks.
+conditions:
+  - alias: Still playing, and it's a Spotify track
+    condition: template
+    value_template: >-
+      {{ trigger.to_state.state == 'playing' and (trigger.to_state.attributes.media_content_id | default('',
+      true) | string).startswith('spotify') }}
+  - alias: Has an album and artist, and the album changed
+    condition: template
+    value_template: >-
+      {{ (trigger.to_state.attributes.media_album_name | default('', true)) != '' and (trigger.to_state.attributes.media_artist
+      | default('', true)) != '' and trigger.to_state.attributes.media_album_name != trigger.from_state.attributes.get('media_album_name')
+      }}
+actions:
+  - action: script.turn_on
+    target:
+      entity_id: script.voice_send_music_request_to_lidarr
+    data:
+      variables:
+        kind: track
+        name: '{{ trigger.to_state.attributes.media_title }}'
+        artist: '{{ (trigger.to_state.attributes.media_artist | string).split(''/'')[0] | trim }}'
+        album: '{{ trigger.to_state.attributes.media_album_name }}'
+mode: queued
+max: 20
+max_exceeded: silent
