@@ -5,7 +5,10 @@ controllers:
       securityContext:
         fsGroup: 988
         fsGroupChangePolicy: OnRootMismatch
-    replicas: 1
+    # Retired: Configarr (argocd/infrastructure/servarr/configarr) now owns Radarr's and
+    # Sonarr's profiles and custom formats. Profilarr v1 is EOL and was last synced on
+    # 2025-11-07. Kept at zero, with its PVC, until the app is deleted (plan stage 3e).
+    replicas: 0
     containers:
       profilarr:
         image:
