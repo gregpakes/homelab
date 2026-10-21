@@ -1,0 +1,234 @@
+# Copy of the Home Assistant script "Voice: send music request to Lidarr" (script.voice_send_music_request_to_lidarr),
+# written by scripts/export-ha-config.py. Home Assistant is the live copy:
+# change it there, then re-export. home-assistant/README.md says how to restore it.
+alias: 'Voice: send music request to Lidarr'
+description: >-
+  Adds a voice-requested artist (whole discography) or album to Lidarr and searches for it, then logs
+  the result on the Music requests to-do list. Successful requests are ticked off; anything that failed
+  stays open. dry_run looks things up and logs what would happen without changing Lidarr. Names are matched
+  ignoring case, punctuation and bracketed edition tags such as (Remastered).
+mode: queued
+max: 10
+fields:
+  kind:
+    name: Kind
+    required: true
+    selector:
+      select:
+        options:
+          - artist
+          - album
+          - track
+  name:
+    name: Name
+    description: Artist name, album title or song title, depending on kind.
+    required: true
+    selector:
+      text: {}
+  artist:
+    name: Artist
+    selector:
+      text: {}
+  album:
+    name: Album
+    description: 'For a song: the album it is on.'
+    selector:
+      text: {}
+  dry_run:
+    name: Dry run
+    default: false
+    selector:
+      boolean: {}
+variables:
+  quality_profile_id: 1
+  metadata_profile_id: 1
+  root_folder: /downloads/media/music
+sequence:
+  - variables:
+      is_dry_run: '{{ dry_run | default(false) | bool }}'
+      album_title: '{{ name if kind == ''album'' else (album | default('''')) }}'
+      label: '{{ name if kind == ''artist'' else album_title ~ '' – '' ~ (artist | default('''')) }}'
+      outcome: 'Not sent: missing artist or album name'
+      ok: false
+      lookup: {}
+      added: {}
+  - choose:
+      - alias: 'Artist: add with the whole discography'
+        conditions:
+          - '{{ kind == ''artist'' }}'
+        sequence:
+          - action: rest_command.lidarr_get
+            data:
+              path: artist/lookup?term={{ name | urlencode }}
+            response_variable: lookup
+          - variables:
+              match: >-
+                {%- set ns = namespace(m={}) -%}{%- set wn = name | lower | regex_replace('[^a-z0-9]',
+                '') -%}{%- for a in (lookup.get('content') or []) -%}{%- set an = (a.artistName | default(''))
+                | lower | regex_replace('[^a-z0-9]', '') -%}{%- if not ns.m and ((wn != '' and an == wn)
+                or ((a.artistName | default('') | lower | trim) == (name | lower | trim))) -%}{%- set
+                ns.m = a -%}{%- endif -%}{%- endfor -%}{{ ns.m }}
+          - choose:
+              - conditions:
+                  - '{{ not match }}'
+                sequence:
+                  - variables:
+                      outcome: Lidarr couldn't find this artist
+              - conditions:
+                  - '{{ (match.get(''id'') | int(0)) > 0 }}'
+                sequence:
+                  - variables:
+                      outcome: Already in Lidarr
+                      ok: true
+              - conditions:
+                  - '{{ is_dry_run }}'
+                sequence:
+                  - variables:
+                      outcome: >-
+                        Dry run: would add {{ match.artistName }} ({{ match.foreignArtistId }}) with every
+                        album monitored, and search
+                      ok: true
+            default:
+              - action: rest_command.lidarr_post
+                data:
+                  path: artist
+                  body: >-
+                    {{ {'artistName': match.artistName, 'foreignArtistId': match.foreignArtistId, 'qualityProfileId':
+                    quality_profile_id, 'metadataProfileId': metadata_profile_id, 'rootFolderPath': root_folder,
+                    'monitored': true, 'monitorNewItems': 'all', 'addOptions': {'monitor': 'all', 'searchForMissingAlbums':
+                    true}} }}
+                response_variable: added
+              - variables:
+                  ok: '{{ added.get(''status'') in [200, 201] }}'
+                  outcome: >-
+                    {{ 'Added to Lidarr, searching for the whole discography' if ok else 'Lidarr refused
+                    it (HTTP ' ~ added.get('status') ~ ')' }}
+      - alias: 'Album, or the album a song is on: add or monitor it, and search'
+        conditions:
+          - >-
+            {{ kind in ['album', 'track'] and album_title != '' and (artist | default('')) != '' }}
+        sequence:
+          - action: rest_command.lidarr_get
+            data:
+              path: album/lookup?term={{ (artist ~ ' ' ~ album_title) | urlencode }}
+            response_variable: lookup
+          - variables:
+              match: >-
+                {%- set ns = namespace(m={}) -%}{%- set wt = album_title | lower | regex_replace('\\s*[\\(\\[][^\\)\\]]*[\\)\\]]',
+                '') | regex_replace('[^a-z0-9]', '') -%}{%- set wa = artist | lower | regex_replace('[^a-z0-9]',
+                '') -%}{%- for a in (lookup.get('content') or []) -%}{%- set t = (a.title | default(''))
+                | lower | regex_replace('\\s*[\\(\\[][^\\)\\]]*[\\)\\]]', '') | regex_replace('[^a-z0-9]',
+                '') -%}{%- set ar = (a.artist.artistName | default('')) | lower | regex_replace('[^a-z0-9]',
+                '') -%}{%- set title_ok = (wt != '' and t == wt) or ((a.title | default('') | lower |
+                trim) == (album_title | lower | trim)) -%}{%- set artist_ok = (wa != '' and ar == wa)
+                or ((a.artist.artistName | default('') | lower | trim) == (artist | lower | trim)) -%}{%-
+                if not ns.m and title_ok and artist_ok -%}{%- set ns.m = a -%}{%- endif -%}{%- endfor
+                -%}{{ ns.m }}
+          - choose:
+              - conditions:
+                  - '{{ not match }}'
+                sequence:
+                  - variables:
+                      outcome: Lidarr couldn't find this album
+              - conditions:
+                  - '{{ (match.get(''id'') | int(0)) > 0 and match.get(''monitored'') == true }}'
+                sequence:
+                  - alias: 'Monitor the artist too: Lidarr hides and skips albums of unmonitored artists'
+                    action: rest_command.lidarr_put
+                    data:
+                      path: artist/editor
+                      body: '{{ {''artistIds'': [match.artistId], ''monitored'': true} }}'
+                  - variables:
+                      outcome: Already in Lidarr
+                      ok: true
+              - conditions:
+                  - '{{ is_dry_run }}'
+                sequence:
+                  - variables:
+                      outcome: >-
+                        Dry run: would {{ 'monitor' if match.get('id') else 'add' }} {{ match.title }}
+                        by {{ match.artist.artistName }} ({{ match.foreignAlbumId }}) and search
+                      ok: true
+              - conditions:
+                  - '{{ (match.get(''id'') | int(0)) > 0 }}'
+                sequence:
+                  - alias: 'Monitor the artist too: Lidarr hides and skips albums of unmonitored artists'
+                    action: rest_command.lidarr_put
+                    data:
+                      path: artist/editor
+                      body: '{{ {''artistIds'': [match.artistId], ''monitored'': true} }}'
+                  - action: rest_command.lidarr_put
+                    data:
+                      path: album/monitor
+                      body: '{{ {''albumIds'': [match.id], ''monitored'': true} }}'
+                    response_variable: added
+                  - action: rest_command.lidarr_post
+                    data:
+                      path: command
+                      body: '{{ {''name'': ''AlbumSearch'', ''albumIds'': [match.id]} }}'
+                  - variables:
+                      ok: '{{ added.get(''status'') in [200, 201, 202] }}'
+                      outcome: >-
+                        {{ 'Already in Lidarr, now monitored and searching' if ok else 'Lidarr refused
+                        it (HTTP ' ~ added.get('status') ~ ')' }}
+            default:
+              - action: rest_command.lidarr_post
+                data:
+                  path: album
+                  body: >-
+                    {{ {'foreignAlbumId': match.foreignAlbumId, 'title': match.title, 'monitored': true,
+                    'anyReleaseOk': true, 'artist': {'artistName': match.artist.artistName, 'foreignArtistId':
+                    match.artist.foreignArtistId, 'qualityProfileId': quality_profile_id, 'metadataProfileId':
+                    metadata_profile_id, 'rootFolderPath': root_folder, 'monitored': true, 'monitorNewItems':
+                    'none', 'addOptions': {'monitor': 'none', 'albumsToMonitor': [match.foreignAlbumId],
+                    'searchForMissingAlbums': false}}, 'addOptions': {'searchForNewAlbum': false}} }}
+                response_variable: added
+              - variables:
+                  ok: '{{ added.get(''status'') in [200, 201] }}'
+                  outcome: >-
+                    {{ 'Added to Lidarr, searching' if ok else 'Lidarr refused it (HTTP ' ~ added.get('status')
+                    ~ ')' }}
+              - alias: >-
+                  Lidarr adds the artist unmonitored and its first refresh resets album monitoring, so
+                  wait for that, then monitor the artist and album and search
+                if:
+                  - '{{ ok }}'
+                then:
+                  - delay:
+                      seconds: 90
+                  - alias: 'Monitor the artist too: Lidarr hides and skips albums of unmonitored artists'
+                    action: rest_command.lidarr_put
+                    data:
+                      path: artist/editor
+                      body: '{{ {''artistIds'': [added.content.artistId], ''monitored'': true} }}'
+                  - action: rest_command.lidarr_put
+                    data:
+                      path: album/monitor
+                      body: '{{ {''albumIds'': [added.content.id], ''monitored'': true} }}'
+                  - action: rest_command.lidarr_post
+                    data:
+                      path: command
+                      body: '{{ {''name'': ''AlbumSearch'', ''albumIds'': [added.content.id]} }}'
+  - alias: Remove any earlier entry for the same request
+    action: todo.remove_item
+    target:
+      entity_id: todo.music_requests
+    data:
+      item: '{{ label }}'
+    continue_on_error: true
+  - action: todo.add_item
+    target:
+      entity_id: todo.music_requests
+    data:
+      item: '{{ label }}'
+      description: '{{ outcome }} ({{ now().strftime(''%d %b %H:%M'') }})'
+  - alias: Tick off what worked; failures stay open
+    if:
+      - '{{ ok }}'
+    then:
+      - action: todo.update_item
+        target:
+          entity_id: todo.music_requests
+        data:
+          item: '{{ label }}'
+          status: completed

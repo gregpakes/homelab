@@ -1,0 +1,40 @@
+# Copy of the Home Assistant script "Voice: start Music Assistant playback" (script.voice_start_music_assistant_playback),
+# written by scripts/export-ha-config.py. Home Assistant is the live copy:
+# change it there, then re-export. home-assistant/README.md says how to restore it.
+alias: 'Voice: start Music Assistant playback'
+description: >-
+  Started in the background by the "Voice: play music fast via Music Assistant" automation, so its spoken
+  reply doesn't wait for playback to begin.
+mode: parallel
+max: 5
+fields:
+  player:
+    name: Player
+    required: true
+    selector:
+      entity:
+        domain: media_player
+        integration: music_assistant
+  media_id:
+    name: Media ID
+    required: true
+    selector:
+      text: {}
+  media_type:
+    name: Media type
+    required: true
+    selector:
+      select:
+        options:
+          - artist
+          - album
+          - playlist
+          - track
+sequence:
+  - action: music_assistant.play_media
+    target:
+      entity_id: '{{ player }}'
+    data:
+      media_id: '{{ media_id }}'
+      media_type: '{{ media_type }}'
+      enqueue: replace

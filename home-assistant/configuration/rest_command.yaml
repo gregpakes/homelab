@@ -1,0 +1,29 @@
+# Part of /config/configuration.yaml on Home Assistant: rest_command can only be set in
+# YAML, so this is kept by hand, not by scripts/export-ha-config.py. Restart HA to apply.
+#
+# lidarr_api_key lives in /config/secrets.yaml. Its value is LIDARR_API_KEY in the
+# 1Password item "Lidarr". HA reaches Lidarr through Traefik: it is outside the cluster,
+# so lidarr.servarr.svc.cluster.local doesn't resolve for it.
+rest_command:
+  lidarr_get:
+    url: "https://lidarr.gregpakes.co.uk/api/v1/{{ path }}"
+    method: get
+    headers:
+      X-Api-Key: !secret lidarr_api_key
+    timeout: 30
+  lidarr_post:
+    url: "https://lidarr.gregpakes.co.uk/api/v1/{{ path }}"
+    method: post
+    headers:
+      X-Api-Key: !secret lidarr_api_key
+    content_type: "application/json"
+    payload: "{{ body | to_json }}"
+    timeout: 30
+  lidarr_put:
+    url: "https://lidarr.gregpakes.co.uk/api/v1/{{ path }}"
+    method: put
+    headers:
+      X-Api-Key: !secret lidarr_api_key
+    content_type: "application/json"
+    payload: "{{ body | to_json }}"
+    timeout: 30

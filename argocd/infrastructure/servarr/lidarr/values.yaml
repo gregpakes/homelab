@@ -3,12 +3,20 @@
 # and are recorded here (read 2026-10-21). The groups are Lidarr's defaults.
 #
 # Quality profiles, highest priority first:
-#   Any (used for new artists): Lossless, High Quality Lossy; upgrades until Lossless
+#   Any (used for new artists): Lossless, High Quality Lossy; upgrades until Lossless.
+#     APE (inside Lossless) and WavPack are off: their single-file album images fail import.
 #   Lossless: Lossless only; no upgrades
 #   Standard: High, Mid and Low Quality Lossy; no upgrades
 # Metadata profiles:
 #   Standard (used for new artists): primary Album, secondary Studio, status Official
 #   None: nothing
+# Metadata: Write Metadata to Audio Files = Sync, Embed Cover Art on, Scrub Existing Tags off.
+#   Music Assistant reads the library over NFS and needs the Album Artist tags this writes.
+#
+# Home Assistant adds the music asked for by voice or played from Spotify, through the API
+# (home-assistant/scripts/voice_send_music_request_to_lidarr.yaml). It uses quality profile
+# id 1 (Any), metadata profile id 1 (Standard) and the Music Library root folder, so
+# recreating either profile under a new id breaks it.
 controllers:
   main:
     strategy: Recreate
