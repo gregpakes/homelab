@@ -13,7 +13,7 @@ spec:
     # 1) Upstream Helm chart (Tailscale Kubernetes operator)
     - repoURL: https://pkgs.tailscale.com/helmcharts
       chart: tailscale-operator
-      targetRevision: 1.104.1
+      targetRevision: 1.104.2
       helm:
         valueFiles:
           - $values/argocd/infrastructure/tailscale/values.yaml
