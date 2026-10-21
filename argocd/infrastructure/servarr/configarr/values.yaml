@@ -1,8 +1,8 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/app-template-4.5.0/charts/other/app-template/values.schema.json
 
-# Configarr pushes the arr settings declared in configarr/ (repo root) into Radarr and
-# Sonarr every hour, so git wins over UI edits. Its config and templates arrive as
-# ConfigMaps built by configarr/kustomization.yaml. See configarr/README.md.
+# Configarr pushes the arr settings declared in configarr/ (repo root) into Radarr,
+# Sonarr and Lidarr every hour, so git wins over UI edits. Its config and templates
+# arrive as ConfigMaps built by configarr/kustomization.yaml. See configarr/README.md.
 controllers:
   main:
     type: cronjob
@@ -38,6 +38,7 @@ controllers:
           LOG_LEVEL: info
           RADARR_URL: http://radarr:8989
           SONARR_URL: http://sonarr:8989
+          LIDARR_URL: http://lidarr:8686
         # API keys and download-client logins, referenced as !env in config.yml
         envFrom:
           - secretRef: { name: configarr-secrets }

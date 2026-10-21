@@ -1,12 +1,12 @@
 # Configarr
 
 [Configarr](https://configarr.de) runs as an hourly CronJob (`:17` past the hour) and
-pushes the settings declared here into Radarr and Sonarr. Git wins: a UI change to
-anything declared here is reverted by the next run.
+pushes the settings declared here into Radarr, Sonarr and Lidarr. Git wins: a UI
+change to anything declared here is reverted by the next run.
 
 | File | What it holds |
 | --- | --- |
-| `config.yml` | Instances, API keys and download-client logins (`!env`), the download clients and their completed-download settings |
+| `config.yml` | Instances, API keys and download-client logins (`!env`), the download clients and their completed-download settings, and Lidarr's naming, media management, root folder and delay profile |
 | `templates/homelab-radarr.yml` | Radarr's 126 custom formats, 6 quality profiles, quality sizes, naming, media management, root folders and delay profile |
 | `templates/homelab-sonarr.yml` | The same for Sonarr: 119 custom formats, 5 profiles |
 | `kustomization.yaml` | Turns the three files into ConfigMaps, which the CronJob mounts at `/app/config` |
@@ -60,7 +60,8 @@ These come from reading its diff code. A UI change to any of them survives until
 - **Download-client passwords.** The arrs only return `********`, so with `update_password: false` a password is set when a client is created and never compared after that.
 
 Also:
-- Profiles with upgrades off always get `cutoffFormatScore: 1`. Radarr's **Any** and **Ultra-HD** had 0, so the first live run writes 1 there. Radarr doesn't use the field for grabbing while upgrades are off.
+- Profiles with upgrades off always get `cutoffFormatScore: 1`. Radarr's **Any** and **Ultra-HD** had 0, so the first live run (2026-10-21) wrote 1 there. Radarr doesn't use the field for grabbing while upgrades are off.
+- Lidarr's quality and metadata profiles aren't declared, so they stay in the UI.
 - Root folders that aren't listed are **deleted**, so every root folder must stay listed.
 - The `may be required` warnings for `url_base`, `api_key` and `*_imported_category` are cosmetic. Those fields are empty on the server, and declaring them as empty would itself be a change.
 - Every run clones the TRaSH-Guides and Recyclarr repos into `/app/repos` before it starts. Nothing from them is used, but the job needs internet access.
@@ -86,8 +87,8 @@ kubectl -n servarr get pods -l app.kubernetes.io/name=configarr
 kubectl -n servarr logs <failed-pod>
 ```
 
-Runs go Sonarr first, then Radarr, so a Sonarr failure also skips that hour's
-Radarr run.
+Runs go Sonarr, Radarr, then Lidarr, so a failure also skips the arrs after it
+for that hour.
 
 After an arr upgrade, the next `:17` run's Diff Report should still say "up to
 date". A major version (Sonarr v5, for example) changes the API under Configarr:
@@ -97,7 +98,8 @@ own version bumps, since its diff logic changes between releases.
 ## Checking a change before it goes live
 
 **Without any keys.** This replays saved API responses to the real Configarr
-image. `RAW` is a directory written by `export-arr-config.py --raw-dir`:
+image. `RAW` is a directory written by `export-arr-config.py --raw-dir`. That
+saves Radarr and Sonarr; Lidarr's responses were saved by hand into `RAW/lidarr/`:
 
 ```bash
 python3 scripts/arr-api-replay.py "$RAW" --port 8765 &
@@ -105,6 +107,7 @@ docker run --rm -e DRY_RUN=true -e TELEMETRY_ENABLED=false \
   -e STOP_ON_ERROR=true -e CONFIGARR_ENFORCE_CONFIG_VALIDATION=true \
   -e RADARR_URL=http://host.docker.internal:8765/radarr -e RADARR_API_KEY=replay \
   -e SONARR_URL=http://host.docker.internal:8765/sonarr -e SONARR_API_KEY=replay \
+  -e LIDARR_URL=http://host.docker.internal:8765/lidarr -e LIDARR_API_KEY=replay \
   -e NZBGET_USERNAME=nzbget -e NZBGET_PASSWORD=replay \
   -e QBITTORRENT_USERNAME=admin -e QBITTORRENT_PASSWORD=replay \
   -v "$PWD/configarr:/app/config:ro" ghcr.io/raydak-labs/configarr:1.35.0
@@ -119,15 +122,16 @@ wasn't saved, and `WRITE` for anything that would have changed an arr.
 op run --env-file configarr/local.env -- docker run --rm -e DRY_RUN=true -e TELEMETRY_ENABLED=false \
   -e STOP_ON_ERROR=true -e CONFIGARR_ENFORCE_CONFIG_VALIDATION=true \
   -e RADARR_URL=https://radarr.gregpakes.co.uk -e SONARR_URL=https://sonarr.gregpakes.co.uk \
-  -e RADARR_API_KEY -e SONARR_API_KEY -e NZBGET_USERNAME -e NZBGET_PASSWORD \
+  -e LIDARR_URL=https://lidarr.gregpakes.co.uk \
+  -e RADARR_API_KEY -e SONARR_API_KEY -e LIDARR_API_KEY -e NZBGET_USERNAME -e NZBGET_PASSWORD \
   -e QBITTORRENT_USERNAME -e QBITTORRENT_PASSWORD \
   -v "$PWD/configarr:/app/config:ro" ghcr.io/raydak-labs/configarr:1.35.0
 ```
 
 ## Rollout
 
-1. Merged with `DRY_RUN: "true"`: the job only logs what it would change.
-2. After taking Radarr and Sonarr backups (System > Backup), set `DRY_RUN: "false"` and scale Profilarr to zero in the same change, so the two never fight.
-3. Add Lidarr and then Prowlarr, each dry-run first.
+1. Merged with `DRY_RUN: "true"`, so the job only logged what it would change (#406).
+2. After Radarr and Sonarr backups, `DRY_RUN: "false"` and Profilarr scaled to zero in the same change, so the two never fight (#407).
+3. Add Lidarr, then Prowlarr, each dry-run first.
 4. Retire Profilarr.
 5. After about two weeks of clean runs, turn on `delete_unmanaged_custom_formats`, `delete_unmanaged_quality_profiles` and `download_clients.delete_unmanaged`.
