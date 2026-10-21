@@ -121,3 +121,110 @@ sonarr:
             sequential_order: false
             first_and_last: false
             content_layout: 0
+
+lidarr:
+  lidarr:
+    base_url: !env LIDARR_URL
+    api_key: !env LIDARR_API_KEY
+    # Lidarr's quality and metadata profiles stay in the UI. Everything below
+    # matches the live values read on 2026-10-21.
+    media_naming_api:
+      renameTracks: true
+      replaceIllegalCharacters: true
+      colonReplacementFormat: 4
+      standardTrackFormat: "{Album Title} ({Release Year})/{Artist Name} - {Album Title} - {track:00} - {Track Title}"
+      multiDiscTrackFormat: "{Album Title} ({Release Year})/{Medium Format} {medium:00}/{Artist Name} - {Album Title} - {track:00} - {Track Title}"
+      artistFolderFormat: "{Artist Name}"
+      includeArtistName: false
+      includeAlbumTitle: false
+      includeQuality: false
+      replaceSpaces: false
+    media_management:
+      autoUnmonitorPreviouslyDownloadedTracks: false
+      recycleBin: ""
+      recycleBinCleanupDays: 7
+      downloadPropersAndRepacks: preferAndUpgrade
+      createEmptyArtistFolders: false
+      deleteEmptyFolders: false
+      fileDate: none
+      watchLibraryForChanges: true
+      rescanAfterRefresh: always
+      allowFingerprinting: newFiles
+      setPermissionsLinux: false
+      chmodFolder: "755"
+      chownGroup: ""
+      skipFreeSpaceCheckWhenImporting: false
+      minimumFreeSpaceWhenImporting: 100
+      copyUsingHardlinks: true
+      enableMediaInfo: true
+      useScriptImport: false
+      scriptImportPath: ""
+      importExtraFiles: false
+      extraFileExtensions: srt
+    # Lidarr root folders carry defaults for newly added artists. A root folder
+    # that isn't listed here is deleted.
+    root_folders:
+      - path: /downloads/media/music
+        name: Music Library
+        metadata_profile: Standard
+        quality_profile: Any
+        monitor: all
+        monitor_new_album: all
+    delay_profiles:
+      default:
+        enableUsenet: true
+        enableTorrent: true
+        preferredProtocol: usenet
+        usenetDelay: 0
+        torrentDelay: 0
+        bypassIfHighestQuality: true
+        bypassIfAboveCustomFormatScore: false
+        minimumCustomFormatScore: 0
+        order: 2147483647
+    download_clients:
+      update_password: false
+      delete_unmanaged:
+        enabled: false
+      config:
+        enable_completed_download_handling: true
+        auto_redownload_failed: true
+        auto_redownload_failed_from_interactive_search: true
+        download_client_working_folders: _UNPACK_|_FAILED_
+      data:
+        - name: NZBGet
+          type: Nzbget
+          enable: true
+          priority: 1
+          remove_completed_downloads: true
+          remove_failed_downloads: true
+          fields:
+            host: download-clients-nzbgetui.servarr.svc.cluster.local
+            port: 6789
+            use_ssl: false
+            username: !env NZBGET_USERNAME
+            password: !env NZBGET_PASSWORD
+            music_category: Music
+            recent_music_priority: 0
+            older_music_priority: 0
+            add_paused: false
+        # Priority 1 here and 5 in Radarr and Sonarr, as live. Priority only ranks
+        # clients of the same protocol, and this is the only torrent client.
+        - name: qBittorrent
+          type: QBittorrent
+          enable: true
+          priority: 1
+          remove_completed_downloads: true
+          remove_failed_downloads: true
+          fields:
+            host: download-clients-webui.servarr.svc.cluster.local
+            port: 8080
+            use_ssl: false
+            username: !env QBITTORRENT_USERNAME
+            password: !env QBITTORRENT_PASSWORD
+            music_category: lidarr
+            recent_music_priority: 0
+            older_music_priority: 0
+            initial_state: 0
+            sequential_order: false
+            first_and_last: false
+            content_layout: 0

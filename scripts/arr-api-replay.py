@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-Stand in for Radarr and Sonarr by replaying API responses saved with
-`scripts/export-arr-config.py --raw-dir DIR`, so a Configarr dry run can be
-checked with no API keys and no access to the real apps.
+Stand in for the arrs by replaying saved API responses (from
+`scripts/export-arr-config.py --raw-dir DIR`, or saved by hand), so a Configarr
+dry run can be checked with no API keys and no access to the real apps.
 
     python3 scripts/arr-api-replay.py DIR [--port 8765]
 
-GET /<arr>/api and /<arr>/api/v3/<endpoint> return DIR/<arr>/<endpoint>.json
+GET /<arr>/api and /<arr>/api/{v1,v3}/<endpoint> return DIR/<arr>/<endpoint>.json
 (slashes become dashes). Anything else gets a 404 or 405 and is logged loudly:
-a 404 means the exporter should save one more endpoint, and a POST, PUT or
-DELETE means the run was not a dry run. See configarr/README.md.
+a 404 means one more endpoint needs saving, and a POST, PUT or DELETE means the
+run was not a dry run. See configarr/README.md.
 """
 
 import argparse
@@ -28,8 +28,8 @@ def make_handler(raw_dir: Path):
             endpoint = None
             if rest == "api":
                 endpoint = "api"
-            elif rest.startswith("api/v3/"):
-                endpoint = rest.removeprefix("api/v3/").replace("/", "-")
+            elif rest.startswith(("api/v1/", "api/v3/")):
+                endpoint = rest[len("api/v3/"):].replace("/", "-")
             path = raw_dir / arr / f"{endpoint}.json" if endpoint else None
             if path is None or not path.is_file():
                 print(f"MISSING  GET {self.path}", file=sys.stderr, flush=True)
