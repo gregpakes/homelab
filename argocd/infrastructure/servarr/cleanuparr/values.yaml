@@ -16,6 +16,7 @@
 #       Album match is not close enough   (Lidarr, added 2026-10-21)
 #       Has missing tracks                (Lidarr, added 2026-10-21)
 #       Found executable file             (added 2026-10-21)
+#       Found archive file                (added 2026-10-21)
 #     Lidarr never retries an album whose import failed; removing the download with a
 #     blocklist makes it search for another release, so these three keep Home Assistant's
 #     music requests flowing without a manual import. "Couldn't find similar album" is
@@ -23,7 +24,10 @@
 #     "Found executable file" is the arrs' warning for a download with an .exe in it. Fake
 #     usenet albums are just an .exe and a .zip, and the Malware Blocker can't see NZBGet,
 #     so this pattern is what clears them.
-#     "Found archive file" is left out on purpose: Unpackerr extracts those.
+#     "Found archive file" only clears archives Unpackerr can't extract, such as a
+#     password-protected fake that the Sonarr/Radarr blocklist now lets download in full.
+#     Unpackerr extracts a good set within minutes and the arr imports it, long before the
+#     fifth hourly strike.
 #     Skip if Not Found in Client: off. qBittorrent is the only client Cleanuparr supports here
 #       (no NZBGet), so with this on every usenet download skipped the check.
 #     Force Import: on, max tries 3 (imports "matched to series/movie by ID" blocks)
