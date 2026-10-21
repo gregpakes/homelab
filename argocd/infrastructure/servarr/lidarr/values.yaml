@@ -1,3 +1,14 @@
+# Configarr (configarr/config.yml) manages Lidarr's naming, media management, root folder,
+# delay profile and download clients. Its quality and metadata profiles stay in the UI
+# and are recorded here (read 2026-10-21). The groups are Lidarr's defaults.
+#
+# Quality profiles, highest priority first:
+#   Any (used for new artists): Lossless, High Quality Lossy; upgrades until Lossless
+#   Lossless: Lossless only; no upgrades
+#   Standard: High, Mid and Low Quality Lossy; no upgrades
+# Metadata profiles:
+#   Standard (used for new artists): primary Album, secondary Studio, status Official
+#   None: nothing
 controllers:
   main:
     strategy: Recreate

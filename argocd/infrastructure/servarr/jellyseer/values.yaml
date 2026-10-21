@@ -1,4 +1,21 @@
-# argocd/infrastructure/servarr/jellyseerr/values.yaml
+# Seerr keeps its settings in /app/config/settings.json and has no env or file
+# overrides for them, so they are set in the UI and recorded here (read 2026-10-21).
+#
+# Media server: Plex at https://plex.gregpakes.co.uk (443, TLS). Libraries: Movies,
+#   Movies - Kids, TV, TV - Kids. Plex and local logins are both allowed; new users
+#   get the Request permission only.
+# Radarr (default, not 4K): radarr.servarr.svc.cluster.local:8989, root
+#   /downloads/media/movies, minimum availability Released, no tags, sync off.
+# Sonarr (default, not 4K): sonarr.servarr.svc.cluster.local:8989, root
+#   /downloads/media/tv, season folders off, no tags, sync off.
+#   Both store quality profile 1 ("Any") as their default. Radarr's Any accepts CAM and
+#   telesync, and Sonarr has no profile 1 at all. Requests so far went out with
+#   2160p Quality (9) or 1080p Quality (12) chosen per request; pick a real default in
+#   Settings > Services before relying on it.
+#   Each server holds its arr's API key (the same keys as servarr-api-keys).
+# Notifications: Pushover for everything except test and auto-requested, and ntfy for
+#   media available. Their tokens and URLs live only in settings.json.
+# General: streaming region GB, partial season requests on, special episodes off.
 controllers:
   main:
     strategy: Recreate

@@ -1,3 +1,16 @@
+# NeutArr keeps its settings in its own database under /config, edited in the UI, so
+# they are recorded here (read 2026-10-21).
+#
+# Radarr hunter: http://radarr.servarr.svc.cluster.local:8989. Searches 1 missing movie
+#   per cycle, no upgrade hunting, every 15 minutes, at most 20 API calls an hour,
+#   monitored only, skipping future releases, release type physical.
+# Sonarr hunter: http://sonarr.servarr.svc.cluster.local:8989. Searches 1 missing episode
+#   per cycle, no upgrade hunting, every 15 minutes, at most 20 API calls an hour,
+#   monitored only, skipping future episodes.
+# Each holds its arr's API key (the same keys as servarr-api-keys).
+# Off: the Lidarr, Readarr, Whisparr and Eros hunters, Swaparr, and notifications.
+# NeutArr has no tagging option, so the huntarr-missing and huntarr-upgrade tags in
+#   Radarr and Sonarr are Huntarr leftovers and can be deleted by hand.
 controllers:
   neutarr:
     strategy: Recreate

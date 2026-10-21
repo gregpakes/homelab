@@ -1,3 +1,12 @@
+# Tdarr keeps its libraries, flows and node settings in its own database
+# (/app/server/Tdarr/DB2), edited in the UI, so they are recorded here (read 2026-10-21).
+#
+# Flow "Strip foreign tracks, commentary and non-forced subtitles" (id pCjXSbqEp). Its
+#   canonical copy is tdarr/flow.json at the repo root; tdarr/README.md covers importing it.
+# Library "Media": source /media/media, cache /temp, output in place, using that flow.
+#   Containers: mkv,mp4,mov,m4v,mpg,mpeg,avi,flv,webm,wmv,vob,evo,iso,m2ts,ts.
+#   Folder watching on; scan on start and scheduled scans off.
+# Node "tdarr-node": 1 GPU transcode worker, 1 CPU health-check worker, no CPU transcodes.
 controllers:
   server:
     strategy: Recreate
