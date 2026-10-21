@@ -1,3 +1,25 @@
+# Cleanuparr keeps all cleaner settings in its own database under /config; env vars only
+# cover port/bind/base path/IDs/DB, so these are set in the UI and recorded here.
+#
+# Queue Cleaner (set 2026-10-21), runs hourly:
+#   Failed Import: max strikes 5, pattern mode Include
+#     Included patterns:
+#       No files found are eligible for import
+#       Not a Custom Format upgrade
+#       Not an upgrade
+#       contains more episodes than this file contains
+#       title mismatch
+#       not found in the grabbed release
+#       was unexpected considering
+#       Unable to parse
+#     "Found archive file" is left out on purpose: Unpackerr extracts those.
+#     Skip if Not Found in Client: off. qBittorrent is the only client Cleanuparr supports here
+#       (no NZBGet), so with this on every usenet download skipped the check.
+#     Force Import: on, max tries 3 (imports "matched to series/movie by ID" blocks)
+#     Ignore Private / Delete Private from Client: off, so private torrents keep seeding
+#   Downloading Metadata: max strikes 3 (was 0 and left a magnet stuck for a month)
+#   Errored Downloads: max strikes 0
+#   Stalled and Slow rules: one each, 3 strikes
 controllers:
   main:
     strategy: Recreate
