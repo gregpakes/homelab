@@ -228,3 +228,200 @@ lidarr:
             sequential_order: false
             first_and_last: false
             content_layout: 0
+
+prowlarr:
+  prowlarr:
+    base_url: !env PROWLARR_URL
+    api_key: !env PROWLARR_API_KEY
+    # Configarr compares only the fields listed, but a rewrite starts from the
+    # definition's defaults, so every field with a value is listed. The info_*
+    # fields are the definitions' own help text and are left out.
+    tags: [flaresolverr]
+    sync_profiles:
+      data:
+        - name: Standard
+          enable_rss: true
+          enable_automatic_search: true
+          enable_interactive_search: true
+          minimum_seeders: 1
+    indexer_proxies:
+      data:
+        # Indexers tagged flaresolverr fetch through this proxy
+        - name: FlareSolverr
+          type: FlareSolverr
+          tags: [flaresolverr]
+          fields:
+            host: http://flaresolverr.servarr.svc.cluster.local:8191/
+            requestTimeout: 60
+    indexers:
+      # kickasstorrents.to and .ws are deliberately not listed: both have been
+      # failing for months and are being deleted by hand.
+      data:
+        # Newznab presets go by preset name. `definition: Newznab` would pick the
+        # first preset (abNZB) as the template for any rewrite.
+        - name: NZBgeek
+          definition: NZBgeek
+          enable: true
+          priority: 15
+          sync_profile: Standard
+          tags: []
+          fields:
+            baseUrl: https://api.nzbgeek.info
+            apiPath: /api
+            apiKey: !env NZBGEEK_API_KEY
+            vipExpiration: ""
+            baseSettings.limitsUnit: 0
+        - name: altHUB
+          definition: altHUB
+          enable: true
+          priority: 15
+          sync_profile: Standard
+          tags: [flaresolverr]
+          fields:
+            baseUrl: https://api.althub.co.za
+            apiPath: /api
+            apiKey: !env ALTHUB_API_KEY
+            vipExpiration: ""
+            baseSettings.limitsUnit: 0
+        - name: TorrentLeech
+          definition: torrentleech
+          enable: true
+          priority: 25
+          sync_profile: Standard
+          tags: [flaresolverr]
+          fields:
+            definitionFile: torrentleech
+            baseSettings.limitsUnit: 0
+            torrentBaseSettings.seedRatio: 1
+            torrentBaseSettings.preferMagnetUrl: false
+            # Cardigann logins are compared as plain text, so these must match exactly
+            username: !env TORRENTLEECH_USERNAME
+            password: !env TORRENTLEECH_PASSWORD
+            alt2fatoken: ""
+            freeleech: false
+            exclude_scene: false
+            exclude_archives: false
+            sort: 0
+            type: 1
+        - name: The Pirate Bay
+          definition: thepiratebay
+          enable: true
+          priority: 25
+          sync_profile: Standard
+          tags: []
+          fields:
+            definitionFile: thepiratebay
+            baseSettings.limitsUnit: 0
+            torrentBaseSettings.seedRatio: 1
+            torrentBaseSettings.preferMagnetUrl: false
+            apiurl: apibay.org
+            top100: 6
+            uploader: ""
+        - name: LimeTorrents
+          definition: limetorrents
+          enable: true
+          priority: 25
+          sync_profile: Standard
+          tags: []
+          fields:
+            definitionFile: limetorrents
+            baseSettings.limitsUnit: 0
+            torrentBaseSettings.seedRatio: 1
+            torrentBaseSettings.preferMagnetUrl: false
+            primarydownloadlink: 1
+            fallbackdownloadlink: 0
+            sort: 0
+        - name: TorrentDownload
+          definition: torrentdownload
+          enable: true
+          priority: 25
+          sync_profile: Standard
+          tags: []
+          fields:
+            definitionFile: torrentdownload
+            baseSettings.limitsUnit: 0
+            torrentBaseSettings.preferMagnetUrl: false
+            sort: 1
+    applications:
+      data:
+        - name: Radarr
+          type: Radarr
+          sync_level: fullSync
+          tags: []
+          fields:
+            prowlarrUrl: http://prowlarr.servarr.svc.cluster.local:9696
+            baseUrl: http://radarr.servarr.svc.cluster.local:8989
+            apiKey: !env RADARR_API_KEY
+            syncCategories: [2000, 2010, 2020, 2030, 2040, 2045, 2050, 2060, 2070, 2080, 2090]
+            syncRejectBlocklistedTorrentHashesWhileGrabbing: true
+        - name: Sonarr
+          type: Sonarr
+          sync_level: fullSync
+          tags: []
+          fields:
+            prowlarrUrl: http://prowlarr.servarr.svc.cluster.local:9696
+            baseUrl: http://sonarr.servarr.svc.cluster.local:8989
+            apiKey: !env SONARR_API_KEY
+            syncCategories: [5000, 5010, 5020, 5030, 5040, 5045, 5050, 5090]
+            animeSyncCategories: [5070]
+            syncAnimeStandardFormatSearch: true
+            syncRejectBlocklistedTorrentHashesWhileGrabbing: true
+        - name: Lidarr
+          type: Lidarr
+          sync_level: fullSync
+          tags: []
+          fields:
+            prowlarrUrl: http://prowlarr.servarr.svc.cluster.local:9696
+            baseUrl: http://lidarr.servarr.svc.cluster.local:8686
+            apiKey: !env LIDARR_API_KEY
+            syncCategories: [3000, 3010, 3030, 3040, 3050, 3060]
+            syncRejectBlocklistedTorrentHashesWhileGrabbing: false
+        # Sportarr speaks Sonarr's API. It used to go out through the ingress
+        # (https://sportarr.gregpakes.co.uk) and now stays in-cluster.
+        - name: Sportarr
+          type: Sonarr
+          sync_level: fullSync
+          tags: []
+          fields:
+            prowlarrUrl: http://prowlarr.servarr.svc.cluster.local:9696
+            baseUrl: http://sportarr.servarr.svc.cluster.local:1867
+            apiKey: !env SPORTARR_API_KEY
+            syncCategories: [5010, 5020, 5030, 5040, 5045, 5050, 5060, 5090]
+            animeSyncCategories: [5070]
+            syncAnimeStandardFormatSearch: true
+            syncRejectBlocklistedTorrentHashesWhileGrabbing: false
+    # For grabs started from Prowlarr's own search page
+    download_clients:
+      update_password: false
+      delete_unmanaged:
+        enabled: false
+      data:
+        - name: NZBGet
+          type: Nzbget
+          enable: true
+          priority: 1
+          fields:
+            host: download-clients-nzbgetui.servarr.svc.cluster.local
+            port: 6789
+            use_ssl: false
+            username: !env NZBGET_USERNAME
+            password: !env NZBGET_PASSWORD
+            category: Prowlarr
+            priority: 0
+            add_paused: false
+        - name: qBittorrent
+          type: QBittorrent
+          enable: true
+          priority: 1
+          fields:
+            host: download-clients-webui.servarr.svc.cluster.local
+            port: 8080
+            use_ssl: false
+            username: !env QBITTORRENT_USERNAME
+            password: !env QBITTORRENT_PASSWORD
+            category: Movies
+            priority: 0
+            initial_state: 0
+            sequential_order: false
+            first_and_last: false
+            content_layout: 0
