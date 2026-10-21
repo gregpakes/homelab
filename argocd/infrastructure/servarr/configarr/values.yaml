@@ -1,0 +1,78 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/app-template-4.5.0/charts/other/app-template/values.schema.json
+
+# Configarr pushes the arr settings declared in configarr/ (repo root) into Radarr and
+# Sonarr every hour, so git wins over UI edits. Its config and templates arrive as
+# ConfigMaps built by configarr/kustomization.yaml. See configarr/README.md.
+controllers:
+  main:
+    type: cronjob
+    cronjob:
+      schedule: "17 * * * *"
+      timeZone: Europe/London
+      # Never two runs at once; a slow TRaSH clone must not stack up behind itself
+      concurrencyPolicy: Forbid
+      startingDeadlineSeconds: 600
+      successfulJobsHistory: 3
+      failedJobsHistory: 3
+      # A failed run is retried by the next hourly one, not straight away
+      backoffLimit: 0
+      # A failed Job fires kube-prometheus-stack's KubeJobFailed alert (Pushover) until the
+      # Job is gone. This clears a one-off failure after a day; logs stay in Loki.
+      ttlSecondsAfterFinished: 86400
+    containers:
+      configarr:
+        image:
+          repository: ghcr.io/raydak-labs/configarr
+          tag: 1.35.0
+        env:
+          TZ: Europe/London
+          # "true": log what would change and write nothing. Plan stage 3b sets "false".
+          DRY_RUN: "true"
+          # Without these Configarr logs an error and still exits 0, so the Job "succeeds".
+          # With them, a failed arr, an unknown quality or an invalid download-client field
+          # (what an arr upgrade tends to cause) fails the Job and alerts.
+          STOP_ON_ERROR: "true"
+          CONFIGARR_ENFORCE_CONFIG_VALIDATION: "true"
+          TELEMETRY_ENABLED: "false"
+          LOG_LEVEL: info
+          RADARR_URL: http://radarr:8989
+          SONARR_URL: http://sonarr:8989
+        # API keys and download-client logins, referenced as !env in config.yml
+        envFrom:
+          - secretRef: { name: configarr-secrets }
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+
+persistence:
+  # config.yml at /app/config/config.yml and the templates under /app/config/templates,
+  # matching localConfigTemplatesPath in config.yml
+  config:
+    type: custom
+    volumeSpec:
+      projected:
+        sources:
+          - configMap:
+              name: configarr-config
+          - configMap:
+              name: configarr-template-radarr
+              items:
+                - { key: homelab-radarr.yml, path: templates/homelab-radarr.yml }
+          - configMap:
+              name: configarr-template-sonarr
+              items:
+                - { key: homelab-sonarr.yml, path: templates/homelab-sonarr.yml }
+    globalMounts:
+      - path: /app/config
+        readOnly: true
+  # Configarr clones the TRaSH-Guides and Recyclarr config repos here on every run, so
+  # the job needs internet access. Nothing in them is used: every custom format and
+  # profile is defined locally.
+  repos:
+    type: emptyDir
+    globalMounts:
+      - path: /app/repos
