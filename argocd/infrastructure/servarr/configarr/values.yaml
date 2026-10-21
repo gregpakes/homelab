@@ -26,8 +26,9 @@ controllers:
           tag: 1.35.0
         env:
           TZ: Europe/London
-          # "true": log what would change and write nothing. Plan stage 3b sets "false".
-          DRY_RUN: "true"
+          # "true" logs what would change and writes nothing. Set it back to "true"
+          # to pause enforcement without removing the CronJob.
+          DRY_RUN: "false"
           # Without these Configarr logs an error and still exits 0, so the Job "succeeds".
           # With them, a failed arr, an unknown quality or an invalid download-client field
           # (what an arr upgrade tends to cause) fails the Job and alerts.
