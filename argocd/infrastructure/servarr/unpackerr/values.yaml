@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/app-template-4.5.0/charts/other/app-template/values.schema.json
 
 # Scene releases arrive as .rar/.r00 sets. NZBGet only unpacks the outer usenet layer
-# and Radarr/Sonarr never extract archives, so without this they sit in the queue
+# and Radarr/Sonarr/Lidarr never extract archives, so without this they sit in the queue
 # forever with "Found archive file, might need to be extracted".
 controllers:
   main:
@@ -37,6 +37,12 @@ controllers:
             valueFrom: { secretKeyRef: { name: unpackerr-secrets, key: SONARR_API_KEY } }
           UN_SONARR_0_PATHS_0: /downloads
           UN_SONARR_0_PROTOCOLS: torrent,TorrentDownloadProtocol,usenet,UsenetDownloadProtocol
+
+          UN_LIDARR_0_URL: http://lidarr:8686
+          UN_LIDARR_0_API_KEY:
+            valueFrom: { secretKeyRef: { name: unpackerr-secrets, key: LIDARR_API_KEY } }
+          UN_LIDARR_0_PATHS_0: /downloads
+          UN_LIDARR_0_PROTOCOLS: torrent,TorrentDownloadProtocol,usenet,UsenetDownloadProtocol
         # No web server, so nothing to probe
         probes:
           liveness: { enabled: false }
@@ -51,7 +57,7 @@ controllers:
             memory: 1Gi
 
 persistence:
-  # Mounted at the same path as Radarr/Sonarr so the paths in their queue resolve here
+  # Mounted at the same path as Radarr/Sonarr/Lidarr so the paths in their queue resolve here
   downloads:
     enabled: true
     type: nfs
