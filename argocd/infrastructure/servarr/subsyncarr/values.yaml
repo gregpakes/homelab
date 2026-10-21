@@ -29,6 +29,14 @@ controllers:
           INCLUDE_ENGINES: "ffsubsync,autosubsync"
           WEB_HOST: "0.0.0.0"
           WEB_PORT: "3000"
+        # Must sit under the container; a top-level resources: key is silently ignored
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
 
 service:
   main:
@@ -67,11 +75,3 @@ persistence:
     existingClaim: subsyncarr-plus-data
     globalMounts:
       - path: /app/data
-
-resources:
-  requests:
-    cpu: 100m
-    memory: 256Mi
-  limits:
-    cpu: 1000m
-    memory: 1Gi

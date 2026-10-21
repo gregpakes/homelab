@@ -15,6 +15,19 @@ controllers:
           TZ: Europe/London
           PUID: "1000"
           PGID: "988"
+          # config.xml settings; env wins over the file and over UI edits. Restart to apply.
+          # RADARR__AUTH__APIKEY comes from envFrom below.
+          RADARR__AUTH__METHOD: Forms           # exact case, or it silently falls back to the file
+          RADARR__AUTH__REQUIRED: Enabled
+          RADARR__SERVER__PORT: "8989"          # not Radarr's default 7878; Service, probes and clients use 8989
+          RADARR__LOG__LEVEL: info
+          RADARR__LOG__ANALYTICSENABLED: "False"
+          RADARR__UPDATE__MECHANISM: Docker
+          RADARR__UPDATE__AUTOMATICALLY: "False"
+          RADARR__UPDATE__BRANCH: master
+        # optional: if the secret is missing, Radarr starts with the key already in config.xml
+        envFrom:
+          - secretRef: { name: radarr-secrets, optional: true }
         probes:
           liveness:  { enabled: true,  type: TCP, port: 8989 }
           readiness: { enabled: true,  type: TCP, port: 8989 }

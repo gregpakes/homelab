@@ -43,6 +43,14 @@ controllers:
           liveness:  { enabled: true, type: HTTP, path: /health, port: 11011 }
           readiness: { enabled: true, type: HTTP, path: /health, port: 11011 }
           startup:   { enabled: true, type: HTTP, path: /health, port: 11011 }
+        # Must sit under the container; a top-level resources: key is silently ignored
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
 service:
   main:
     controller: main
@@ -70,11 +78,3 @@ persistence:
     enabled: true
     type: persistentVolumeClaim
     existingClaim: cleanuparr-config
-
-resources:
-  requests:
-    cpu: 100m
-    memory: 256Mi
-  limits:
-    cpu: 500m
-    memory: 512Mi

@@ -45,6 +45,4 @@ service:
 # Flaresolverr is stateless, so this is fine.
 persistence: {}
 
-# Optionally, add probes if you want to use Aspire or Argo health checks
-defaultProbes:
-  enabled: true
+# Probes: the chart's defaults (TCP on the service port) already apply to the app container
