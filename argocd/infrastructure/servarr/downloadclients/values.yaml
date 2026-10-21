@@ -112,6 +112,10 @@ controllers:
           TZ: Europe/London
           PUID: "1000"
           PGID: "988"
+        # Logins for the nzbget-config script. optional: with no secret it
+        # leaves them alone.
+        envFrom:
+          - secretRef: { name: nzbget-secrets, optional: true }
         ports:
           - name: httpnzb
             containerPort: 6789
@@ -297,6 +301,92 @@ configMaps:
             }
         }
 
+  # NZBGet reads nzbget.conf when it starts or reloads; a UI save alone
+  # changes nothing live.
+  nzbget-config:
+    data:
+      10-nzbget-config.sh: |
+        #!/bin/bash
+        set -euo pipefail
+
+        conf=/config/nzbget.conf
+
+        # kv_set KEY VALUE sets KEY=VALUE, adding the line if missing. awk reads
+        # its arguments from ENVIRON because -v expands backslash escapes,
+        # which would mangle passwords.
+        kv_set() {
+          local tmp
+          tmp=$(mktemp)
+          K="$1" V="$2" awk '
+            BEGIN { key = ENVIRON["K"] "="; line = key ENVIRON["V"] }
+            index($0, key) == 1 {
+              if (!done) { print line; done = 1 }
+              next
+            }
+            { print }
+            END { if (!done) print line }
+          ' "$conf" > "$tmp"
+          # cat into the existing file keeps its owner and mode
+          cat "$tmp" > "$conf"
+          rm -f "$tmp"
+        }
+
+        # Logins come from nzbget-secrets and are skipped when it is missing
+        if [[ -n ${CONTROL_USERNAME:-} && -n ${CONTROL_PASSWORD:-} ]]; then
+          kv_set ControlUsername "$CONTROL_USERNAME"
+          kv_set ControlPassword "$CONTROL_PASSWORD"
+        fi
+
+        # Work happens on k3s-05's local disk; only finished jobs go to the NFS
+        # share, which is the one path the arrs can read
+        kv_set MainDir /config
+        kv_set DestDir /downloads/downloads/nzbget/completed
+        kv_set InterDir /mnt/local-downloads/nzbget/intermediate
+        kv_set NzbDir /mnt/local-downloads/nzbget/nzb
+        kv_set QueueDir /mnt/local-downloads/nzbget/queue
+        kv_set TempDir /mnt/local-downloads/nzbget/tmp
+        kv_set ScriptDir /mnt/local-downloads/nzbget/scripts
+
+        # Radarr sends Movies, Sonarr Series, Lidarr Music. An empty DestDir
+        # means DestDir/<Name>.
+        n=1
+        for name in Movies Series Music Software Prowlarr; do
+          kv_set "Category$n.Name" "$name"
+          kv_set "Category$n.DestDir" ""
+          kv_set "Category$n.Unpack" yes
+          kv_set "Category$n.Extensions" ""
+          kv_set "Category$n.Aliases" ""
+          n=$((n + 1))
+        done
+
+        # server NUM NAME HOST LEVEL CONNECTIONS. Level 0 is tried first; a
+        # higher level only fetches articles the lower ones failed.
+        server() {
+          kv_set "Server$1.Active" yes
+          kv_set "Server$1.Name" "$2"
+          kv_set "Server$1.Host" "$3"
+          kv_set "Server$1.Port" 563
+          kv_set "Server$1.Encryption" yes
+          kv_set "Server$1.CertVerification" Strict
+          kv_set "Server$1.Level" "$4"
+          kv_set "Server$1.Connections" "$5"
+        }
+        # UsenetExpress caps the account at 75 connections and keeps counting
+        # sockets NZBGet abandons after a hang. 20 stays under the cap; 35 did not.
+        server 1 UNE news-eu.usenetexpress.com 0 20
+        server 2 Usenet.Farm news.usenet.farm 50 40
+
+        if [[ -n ${NEWS1_USERNAME:-} && -n ${NEWS1_PASSWORD:-} ]]; then
+          kv_set Server1.Username "$NEWS1_USERNAME"
+          kv_set Server1.Password "$NEWS1_PASSWORD"
+        fi
+        if [[ -n ${NEWS2_USERNAME:-} && -n ${NEWS2_PASSWORD:-} ]]; then
+          kv_set Server2.Username "$NEWS2_USERNAME"
+          kv_set Server2.Password "$NEWS2_PASSWORD"
+        fi
+
+        lsiown abc:abc "$conf"
+
 persistence:
   qbt-config:
     type: configMap
@@ -310,6 +400,17 @@ persistence:
             readOnly: true
           - path: /git/qbittorrent/categories.json
             subPath: categories.json
+            readOnly: true
+
+  nzbget-config:
+    type: configMap
+    identifier: nzbget-config
+    defaultMode: 493 # 0755: linuxserver skips init scripts that aren't executable
+    advancedMounts:
+      main:
+        nzbget:
+          - path: /custom-cont-init.d/10-nzbget-config.sh
+            subPath: 10-nzbget-config.sh
             readOnly: true
 
   dev-tun:
