@@ -40,7 +40,11 @@ controllers:
             valueFrom: { secretKeyRef: { name: gluetun-secrets, key: WIREGUARD_ADDRESSES } }
 
           # Health & firewall
-          FIREWALL: "off"
+          # The kill switch is deliberately ON. A `FIREWALL: "off"` line sat here
+          # until 2026-10, but gluetun v3.39 dropped that variable, so it was ignored
+          # and the firewall was on all along. Never set its replacement,
+          # FIREWALL_ENABLED_DISABLING_IT_SHOOTS_YOU_IN_YOUR_FOOT: with it off,
+          # qBittorrent and NZBGet traffic could leave outside the VPN.
           HEALTH_TARGET_ADDRESSES: "1.1.1.1:53"
           FIREWALL_VPN_INPUT_PORTS:
             valueFrom: { secretKeyRef: { name: gluetun-secrets, key: FIREWALL_VPN_INPUT_PORTS } }
@@ -71,11 +75,12 @@ controllers:
           PUID: "1000"
           PGID: "988"
           WEBUI_PORT: "8080"
-          # Set the listening peer port in qBittorrent config
-          QBT_BitTorrent__Session__Port:
+          # The port AirVPN forwards (one port: qBittorrent won't start on a list).
+          # linuxserver passes it as --torrenting-port,
+          # which qBittorrent writes to Session\Port on every start. The rest of
+          # qBittorrent's git-owned settings are in the qbt-config configMap below.
+          TORRENTING_PORT:
             valueFrom: { secretKeyRef: { name: gluetun-secrets, key: FIREWALL_VPN_INPUT_PORTS } }
-
-          QBT_Application__NetworkInterface: tun0
 
         ports:
           - name: http
@@ -166,7 +171,147 @@ ingress:
               port: http
     # tls: [...]   # optional
 
+# Settings git owns. linuxserver runs /custom-cont-init.d as root on every
+# start, after it creates a default config and before the app reads it, so
+# these keys win over UI edits once the pod restarts. Settings not listed
+# here stay in the UI.
+configMaps:
+  qbt-config:
+    data:
+      10-qbt-config.sh: |
+        #!/bin/bash
+        set -euo pipefail
+
+        conf=/config/qBittorrent/qBittorrent.conf
+
+        # ini_set SECTION KEY VALUE sets KEY=VALUE in [SECTION], adding the key
+        # or the section if missing. awk reads its arguments from ENVIRON
+        # because -v expands backslash escapes, which would mangle Session\Port.
+        ini_set() {
+          local tmp
+          tmp=$(mktemp)
+          S="$1" K="$2" V="$3" awk '
+            BEGIN { sec = "[" ENVIRON["S"] "]"; key = ENVIRON["K"] "="; line = key ENVIRON["V"] }
+            /^\[/ {
+              if (in_sec && !done) { print line; done = 1 }
+              in_sec = ($0 == sec)
+              if (in_sec) seen = 1
+            }
+            in_sec && index($0, key) == 1 {
+              if (!done) { print line; done = 1 }
+              next
+            }
+            { print }
+            END {
+              if (!done) {
+                if (!seen) print sec
+                print line
+              }
+            }
+          ' "$conf" > "$tmp"
+          # cat into the existing file keeps its owner and mode
+          cat "$tmp" > "$conf"
+          rm -f "$tmp"
+        }
+
+        # Only the WireGuard tunnel. gluetun's kill switch blocks any other
+        # route anyway.
+        ini_set BitTorrent 'Session\Interface' tun0
+        ini_set BitTorrent 'Session\InterfaceName' tun0
+
+        # Downloads go to k3s-05's local disk, then move to the NFS share
+        ini_set BitTorrent 'Session\DefaultSavePath' /downloads/downloads/qbittorrent/completed
+        ini_set BitTorrent 'Session\TempPath' /mnt/local-downloads/qbittorrent/incomplete
+        ini_set BitTorrent 'Session\TempPathEnabled' true
+
+        ini_set BitTorrent 'Session\QueueingSystemEnabled' true
+        ini_set BitTorrent 'Session\MaxActiveDownloads' 3
+        ini_set BitTorrent 'Session\MaxActiveUploads' 10
+        ini_set BitTorrent 'Session\MaxActiveTorrents' 13
+        ini_set BitTorrent 'Session\MaxActiveCheckingTorrents' 1
+        ini_set BitTorrent 'Session\IgnoreSlowTorrentsForQueueing' true
+        ini_set BitTorrent 'Session\SlowTorrentsDownloadRate' 5
+        ini_set BitTorrent 'Session\SlowTorrentsUploadRate' 5
+        ini_set BitTorrent 'Session\SlowTorrentsInactivityTimer' 60
+
+        # KiB/s here; the API reports bytes (2048000 and 1280000)
+        ini_set BitTorrent 'Session\GlobalDLSpeedLimit' 2000
+        ini_set BitTorrent 'Session\GlobalUPSpeedLimit' 1250
+
+        ini_set BitTorrent 'Session\DHTEnabled' true
+        ini_set BitTorrent 'Session\PeXEnabled' true
+        ini_set BitTorrent 'Session\LSDEnabled' true
+
+        # Categories the arrs add to. A category missing from this file is
+        # recreated when a torrent is added with it.
+        install -m 644 /git/qbittorrent/categories.json /config/qBittorrent/categories.json
+
+        lsiown abc:abc /config/qBittorrent/qBittorrent.conf /config/qBittorrent/categories.json
+      # Copied from the live file, in the format qBittorrent 5.3 writes
+      categories.json: |
+        {
+            "Movies": {
+                "download_path": null,
+                "inactive_seeding_time_limit": -2,
+                "ratio_limit": -2,
+                "save_path": "",
+                "seeding_time_limit": -2,
+                "share_limit_action": "Default",
+                "share_limits_mode": "Default"
+            },
+            "lidarr": {
+                "download_path": null,
+                "inactive_seeding_time_limit": -2,
+                "ratio_limit": -2,
+                "save_path": "",
+                "seeding_time_limit": -2,
+                "share_limit_action": "Default",
+                "share_limits_mode": "Default"
+            },
+            "radarr": {
+                "download_path": null,
+                "inactive_seeding_time_limit": -2,
+                "ratio_limit": -2,
+                "save_path": "",
+                "seeding_time_limit": -2,
+                "share_limit_action": "Default",
+                "share_limits_mode": "Default"
+            },
+            "sportarr": {
+                "download_path": null,
+                "inactive_seeding_time_limit": -2,
+                "ratio_limit": -2,
+                "save_path": "",
+                "seeding_time_limit": -2,
+                "share_limit_action": "Default",
+                "share_limits_mode": "Default"
+            },
+            "tv-sonarr": {
+                "download_path": null,
+                "inactive_seeding_time_limit": -2,
+                "ratio_limit": -2,
+                "save_path": "",
+                "seeding_time_limit": -2,
+                "share_limit_action": "Default",
+                "share_limits_mode": "Default"
+            }
+        }
+
 persistence:
+  qbt-config:
+    type: configMap
+    identifier: qbt-config
+    defaultMode: 493 # 0755: linuxserver skips init scripts that aren't executable
+    advancedMounts:
+      main:
+        qbittorrent:
+          - path: /custom-cont-init.d/10-qbt-config.sh
+            subPath: 10-qbt-config.sh
+            readOnly: true
+          - path: /git/qbittorrent/categories.json
+            subPath: categories.json
+            readOnly: true
+
   dev-tun:
     enabled: true
     type: hostPath
