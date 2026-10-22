@@ -1,5 +1,7 @@
-# NeutArr keeps its settings in its own database under /config, edited in the UI, so
-# they are recorded here (read 2026-10-21).
+# NeutArr keeps each app's settings in /config/<app>.json, edited in the UI. Git owns
+# the Lidarr hunter's: the settings configMap below is written over /config/lidarr.json
+# on every start, so a UI edit to it lasts until the next restart. The rest stay in the
+# UI and are recorded here (read 2026-10-21).
 #
 # Radarr hunter: http://radarr.servarr.svc.cluster.local:8989. Searches 1 missing movie
 #   per cycle, no upgrade hunting, every 15 minutes, at most 20 API calls an hour,
@@ -8,7 +10,7 @@
 #   per cycle, no upgrade hunting, every 15 minutes, at most 20 API calls an hour,
 #   monitored only, skipping future episodes.
 # Each holds its arr's API key (the same keys as servarr-api-keys).
-# Off: the Lidarr, Readarr, Whisparr and Eros hunters, Swaparr, and notifications.
+# Off: the Readarr, Whisparr and Eros hunters, Swaparr, and notifications.
 # NeutArr has no tagging option, so the huntarr-missing and huntarr-upgrade tags in
 #   Radarr and Sonarr are Huntarr leftovers and can be deleted by hand.
 controllers:
@@ -27,7 +29,7 @@ controllers:
         # that stopped serving anonymous pulls (every elfhosted/* package now
         # 401s at the token endpoint), so nothing in this cluster can fetch
         # them. NeutArr publishes to Docker Hub with no auth required.
-        image:
+        image: &image
           repository: iampuid0/neutarr
           tag: 1.11.1
         env:
@@ -41,6 +43,61 @@ controllers:
           liveness:  { enabled: true, type: HTTP, path: /api/health, port: 9705 }
           readiness: { enabled: true, type: HTTP, path: /api/health, port: 9705 }
           startup:   { enabled: true, type: HTTP, path: /api/health, port: 9705 }
+
+    initContainers:
+      # Writes the git-owned settings before NeutArr reads them. It runs as root, and
+      # NeutArr's entrypoint chowns /config afterwards.
+      settings:
+        image: *image
+        command: ["python3", "/git/apply-settings.py"]
+        env:
+          # Lidarr's own key, so the two can't drift apart
+          LIDARR_API_KEY:
+            valueFrom: { secretKeyRef: { name: lidarr-secrets, key: LIDARR__AUTH__APIKEY } }
+
+# Settings git owns, one <app>.json per app, in the shape NeutArr 1.11 saves. An
+# instance's api_key_env names the init container env var that holds its API key.
+# Changing anything here restarts the pod (app-template checksums its configMaps).
+configMaps:
+  settings:
+    data:
+      apply-settings.py: |
+        import json
+        import os
+        import pathlib
+
+        for declared in sorted(pathlib.Path("/git").glob("*.json")):
+            settings = json.loads(declared.read_text())
+            for instance in settings.get("instances", []):
+                instance["api_key"] = os.environ[instance.pop("api_key_env")]
+            target = pathlib.Path("/config") / declared.name
+            temp = target.with_name(target.name + ".tmp")
+            temp.write_text(json.dumps(settings, indent=2) + "\n")
+            temp.replace(target)
+            print(f"wrote {target}")
+      # Searches 1 missing album per cycle (album mode, not whole artists), no upgrade
+      # hunting, every 15 minutes, at most 20 API calls an hour, monitored only,
+      # skipping future releases: the same pace as the Radarr and Sonarr hunters.
+      # Lidarr itself only re-searches on RSS, so without this a request whose first
+      # search found nothing (KATSEYE's "Gabriela", 2026-10-22) is never retried.
+      lidarr.json: |
+        {
+          "instances": [
+            {
+              "name": "Lidarr",
+              "api_url": "http://lidarr.servarr.svc.cluster.local:8686",
+              "api_key_env": "LIDARR_API_KEY",
+              "enabled": true
+            }
+          ],
+          "hunt_missing_mode": "album",
+          "hunt_missing_items": 1,
+          "hunt_upgrade_items": 0,
+          "sleep_duration": 900,
+          "monitored_only": true,
+          "hourly_cap": 20,
+          "skip_future_releases": true
+        }
 
 service:
   main:
@@ -69,3 +126,11 @@ persistence:
     existingClaim: neutarr-config
     globalMounts:
       - path: /config
+  settings:
+    type: configMap
+    identifier: settings
+    advancedMounts:
+      neutarr:
+        settings:
+          - path: /git
+            readOnly: true
