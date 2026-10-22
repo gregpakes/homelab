@@ -6,7 +6,7 @@ wins: a UI change to anything declared here is reverted by the next run.
 
 | File | What it holds |
 | --- | --- |
-| `config.yml` | Instances, API keys and download-client logins (`!env`), the download clients and their completed-download settings, Lidarr's naming, media management, root folder, delay profile and release profile, and Prowlarr's indexers, FlareSolverr proxy, sync profile and app links |
+| `config.yml` | Instances, API keys and download-client logins (`!env`), the download clients and their completed-download settings, Lidarr's naming, media management, lossy quality sizes, root folder, delay profile and release profile, and Prowlarr's indexers, FlareSolverr proxy, sync profile and app links |
 | `templates/homelab-radarr.yml` | Radarr's 126 custom formats, 6 quality profiles, quality sizes, naming, media management, root folders and delay profile |
 | `templates/homelab-sonarr.yml` | The same for Sonarr: 119 custom formats, 5 profiles |
 | `kustomization.yaml` | Turns the three files into ConfigMaps, which the CronJob mounts at `/app/config` |
@@ -56,12 +56,12 @@ flips both levels back.
 
 These come from reading its diff code. A UI change to any of them survives until something else forces a rewrite:
 - **Which qualities are allowed in a profile.** Only the order of qualities is compared. The `enabled: false` flags are applied only when the order differs too.
-- **"Unlimited" quality sizes.** The API returns those as null, and Configarr cannot declare null, so those keys are left out of `quality_definition`.
+- **"Unlimited" quality sizes.** The API returns those as null, and Configarr cannot declare null, so those keys are left out of `quality_definition`. Lidarr is the exception: it also skips the size check when max is `0`, which Configarr can declare, so Lidarr's unlimited lossy sizes are `max: 0` and enforced. Its lossless sizes are still null and undeclared.
 - **Download-client passwords.** The arrs only return `********`, so with `update_password: false` a password is set when a client is created and never compared after that.
 
 Also:
 - Profiles with upgrades off always get `cutoffFormatScore: 1`. Radarr's **Any** and **Ultra-HD** had 0, so the first live run (2026-10-21) wrote 1 there. Radarr doesn't use the field for grabbing while upgrades are off.
-- Lidarr's quality and metadata profiles aren't declared, so they stay in the UI.
+- Lidarr's quality and metadata profiles aren't declared, so they stay in the UI. Its quality sizes are declared only for the six lossy qualities the Any profile allows; the rest keep their server values.
 - Prowlarr only compares the fields listed, but a rewrite of an indexer or app starts from its definition's defaults. So every field with a value is listed, apart from the definitions' `info_*` help text.
 - Prowlarr returns Cardigann logins (TorrentLeech's username and password) in plain text, and Configarr compares them exactly. The `prowlarr-indexers` values must match what Prowlarr holds. Changing them there changes Prowlarr on the next run.
 - Newznab indexers are declared by preset name (`definition: NZBgeek`). `definition: Newznab` would pick the first preset, abNZB, as the template.
