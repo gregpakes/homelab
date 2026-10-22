@@ -6,7 +6,9 @@ alias: 'Music: download albums played from Spotify'
 description: >-
   Whenever a Music Assistant player has been playing a Spotify track for 30 seconds, sends the album it's
   on to Lidarr (via the Lidarr request script), so it's available locally next time. Skipped tracks (under
-  30 s) and further tracks from the same album are ignored.
+  30 s) and further tracks from the same album are ignored. Reads the player's live state after the 30
+  s, not trigger.to_state: when playback starts from a stopped player the track changes while the player
+  is still 'idle', so to_state never says 'playing'.
 triggers:
   - trigger: state
     entity_id:
@@ -31,14 +33,12 @@ conditions:
   - alias: Still playing, and it's a Spotify track
     condition: template
     value_template: >-
-      {{ trigger.to_state.state == 'playing' and (trigger.to_state.attributes.media_content_id | default('',
-      true) | string).startswith('spotify') }}
+      {{ now_playing.state == 'playing' and now_playing.content_id.startswith('spotify') }}
   - alias: Has an album and artist, and the album changed
     condition: template
     value_template: >-
-      {{ (trigger.to_state.attributes.media_album_name | default('', true)) != '' and (trigger.to_state.attributes.media_artist
-      | default('', true)) != '' and trigger.to_state.attributes.media_album_name != trigger.from_state.attributes.get('media_album_name')
-      }}
+      {{ now_playing.album != '' and now_playing.artist != '' and now_playing.album != (trigger.from_state.attributes.get('media_album_name')
+      | default('', true) | string) }}
 actions:
   - action: script.turn_on
     target:
@@ -46,9 +46,15 @@ actions:
     data:
       variables:
         kind: track
-        name: '{{ trigger.to_state.attributes.media_title }}'
-        artist: '{{ (trigger.to_state.attributes.media_artist | string).split(''/'')[0] | trim }}'
-        album: '{{ trigger.to_state.attributes.media_album_name }}'
+        name: '{{ now_playing.title }}'
+        artist: '{{ now_playing.artist }}'
+        album: '{{ now_playing.album }}'
 mode: queued
 max: 20
 max_exceeded: silent
+variables:
+  now_playing: >-
+    {{ {'state': states(trigger.entity_id), 'content_id': state_attr(trigger.entity_id, 'media_content_id')
+    | default('', true) | string, 'title': state_attr(trigger.entity_id, 'media_title') | default('',
+    true) | string, 'artist': (state_attr(trigger.entity_id, 'media_artist') | default('', true) | string).split('/')[0]
+    | trim, 'album': state_attr(trigger.entity_id, 'media_album_name') | default('', true) | string} }}
