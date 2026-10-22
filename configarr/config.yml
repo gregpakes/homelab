@@ -127,8 +127,8 @@ lidarr:
     base_url: !env LIDARR_URL
     api_key: !env LIDARR_API_KEY
     # Lidarr's quality and metadata profiles stay in the UI. Everything below
-    # matches the live values read on 2026-10-21, apart from the release profile,
-    # which was added from git.
+    # matches the live values read on 2026-10-21, apart from the release profile
+    # and the quality sizes, which were added from git.
     media_naming_api:
       renameTracks: true
       replaceIllegalCharacters: true
@@ -162,6 +162,38 @@ lidarr:
       scriptImportPath: ""
       importExtraFiles: false
       extraFileExtensions: srt
+    # No maximum size for the lossy qualities the Any profile allows (lossless has
+    # none already). Lidarr caps a release at max kbps x the longest release it knows,
+    # and the 350 default rejected singles that bundle extra versions: KATSEYE's
+    # "Gabriela" was 17.7 MB against a 16.2 MB cap (2026-10-22). Lidarr skips the check
+    # when max is 0. Configarr can't declare the UI's "unlimited" (null), but it can
+    # declare 0. Qualities that aren't listed keep their server sizes.
+    quality_definition:
+      qualities:
+        - quality: MP3-VBR-V0
+          min: 0
+          preferred: 195
+          max: 0
+        - quality: AAC-VBR
+          min: 0
+          preferred: 195
+          max: 0
+        - quality: MP3-320
+          min: 0
+          preferred: 195
+          max: 0
+        - quality: OGG Vorbis Q9
+          min: 0
+          preferred: 195
+          max: 0
+        - quality: AAC-320
+          min: 0
+          preferred: 195
+          max: 0
+        - quality: OGG Vorbis Q10
+          min: 0
+          preferred: 295
+          max: 0
     # Lidarr root folders carry defaults for newly added artists. A root folder
     # that isn't listed here is deleted.
     root_folders:
