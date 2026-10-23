@@ -17,8 +17,16 @@
 #   account_locked, user_login_failed and user_tfa_disabled.
 # - Settings > Metrics: anonymous usage metrics off.
 # - Compliance scanning: left off on purpose.
-# - Patch policies: none. A policy only times runs someone queues by hand;
-#   PatchMon has no recurring patch schedule.
+# - Patch policies. A policy only times a run someone starts; PatchMon has
+#   no recurring patch schedule, so nothing patches until you click
+#   "Patch all". Fixed times are local (Europe/London, from TZ below).
+#   - "Nightly 02:00" on pihole2, "Nightly 03:00" on infra-pi, "Nightly
+#     04:00" on pihole3, all assigned per host, so one "Patch all" on the
+#     Infra group lands an hour apart and the two Pi-holes never patch
+#     together. A new Infra host has no policy and runs immediately.
+#   - "Hold 30 min" (delayed) on the K3s and Proxmox groups: a run waits 30
+#     minutes, so a mistaken one can be cancelled. Patch these one host at
+#     a time.
 
 global:
   storageClass: longhorn
