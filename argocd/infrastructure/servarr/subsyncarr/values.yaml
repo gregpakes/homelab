@@ -34,9 +34,11 @@ controllers:
           requests:
             cpu: 100m
             memory: 256Mi
+          # The nightly sync peaked at 5.4 GiB while no limit applied. Once the 1Gi limit
+          # took effect (2026-10-21) it was OOM-killed about 7 minutes into every run.
           limits:
             cpu: 1000m
-            memory: 1Gi
+            memory: 6Gi
 
 service:
   main:
