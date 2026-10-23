@@ -209,13 +209,28 @@ sequence:
                     data:
                       path: command
                       body: '{{ {''name'': ''AlbumSearch'', ''albumIds'': [added.content.id]} }}'
-  - alias: Remove any earlier entry for the same request
-    action: todo.remove_item
+  - alias: Find any earlier entries for the same request (open or ticked off)
+    action: todo.get_items
     target:
       entity_id: todo.music_requests
     data:
-      item: '{{ label }}'
-    continue_on_error: true
+      status:
+        - needs_action
+        - completed
+    response_variable: existing
+  - variables:
+      earlier_uids: >-
+        {{ (existing['todo.music_requests']['items'] | default([])) | selectattr('summary', 'eq', label)
+        | map(attribute='uid') | list }}
+  - alias: Remove any earlier entry for the same request
+    if:
+      - '{{ earlier_uids | count > 0 }}'
+    then:
+      - action: todo.remove_item
+        target:
+          entity_id: todo.music_requests
+        data:
+          item: '{{ earlier_uids }}'
   - action: todo.add_item
     target:
       entity_id: todo.music_requests
