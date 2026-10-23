@@ -24,7 +24,7 @@ controllers:
       configarr:
         image:
           repository: ghcr.io/raydak-labs/configarr
-          tag: 1.35.0
+          tag: 1.36.0
         env:
           TZ: Europe/London
           # "true" logs what would change and writes nothing. Set it back to "true"
