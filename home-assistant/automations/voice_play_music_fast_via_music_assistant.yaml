@@ -7,7 +7,9 @@ description: >-
   Handles "play ..." without the LLM when the request exactly names an artist, song, album or playlist
   and the speaking device's room (or the named room) has a Music Assistant player. Everything else is
   handed to the Haiku agent, so no request is dropped. Your own library (Lidarr downloads) is searched
-  before Spotify.
+  before Spotify. Music that starts as asked is not announced: the fast path replies with an empty response
+  (Assist then skips text-to-speech), and the LLM is told to answer just OK in that case, which is dropped
+  too. Substitutions, questions and failures are still spoken.
 triggers:
   - trigger: conversation
     command:
@@ -29,7 +31,8 @@ actions:
         | first | default('')) if target_area else '' }}
       llm_text: >-
         {{ trigger.sentence }}{{ ' (asked in the ' ~ area_name(target_area) ~ ')' if target_area and not
-        room else '' }}
+        room else '' }} If you start playing what was asked, reply with just OK. If you play something
+        different or cannot play it, say so briefly.
       results: {}
   - alias: 'No Music Assistant player for this room: hand to the LLM'
     if:
@@ -41,7 +44,9 @@ actions:
           text: '{{ llm_text }}'
           language: en
         response_variable: llm
-      - set_conversation_response: '{{ llm.response.speech.plain.speech }}'
+      - set_conversation_response: >-
+          {{ '' if (llm.response.speech.plain.speech | lower | regex_replace('[^a-z]', '')) in ['ok',
+          'okay'] else llm.response.speech.plain.speech | trim }}
       - stop: Handed to the LLM
   - action: music_assistant.search
     continue_on_error: true
@@ -101,7 +106,9 @@ actions:
           text: '{{ llm_text }}'
           language: en
         response_variable: llm
-      - set_conversation_response: '{{ llm.response.speech.plain.speech }}'
+      - set_conversation_response: >-
+          {{ '' if (llm.response.speech.plain.speech | lower | regex_replace('[^a-z]', '')) in ['ok',
+          'okay'] else llm.response.speech.plain.speech | trim }}
       - stop: Handed to the LLM
   - alias: Start playback in the background so the reply is not held up
     action: script.turn_on
@@ -125,6 +132,7 @@ actions:
             name: '{{ pick.name }}'
             artist: '{{ pick.artist }}'
             album: '{{ pick.album }}'
-  - set_conversation_response: Playing {{ pick.name }}
+  - set_conversation_response: ''
+    alias: 'Say nothing: the music starting is the confirmation'
 mode: parallel
 max: 5

@@ -14,7 +14,7 @@ here goes stale.
 | `automations/music_download_albums_played_from_spotify.yaml` | Sends the album of any Spotify track a Music Assistant player has played for 30 s to Lidarr, so it plays from the library next time |
 | `automations/kitchen_lower_sonos_while_the_echo_listens.yaml` | Ducks the kitchen Sonos to 30% while the kitchen Echo listens, then restores it |
 | `scripts/voice_send_music_request_to_lidarr.yaml` | Adds an artist (whole discography) or one album to Lidarr, monitors it and searches. Logs each request on the Music requests to-do list |
-| `scripts/voice_start_music_assistant_playback.yaml` | Starts playback in the background, so the spoken reply doesn't wait for it |
+| `scripts/voice_start_music_assistant_playback.yaml` | Starts playback in the background, so the voice request ends without waiting for it |
 | `configuration/rest_command.yaml` | The `rest_command` block from `configuration.yaml` that the Lidarr script calls |
 
 ## How the music flows
