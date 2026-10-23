@@ -6569,7 +6569,11 @@ media_management:
   autoUnmonitorPreviouslyDownloadedMovies: false
   recycleBin: ''
   recycleBinCleanupDays: 7
-  downloadPropersAndRepacks: preferAndUpgrade
+  # The Repack1-3 custom formats rank repacks, as TRaSH intends with this setting.
+  # preferAndUpgrade grabbed a repack of a different release as a revision upgrade, and
+  # the import then rejected it on custom format score: Coyote vs Acme was downloaded
+  # four times in a day (2026-10-21).
+  downloadPropersAndRepacks: doNotPrefer
   createEmptyMovieFolders: false
   deleteEmptyFolders: false
   fileDate: none

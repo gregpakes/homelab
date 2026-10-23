@@ -22,7 +22,11 @@ spec:
           - --api.insecure=false
           - --global.sendanonymoususage=false
           - --global.checknewversion=false
-          - --entrypoints.web.http.redirections.entrypoint.to=websecure
+          # A port, not the entrypoint name: `to=websecure` redirects to websecure's
+          # container port, https://<host>:8443/, which nothing outside the pod answers.
+          # Radarr, Sonarr and Prowlarr send signed-out browsers to http://<host>/login,
+          # so this redirect is how a fresh browser reaches their login page.
+          - --entrypoints.web.http.redirections.entrypoint.to=:443
           - --entrypoints.web.http.redirections.entrypoint.scheme=https
           - --entrypoints.web.http.redirections.entrypoint.permanent=true
 

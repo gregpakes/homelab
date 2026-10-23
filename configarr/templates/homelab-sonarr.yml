@@ -6102,7 +6102,10 @@ media_management:
   autoUnmonitorPreviouslyDownloadedEpisodes: false
   recycleBin: ''
   recycleBinCleanupDays: 7
-  downloadPropersAndRepacks: preferAndUpgrade
+  # The Repack1-3 custom formats rank repacks, as TRaSH intends with this setting.
+  # preferAndUpgrade lets a repack win as a revision upgrade even with a lower custom
+  # format score, which the import then rejects (Radarr's Coyote vs Acme loop, 2026-10-21).
+  downloadPropersAndRepacks: doNotPrefer
   createEmptySeriesFolders: false
   deleteEmptyFolders: false
   fileDate: none
