@@ -92,6 +92,12 @@
       "matchDatasources": ["helm"],
       "matchPackageNames": ["descheduler"],
       "allowedVersions": "<0.37.0"
+    },
+    {
+      "description": "PatchMon's database is on Postgres 17. A major bump needs a dump and restore, so it is a manual job, not a bot PR.",
+      "matchFileNames": ["argocd/infrastructure/patchmon/values.yaml"],
+      "matchPackageNames": ["/(^|/)postgres$/"],
+      "allowedVersions": "<18"
     }
   ]
 }

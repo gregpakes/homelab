@@ -1,0 +1,28 @@
+alias: "PatchMon: Notify phone"
+description: >-
+  PatchMon's generic webhook destination posts {event_type, severity, title,
+  message, app_link} here. PatchMon picks which events are sent (Settings >
+  Notifications > routes); this only formats and pushes them. The webhook ID is
+  a secret, so it's kept out of the public repo.
+triggers:
+  - trigger: webhook
+    # The real ID is in HA and in PatchMon's "Home Assistant (phone push)"
+    # destination URL. To rebuild, generate a new one and set it in both.
+    webhook_id: patchmon_<redacted>
+    allowed_methods:
+      - POST
+    local_only: true
+    note: PatchMon posts from inside the k3s cluster, so the call arrives from a node's LAN address.
+conditions: []
+actions:
+  - action: notify.mobile_app_gregs_iphone
+    data:
+      title: "PatchMon: {{ trigger.json.title | default('alert') }}"
+      message: "{{ trigger.json.message | default('') }}"
+      data:
+        url: "{{ trigger.json.app_link | default('https://patchmon.gregpakes.co.uk') }}"
+        group: patchmon
+        push:
+          interruption-level: "{{ 'time-sensitive' if trigger.json.severity | default('') in ['error', 'critical'] else 'active' }}"
+mode: parallel
+max: 20

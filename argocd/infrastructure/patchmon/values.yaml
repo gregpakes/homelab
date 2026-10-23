@@ -1,37 +1,68 @@
+# PatchMon keeps most of its config in its database, set in the UI. What was
+# set there (2026-10-23), so it can be rebuilt:
+#
+# - Hosts: all 14 report in (k3s-01..06, k3s-admin, proxmox-01..03, pbs,
+#   pihole2, pihole3, infra-pi). Every Proxmox guest has an agent; the
+#   stopped ubuntu-cloud template (VM 5000) does not need one.
+# - Host groups: K3s (the seven k3s VMs), Proxmox (the three hosts + pbs),
+#   Infra (pihole2, pihole3, infra-pi).
+# - Alerts > host_down: alert delay 600s. Agents reconnect within seconds of a
+#   server or Traefik restart; with no delay every restart raised one alert
+#   per host (611 of them by 2026-10-23).
+# - Notifications: destination "Home Assistant (phone push)", a generic
+#   webhook to http://172.16.30.124:8123/api/webhook/<id>. The ID is a secret
+#   and lives only in PatchMon and in HA's "PatchMon: Notify phone"
+#   automation (home-assistant/automations/patchmon_notify_phone.yaml). Its
+#   route sends host_down, patch_run_failed, patch_reboot_required,
+#   account_locked, user_login_failed and user_tfa_disabled.
+# - Settings > Metrics: anonymous usage metrics off.
+# - Compliance scanning: left off on purpose.
+# - Patch policies: none. A policy only times runs someone queues by hand;
+#   PatchMon has no recurring patch schedule.
+
 global:
   storageClass: longhorn
 
 fullnameOverride: patchmon
 
+# Every image sets registry and repository as well as tag: Renovate's
+# helm-values manager skips an image block that only has a tag, which left the
+# server on 2.0.2 for six months with no update PR.
+
 database:
   image:
+    registry: docker.io
+    repository: postgres
+    # Stays on 17 (see renovate.json): a Postgres major needs a dump and
+    # restore, and the chart's 18 default cannot start on this 17 data dir.
     tag: "17-alpine"
   auth:
     existingSecret: patchmon-secrets
     existingSecretPasswordKey: postgres-password
   persistence:
     size: 5Gi
-  # Temporary for the chart 3.0 ownership migration. Disable after a healthy sync.
-  initContainers:
-    fixPermissions:
-      enabled: true
 
 redis:
   image:
+    registry: docker.io
+    repository: redis
     tag: "7-alpine"
   auth:
     existingSecret: patchmon-secrets
     existingSecretPasswordKey: redis-password
   persistence:
     size: 2Gi
-  # Temporary for the chart 3.0 ownership migration. Disable after a healthy sync.
-  initContainers:
-    fixPermissions:
-      enabled: true
 
 server:
   image:
-    tag: "2.0.2"
+    registry: ghcr.io
+    repository: patchmon/patchmon-server
+    tag: "2.1.6"
+  # The descheduler never evicts this (argocd/infrastructure/descheduler):
+  # every restart drops all agent WebSockets at once and raises a host_down
+  # alert for every host.
+  podAnnotations:
+    descheduler.alpha.kubernetes.io/prefer-no-eviction: ""
   env:
     serverProtocol: https
     serverHost: patchmon.gregpakes.co.uk
@@ -55,10 +86,12 @@ server:
     - name: TZ
       value: Europe/London
 
+# guacd is only for in-browser RDP to Windows hosts, and there are none. This
+# chart also runs it as its own Deployment, which upstream says cannot open an
+# RDP session: the server hands guacd a port on 127.0.0.1, so it has to be a
+# sidecar in the server pod.
 guacd:
-  enabled: true
-  image:
-    tag: "1.5.5"
+  enabled: false
 
 ingress:
   enabled: true
