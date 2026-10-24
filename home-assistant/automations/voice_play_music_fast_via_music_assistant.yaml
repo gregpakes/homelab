@@ -4,12 +4,15 @@
 id: '1792566409191'
 alias: 'Voice: play music fast via Music Assistant'
 description: >-
-  Handles "play ..." without the LLM when the request exactly names an artist, song, album or playlist
-  and the speaking device's room (or the named room) has a Music Assistant player. Everything else is
-  handed to the Haiku agent, so no request is dropped. Your own library (Lidarr downloads) is searched
-  before Spotify. Music that starts as asked is not announced: the fast path replies with an empty response
-  (Assist then skips text-to-speech), and the LLM is told to answer just OK in that case, which is dropped
-  too. Substitutions, questions and failures are still spoken.
+  Handles "play ..." without the LLM when the request names an artist, song, album or playlist and the
+  speaking device's room (or the named room) has a Music Assistant player. Exact names win: your own library
+  (Lidarr downloads) first, then Spotify. If neither matches exactly, a near-miss (plural/punctuation/spacing
+  difference, e.g. "Salmon Cats" -> "Salmon Cat") is played only when it is the single candidate of its
+  kind, and is announced ("Playing Salmon Cat."). Repeating the same request within 30 seconds of a near-miss
+  skips the guess and hands to the LLM, telling it the last pick was wrong. "... on/from Spotify" skips
+  your library. Everything else is handed to the Haiku agent, so no request is dropped. Exact matches
+  are not announced (empty response, Assist skips TTS); the LLM is told to answer just OK in that case,
+  which is dropped too. The last request is kept in input_text.voice_last_music_request.
 triggers:
   - trigger: conversation
     command:
@@ -18,22 +21,43 @@ triggers:
       - play {query}
 actions:
   - variables:
-      query: >-
+      raw_query: >-
         {{ (trigger.slots.get('query') or trigger.slots.get('title') or '') | regex_replace('[.!?,]+$',
         '') | trim }}
-      artist: '{{ (trigger.slots.get(''artist'') or '''') | regex_replace(''[.!?,]+$'', '''') | trim }}'
-      room: '{{ (trigger.slots.get(''room'') or '''') | regex_replace(''[.!?,]+$'', '''') | trim }}'
+      raw_artist: '{{ (trigger.slots.get(''artist'') or '''') | regex_replace(''[.!?,]+$'', '''') | trim
+        }}'
+      raw_room: '{{ (trigger.slots.get(''room'') or '''') | regex_replace(''[.!?,]+$'', '''') | trim }}'
+      spotify_only: >-
+        {{ raw_room | lower == 'spotify' or raw_query | regex_match('.*\s(on|from)\s+spotify$', ignorecase=True)
+        or raw_artist | regex_match('.*\s(on|from)\s+spotify$', ignorecase=True) }}
+      query: >-
+        {{ raw_query | regex_replace('\s+(on|from)\s+spotify$', '', ignorecase=True) | trim }}
+      artist: >-
+        {{ raw_artist | regex_replace('\s+(on|from)\s+spotify$', '', ignorecase=True) | trim }}
+      room: '{{ '''' if raw_room | lower == ''spotify'' else raw_room }}'
       target_area: >-
         {{ area_id(room) if room else (area_id(trigger.device_id) if trigger.device_id else none) }}
       player: >-
         {% set ma = integration_entities('music_assistant') | select('match', 'media_player\.') | list
         %}{{ (area_entities(target_area) | select('in', ma) | reject('is_state', 'unavailable') | list
         | first | default('')) if target_area else '' }}
+      qkey: >-
+        {%- macro k(s) -%}{{ (s | lower | regex_replace('[^a-z0-9 ]', ' ') | regex_replace('^\s*the\s+',
+        '')).split() | map('regex_replace', 's$', '') | join('') }}{%- endmacro -%}{{ (k(query) ~ ('|'
+        ~ k(artist) if artist else ''))[:60] }}
+      last: '{{ states(''input_text.voice_last_music_request'') | from_json(default={}) }}'
+      repeat: >-
+        {{ last is mapping and last.get('near', false) == true and last.get('q') == qkey and (as_timestamp(now())
+        - (last.get('t', 0) | float(0))) < 30 }}
       llm_text: >-
         {{ trigger.sentence }}{{ ' (asked in the ' ~ area_name(target_area) ~ ')' if target_area and not
-        room else '' }} If you start playing what was asked, reply with just OK. If you play something
+        room else '' }}{{ (' A moment ago this same request played ' ~ last.get('name', '') ~ ' and the
+        user has asked again, so that was probably the wrong pick: search Spotify and play something else.')
+        if repeat else '' }} If you start playing what was asked, reply with just OK. If you play something
         different or cannot play it, say so briefly.
-      results: {}
+      lib: {}
+      sp: {}
+      pick: {}
   - alias: 'No Music Assistant player for this room: hand to the LLM'
     if:
       - '{{ not player }}'
@@ -48,28 +72,33 @@ actions:
           {{ '' if (llm.response.speech.plain.speech | lower | regex_replace('[^a-z]', '')) in ['ok',
           'okay'] else llm.response.speech.plain.speech | trim }}
       - stop: Handed to the LLM
-  - action: music_assistant.search
-    continue_on_error: true
-    data:
-      config_entry_id: 01JR2GCACNTPEPJYMKJ6X6GC34
-      name: '{{ query }}'
-      artist: '{{ artist }}'
-      media_type: '{{ [''track'', ''album''] if artist else [''artist'', ''playlist'', ''track'', ''album'']
-        }}'
-      limit: 5
-      library_only: true
-    response_variable: results
-    alias: Search your own library first (local database, no Spotify calls)
+  - alias: >-
+      Search your own library first (local database, no Spotify calls), unless asked for Spotify
+    if:
+      - '{{ not spotify_only }}'
+    then:
+      - action: music_assistant.search
+        continue_on_error: true
+        data:
+          config_entry_id: 01JR2GCACNTPEPJYMKJ6X6GC34
+          name: '{{ query }}'
+          artist: '{{ artist }}'
+          media_type: '{{ [''track'', ''album''] if artist else [''artist'', ''playlist'', ''track'',
+            ''album''] }}'
+          limit: 5
+          library_only: true
+        response_variable: lib
   - variables:
       pick: >-
         {%- set norm = query | lower | regex_replace('^the ', '') | trim -%}{%- set ns = namespace(item=none)
         -%}{%- for kind in (['tracks', 'albums'] if artist else ['artists', 'playlists', 'tracks', 'albums'])
-        -%}{%- for i in results.get(kind, []) -%}{%- if ns.item is none and (i.name | lower | regex_replace('^the
+        -%}{%- for i in lib.get(kind, []) -%}{%- if ns.item is none and (i.name | lower | regex_replace('^the
         ', '') | trim) == norm and (not artist or artist | lower in (i.get('artists', []) | map(attribute='name')
         | map('lower') | list)) -%}{%- set ns.item = i -%}{%- endif -%}{%- endfor -%}{%- endfor -%}{{
         {'uri': ns.item.uri, 'media_type': ns.item.media_type, 'name': ns.item.name, 'artist': ns.item.name
         if ns.item.media_type == 'artist' else ((ns.item.get('artists') or [{}])[0].get('name', '')),
         'album': (ns.item.get('album') or {}).get('name', '')} if ns.item is not none else {} }}
+    alias: Exact match in your library
   - alias: 'No exact match in your library: try Spotify'
     if:
       - '{{ not pick }}'
@@ -83,20 +112,38 @@ actions:
           media_type: '{{ [''track'', ''album''] if artist else [''artist'', ''playlist'', ''track'',
             ''album''] }}'
           limit: 5
-        response_variable: results
+        response_variable: sp
         alias: 'Not in your library: search Spotify'
-      - variables:
-          pick: >-
-            {%- set norm = query | lower | regex_replace('^the ', '') | trim -%}{%- set ns = namespace(item=none)
-            -%}{%- for kind in (['tracks', 'albums'] if artist else ['artists', 'playlists', 'tracks',
-            'albums']) -%}{%- for i in results.get(kind, []) -%}{%- if ns.item is none and (i.name | lower
-            | regex_replace('^the ', '') | trim) == norm and (not artist or artist | lower in (i.get('artists',
-            []) | map(attribute='name') | map('lower') | list)) -%}{%- set ns.item = i -%}{%- endif -%}{%-
-            endfor -%}{%- endfor -%}{{ {'uri': ns.item.uri, 'media_type': ns.item.media_type, 'name':
-            ns.item.name, 'artist': ns.item.name if ns.item.media_type == 'artist' else ((ns.item.get('artists')
-            or [{}])[0].get('name', '')), 'album': (ns.item.get('album') or {}).get('name', '')} if ns.item
-            is not none else {} }}
-  - alias: 'No exact match: hand to the LLM'
+  - alias: >-
+      Exact match on Spotify, else a single near-miss (not right after a near-miss for the same request)
+    variables:
+      exact_pick: >-
+        {%- set norm = query | lower | regex_replace('^the ', '') | trim -%}{%- set ns = namespace(item=none)
+        -%}{%- for kind in (['tracks', 'albums'] if artist else ['artists', 'playlists', 'tracks', 'albums'])
+        -%}{%- for i in sp.get(kind, []) -%}{%- if ns.item is none and (i.name | lower | regex_replace('^the
+        ', '') | trim) == norm and (not artist or artist | lower in (i.get('artists', []) | map(attribute='name')
+        | map('lower') | list)) -%}{%- set ns.item = i -%}{%- endif -%}{%- endfor -%}{%- endfor -%}{{
+        pick if pick else ({'uri': ns.item.uri, 'media_type': ns.item.media_type, 'name': ns.item.name,
+        'artist': ns.item.name if ns.item.media_type == 'artist' else ((ns.item.get('artists') or [{}])[0].get('name',
+        '')), 'album': (ns.item.get('album') or {}).get('name', '')} if ns.item is not none else {}) }}
+      near_pick: >-
+        {%- macro k(s) -%}{{ (s | lower | regex_replace('[^a-z0-9 ]', ' ') | regex_replace('^\s*the\s+',
+        '')).split() | map('regex_replace', 's$', '') | join('') }}{%- endmacro -%}{%- set want = k(query)
+        -%}{%- set wart = k(artist) if artist else '' -%}{%- set ns = namespace(c=[], seen=[]) -%}{%-
+        if not exact_pick and not repeat and want -%}{%- for kind in (['tracks', 'albums'] if artist else
+        ['artists', 'playlists', 'tracks', 'albums']) -%}{%- for res in [lib, sp] -%}{%- for i in res.get(kind,
+        []) -%}{%- set a = i.name if i.media_type == 'artist' else ((i.get('artists') or [{}])[0].get('name',
+        '')) -%}{%- set an = namespace(ok=not artist) -%}{%- for x in i.get('artists', []) -%}{%- if k(x.name)
+        == wart -%}{%- set an.ok = true -%}{%- endif -%}{%- endfor -%}{%- set key = i.media_type ~ '|'
+        ~ k(i.name) ~ '|' ~ k(a) -%}{%- if k(i.name) == want and an.ok and key not in ns.seen -%}{%- set
+        ns.seen = ns.seen + [key] -%}{%- set ns.c = ns.c + [{'uri': i.uri, 'media_type': i.media_type,
+        'name': i.name, 'artist': a, 'album': (i.get('album') or {}).get('name', '')}] -%}{%- endif -%}{%-
+        endfor -%}{%- endfor -%}{%- endfor -%}{%- endif -%}{%- set first = ns.c[0] if ns.c else none -%}{{
+        first if first is not none and (ns.c | selectattr('media_type', 'eq', first.media_type) | list
+        | length) == 1 else {} }}
+      pick: '{{ exact_pick if exact_pick else near_pick }}'
+      near: '{{ not exact_pick and (near_pick | length) > 0 }}'
+  - alias: 'No match: hand to the LLM'
     if:
       - '{{ not pick }}'
     then:
@@ -132,7 +179,20 @@ actions:
             name: '{{ pick.name }}'
             artist: '{{ pick.artist }}'
             album: '{{ pick.album }}'
-  - set_conversation_response: ''
-    alias: 'Say nothing: the music starting is the confirmation'
+  - alias: >-
+      Remember this request, so repeating it within 30 s after a near-miss skips the guess
+    action: input_text.set_value
+    continue_on_error: true
+    target:
+      entity_id: input_text.voice_last_music_request
+    data:
+      value: >-
+        {{ {'q': qkey, 'name': pick.name[:60], 'near': near, 't': as_timestamp(now()) | int} | to_json
+        }}
+  - alias: >-
+      Exact match: say nothing (the music starting is the confirmation). Near-miss: say what was picked
+    set_conversation_response: >-
+      {{ ('Playing ' ~ pick.name ~ ((' by ' ~ pick.artist) if pick.media_type != 'artist' and pick.artist
+      else '') ~ '.') if near else '' }}
 mode: parallel
 max: 5
