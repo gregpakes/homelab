@@ -1,0 +1,62 @@
+{
+  "_id": "musicIntegrity",
+  "name": "Music integrity",
+  "description": "Decodes each music file and compares the samples that decode with its declared duration. A broken file (short, or full of decode errors) has its Lidarr grab marked failed (blocklisting the release), its track file deleted and its album searched again, then fails the flow so it shows in the error list. A file that can't be checked fails the flow without touching Lidarr. Files that pass end here unchanged.",
+  "tags": "",
+  "flowPlugins": [
+    {
+      "name": "Input File",
+      "sourceRepo": "Community",
+      "pluginName": "inputFile",
+      "version": "1.0.0",
+      "id": "mi-input",
+      "position": { "x": 560, "y": 160 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Check Audio Integrity",
+      "sourceRepo": "Local",
+      "pluginName": "checkAudioIntegrity",
+      "version": "1.0.0",
+      "id": "mi-check",
+      "position": { "x": 560, "y": 280 },
+      "fpEnabled": true,
+      "inputsDB": {
+        "minDecodedRatio": "0.98",
+        "maxDecodeErrors": "5"
+      }
+    },
+    {
+      "name": "Replace Broken Track Via Lidarr",
+      "sourceRepo": "Local",
+      "pluginName": "reportBrokenToLidarr",
+      "version": "1.0.0",
+      "id": "mi-lidarr",
+      "position": { "x": 560, "y": 430 },
+      "fpEnabled": true,
+      "inputsDB": {
+        "lidarrUrl": "http://lidarr:8686",
+        "tdarrMusicRoot": "/media/media/music",
+        "lidarrMusicRoot": "/downloads/media/music",
+        "dryRun": "false",
+        "maxFilesPerDay": "40"
+      }
+    },
+    {
+      "name": "Fail Flow",
+      "sourceRepo": "Community",
+      "pluginName": "failFlow",
+      "version": "1.0.0",
+      "id": "mi-fail",
+      "position": { "x": 560, "y": 580 },
+      "fpEnabled": true
+    }
+  ],
+  "flowEdges": [
+    { "source": "mi-input", "sourceHandle": "1", "target": "mi-check", "targetHandle": null, "id": "e-input-check" },
+    { "source": "mi-check", "sourceHandle": "2", "target": "mi-lidarr", "targetHandle": null, "id": "e-broken-lidarr" },
+    { "source": "mi-check", "sourceHandle": "3", "target": "mi-fail", "targetHandle": null, "id": "e-unchecked-fail" },
+    { "source": "mi-lidarr", "sourceHandle": "1", "target": "mi-fail", "targetHandle": null, "id": "e-replaced-fail" },
+    { "source": "mi-lidarr", "sourceHandle": "2", "target": "mi-fail", "targetHandle": null, "id": "e-skipped-fail" }
+  ]
+}

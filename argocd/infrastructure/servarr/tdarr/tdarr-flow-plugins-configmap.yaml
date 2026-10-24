@@ -155,3 +155,277 @@ data:
         + ' | ' + trackArgs);
     };
     exports.plugin = plugin;
+
+  # Music integrity check for the "Music integrity" flow (tdarr/music-integrity-flow.json).
+  # Decodes the first audio stream and counts the samples that actually decode against
+  # the declared duration. Catches incomplete downloads whose missing pieces are zeros
+  # (2026-10-24: 12 of 13 tracks of Justin Bieber's Believe from one torrent), which
+  # ffmpeg decodes without an error, so Tdarr's own health check passes them. Fails
+  # closed: if ffmpeg can't run, the file goes to output 3, never to the delete branch.
+  checkAudioIntegrity.js: |
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.plugin = exports.details = void 0;
+
+    var cp = require('child_process');
+
+    var details = function () { return ({
+      name: 'Check Audio Integrity',
+      description: 'Decodes the first audio stream to the end and compares the length that '
+        + 'actually decodes with the duration the file declares. Catches incomplete '
+        + 'downloads whose missing pieces are zeros: ffmpeg reports no error on those, it '
+        + 'just stops, so a plain health check passes them.',
+      style: { borderColor: 'orange' },
+      tags: '',
+      isStartPlugin: false,
+      pType: '',
+      requiresVersion: '2.11.01',
+      sidebarPosition: -1,
+      icon: 'faHeartbeat',
+      id: 'checkAudioIntegrity',
+      inputs: [
+        { name: 'minDecodedRatio', type: 'number', defaultValue: '0.98',
+          inputUI: { type: 'text' },
+          tooltip: 'Broken when less than this fraction of the declared duration decodes.' },
+        { name: 'maxDecodeErrors', type: 'number', defaultValue: '5',
+          inputUI: { type: 'text' },
+          tooltip: 'Broken when ffmpeg logs more than this many errors while decoding.' },
+      ],
+      outputs: [
+        { number: 1, tooltip: 'OK - decodes in full' },
+        { number: 2, tooltip: 'Broken - short or full of decode errors' },
+        { number: 3, tooltip: 'Could not check - no audio, no duration, or ffmpeg failed' },
+      ],
+    }); };
+    exports.details = details;
+
+    var firstAudioStream = function (ffProbeData) {
+      var streams = (ffProbeData && ffProbeData.streams) || [];
+      return streams.filter(function (s) { return s.codec_type === 'audio'; })[0] || null;
+    };
+
+    // Declared duration of the first audio stream, from Tdarr's own ffprobe scan. For FLAC
+    // this is STREAMINFO's sample count; for an MP3 without a Xing header ffprobe estimates
+    // it from the file size, which is still the full length when the gaps are zeros.
+    var declaredDuration = function (ffProbeData) {
+      var audio = firstAudioStream(ffProbeData);
+      var value = parseFloat((audio && audio.duration) || (ffProbeData && ffProbeData.format
+        && ffProbeData.format.duration) || '0');
+      return isFinite(value) ? value : 0;
+    };
+
+    // Samples that actually decoded (per channel), from astats. Not ffmpeg's "time=": FLAC
+    // frames carry their own position, so a FLAC with a zeroed gap still reports the full time.
+    var decodedSamples = function (stderr) {
+      var re = /Number of samples: (\d+)/g;
+      var match;
+      var last = null;
+      while ((match = re.exec(stderr)) !== null) { last = match; }
+      return last ? parseInt(last[1], 10) : -1;
+    };
+
+    var plugin = function (args) {
+      var lib = require('../../../../../methods/lib')();
+      args.inputs = lib.loadDefaultValues(args.inputs, details);
+
+      var filePath = args.inputFileObj._id;
+      var out = function (n, msg) {
+        args.jobLog(msg);
+        args.variables.user = args.variables.user || {};
+        args.variables.user.integrity = msg;
+        return { outputFileObj: args.inputFileObj, outputNumber: n, variables: args.variables };
+      };
+
+      var declared = declaredDuration(args.inputFileObj.ffProbeData);
+      var audio = firstAudioStream(args.inputFileObj.ffProbeData);
+      var sampleRate = parseInt((audio && audio.sample_rate) || '0', 10);
+      if (!(declared > 0) || !(sampleRate > 0)) {
+        return out(3, 'Could not check: no declared audio duration or sample rate');
+      }
+
+      // "level+info" tags every line with its level, so errors can be told apart from the
+      // info-level astats summary
+      var run = cp.spawnSync(args.ffmpegPath || 'ffmpeg',
+        ['-nostdin', '-hide_banner', '-v', 'level+info', '-i', filePath, '-map', '0:a:0',
+          '-af', 'astats=measure_perchannel=none:measure_overall=Number_of_samples',
+          '-f', 'null', '-'],
+        { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+      if (run.error || run.status !== 0) {
+        // Fails closed: a missing ffmpeg or an unreadable mount must never look like a
+        // broken file, because the broken branch deletes it.
+        return out(3, 'Could not check: ffmpeg exited ' + (run.error ? run.error.message : run.status)
+          + ' ' + String(run.stderr || '').slice(-300));
+      }
+      var stderr = String(run.stderr || '');
+      var samples = decodedSamples(stderr);
+      if (samples < 0) { return out(3, 'Could not check: ffmpeg printed no sample count'); }
+      var decoded = samples / sampleRate;
+      var errors = stderr.replace(/\r/g, '\n').split('\n').filter(function (line) {
+        return /\[(error|fatal|panic)\]/.test(line);
+      });
+      var ratio = decoded / declared;
+      var summary = 'decoded ' + decoded.toFixed(1) + ' of ' + declared.toFixed(1) + ' s ('
+        + (ratio * 100).toFixed(1) + '%), ' + errors.length + ' decode error(s)';
+      if (ratio < Number(args.inputs.minDecodedRatio) || errors.length > Number(args.inputs.maxDecodeErrors)) {
+        return out(2, 'Broken: ' + summary + (errors.length ? '; first: ' + errors[0].slice(0, 200) : ''));
+      }
+      return out(1, 'OK: ' + summary);
+    };
+    exports.plugin = plugin;
+
+  # Broken-file branch of the same flow: marks the Lidarr grab the file came from as
+  # failed (blocklists the release; Lidarr's "Redownload failed" re-searches), deletes
+  # the track file in Lidarr and queues an album search. Capped per node per day.
+  reportBrokenToLidarr.js: |
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.plugin = exports.details = void 0;
+
+    var fs = require('fs');
+    var os = require('os');
+    var path = require('path');
+
+    var details = function () { return ({
+      name: 'Replace Broken Track Via Lidarr',
+      description: 'For a broken music file: marks the Lidarr grab it came from as failed '
+        + '(blocklisting the release; Lidarr re-searches when "Redownload failed" is on), '
+        + 'deletes the track file in Lidarr, and starts an album search. LIDARR_API_KEY '
+        + 'comes from the node environment.',
+      style: { borderColor: 'red' },
+      tags: '',
+      isStartPlugin: false,
+      pType: '',
+      requiresVersion: '2.11.01',
+      sidebarPosition: -1,
+      icon: 'faRedo',
+      id: 'reportBrokenToLidarr',
+      inputs: [
+        { name: 'lidarrUrl', type: 'string', defaultValue: 'http://lidarr:8686',
+          inputUI: { type: 'text' }, tooltip: 'Lidarr base URL, reachable from the node.' },
+        { name: 'tdarrMusicRoot', type: 'string', defaultValue: '/media/media/music',
+          inputUI: { type: 'text' }, tooltip: 'The music folder as Tdarr sees it.' },
+        { name: 'lidarrMusicRoot', type: 'string', defaultValue: '/downloads/media/music',
+          inputUI: { type: 'text' }, tooltip: 'The same folder as Lidarr sees it.' },
+        { name: 'dryRun', type: 'boolean', defaultValue: 'false',
+          inputUI: { type: 'dropdown', options: ['false', 'true'] },
+          tooltip: 'Log what would happen in Lidarr and change nothing.' },
+        { name: 'maxFilesPerDay', type: 'number', defaultValue: '40',
+          inputUI: { type: 'text' },
+          tooltip: 'Stop deleting after this many files in a day (per node), in case the '
+            + 'check misfires on a whole library.' },
+      ],
+      outputs: [
+        { number: 1, tooltip: 'Lidarr told: grab failed, file deleted, album searched' },
+        { number: 2, tooltip: 'Nothing done - dry run, daily limit, or not found in Lidarr' },
+      ],
+    }); };
+    exports.details = details;
+
+    var request = function (baseUrl, apiKey, method, apiPath, body) {
+      return new Promise(function (resolve, reject) {
+        var url = new URL(baseUrl.replace(/\/$/, '') + '/api/v1/' + apiPath);
+        var mod = require(url.protocol === 'https:' ? 'https' : 'http');
+        var data = body === undefined ? null : JSON.stringify(body);
+        var req = mod.request(url, {
+          method: method,
+          headers: Object.assign({ 'X-Api-Key': apiKey, Accept: 'application/json' },
+            data ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } : {}),
+          timeout: 60000,
+        }, function (res) {
+          var chunks = [];
+          res.on('data', function (c) { chunks.push(c); });
+          res.on('end', function () {
+            var text = Buffer.concat(chunks).toString('utf8');
+            if (res.statusCode >= 400) {
+              var err = new Error(method + ' ' + apiPath + ' -> ' + res.statusCode + ' ' + text.slice(0, 200));
+              err.status = res.statusCode;
+              return reject(err);
+            }
+            try { resolve(text ? JSON.parse(text) : null); } catch (e) { resolve(text); }
+          });
+        });
+        req.on('timeout', function () { req.destroy(new Error(method + ' ' + apiPath + ' timed out')); });
+        req.on('error', reject);
+        if (data) { req.write(data); }
+        req.end();
+      });
+    };
+
+    // A per-node count of files deleted today, so a misfiring check can't empty the library
+    var COUNTER = path.join(os.tmpdir(), 'tdarr-lidarr-replacements.json');
+    var today = function () { return new Date().toISOString().slice(0, 10); };
+    var readCount = function () {
+      try {
+        var c = JSON.parse(fs.readFileSync(COUNTER, 'utf8'));
+        return c.day === today() ? c.count : 0;
+      } catch (e) { return 0; }
+    };
+    var writeCount = function (n) {
+      try { fs.writeFileSync(COUNTER, JSON.stringify({ day: today(), count: n })); } catch (e) { /* best effort */ }
+    };
+
+    var plugin = async function (args) {
+      var lib = require('../../../../../methods/lib')();
+      args.inputs = lib.loadDefaultValues(args.inputs, details);
+
+      var out = function (n, msg) {
+        args.jobLog(msg);
+        return { outputFileObj: args.inputFileObj, outputNumber: n, variables: args.variables };
+      };
+      var apiKey = process.env.LIDARR_API_KEY;
+      if (!apiKey) { return out(2, 'Nothing done: LIDARR_API_KEY is not set on this node'); }
+
+      var tdarrRoot = String(args.inputs.tdarrMusicRoot).replace(/\/$/, '');
+      var lidarrRoot = String(args.inputs.lidarrMusicRoot).replace(/\/$/, '');
+      var filePath = args.inputFileObj._id;
+      if (filePath.indexOf(tdarrRoot + '/') !== 0) {
+        return out(2, 'Nothing done: ' + filePath + ' is not under ' + tdarrRoot);
+      }
+      var lidarrPath = lidarrRoot + filePath.slice(tdarrRoot.length);
+      var call = function (method, apiPath, body) {
+        return request(String(args.inputs.lidarrUrl), apiKey, method, apiPath, body);
+      };
+
+      var artists = await call('GET', 'artist');
+      var artist = artists
+        .filter(function (a) { return lidarrPath.indexOf(String(a.path).replace(/\/$/, '') + '/') === 0; })
+        .sort(function (a, b) { return b.path.length - a.path.length; })[0];
+      if (!artist) { return out(2, 'Nothing done: no Lidarr artist folder contains ' + lidarrPath); }
+      var trackFiles = await call('GET', 'trackfile?artistId=' + artist.id);
+      var trackFile = trackFiles.filter(function (f) { return f.path === lidarrPath; })[0];
+      if (!trackFile) { return out(2, 'Nothing done: Lidarr has no track file at ' + lidarrPath); }
+
+      // The grab this file came from: the latest one before it was imported
+      var history = await call('GET', 'history/artist?artistId=' + artist.id + '&albumId=' + trackFile.albumId);
+      var added = Date.parse(trackFile.dateAdded);
+      var grab = (history || [])
+        .filter(function (e) { return e.eventType === 'grabbed' && Date.parse(e.date) <= added; })
+        .sort(function (a, b) { return Date.parse(b.date) - Date.parse(a.date); })[0];
+
+      var plan = (grab ? 'mark grab ' + grab.id + ' (' + grab.sourceTitle + ') failed, ' : 'no grab found, ')
+        + 'delete track file ' + trackFile.id + ', search album ' + trackFile.albumId;
+      if (String(args.inputs.dryRun) === 'true') { return out(2, 'Dry run, would: ' + plan); }
+      var done = readCount();
+      if (done >= Number(args.inputs.maxFilesPerDay)) {
+        return out(2, 'Nothing done: already replaced ' + done + ' file(s) today (limit '
+          + args.inputs.maxFilesPerDay + '). Would: ' + plan);
+      }
+
+      var notes = [];
+      if (grab) {
+        try {
+          await call('POST', 'history/failed/' + grab.id);
+          notes.push('grab ' + grab.id + ' marked failed (release blocklisted)');
+        } catch (err) {
+          // Another broken track from the same release got there first
+          notes.push('grab ' + grab.id + ' not marked failed: ' + err.message);
+        }
+      }
+      await call('DELETE', 'trackfile/' + trackFile.id);
+      writeCount(done + 1);
+      notes.push('track file ' + trackFile.id + ' deleted');
+      await call('POST', 'command', { name: 'AlbumSearch', albumIds: [trackFile.albumId] });
+      notes.push('album ' + trackFile.albumId + ' search queued');
+      return out(1, 'Lidarr: ' + notes.join('; '));
+    };
+    exports.plugin = plugin;

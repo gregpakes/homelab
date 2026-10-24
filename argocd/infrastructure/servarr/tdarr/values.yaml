@@ -6,6 +6,10 @@
 # Library "Media": source /media/media, cache /temp, output in place, using that flow.
 #   Containers: mkv,mp4,mov,m4v,mpg,mpeg,avi,flv,webm,wmv,vob,evo,iso,m2ts,ts.
 #   Folder watching on; scan on start and scheduled scans off.
+# Flow "Music integrity" (id musicIntegrity). Canonical copy tdarr/music-integrity-flow.json.
+# Library "Music": source /media/media/music, cache /temp, output in place, containers
+#   mp3,flac,m4a,ogg,opus, health checks off (the flow is the check), new files held
+#   10 minutes, using that flow. The Media library's video-only filter skips music.
 # Node "tdarr-node": 1 GPU transcode worker, 1 CPU health-check worker, no CPU transcodes.
 controllers:
   server:
@@ -44,8 +48,10 @@ controllers:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            mkdir -p /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/Custom/hasNonEnglishTracks/1.0.0 &&
-            cp /plugin-src/hasNonEnglishTracks.js /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/Custom/hasNonEnglishTracks/1.0.0/index.js
+            for plugin in hasNonEnglishTracks checkAudioIntegrity reportBrokenToLidarr; do
+              mkdir -p /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/Custom/$plugin/1.0.0 &&
+              cp /plugin-src/$plugin.js /app/server/Tdarr/Plugins/FlowPlugins/LocalFlowPlugins/Custom/$plugin/1.0.0/index.js || exit 1
+            done
         securityContext:
           runAsUser: 0
           runAsGroup: 0
@@ -161,6 +167,10 @@ controllers:
           serverIP: tdarr-server
           serverPort: "8266"
           nodeID: tdarr-node
+          # For the reportBrokenToLidarr flow plugin (Music library). Lidarr's own key, so
+          # the two can't drift apart.
+          LIDARR_API_KEY:
+            valueFrom: { secretKeyRef: { name: lidarr-secrets, key: LIDARR__AUTH__APIKEY } }
 
           PYTHONPATH: /pytools
           PATH: /pytools/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
