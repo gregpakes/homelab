@@ -65,10 +65,12 @@ here goes stale.
     conversation entry → Reconfigure) ends with the "OK" music rule and this announce rule:
     "To announce, broadcast or tell everyone something, always use the "Announce to the
     house" script, never HassBroadcast (it cannot reach the Echos). Pass the message as
-    said, without the word announce. If it reached any speakers, reply with just:
-    Announced. If its result lists Echos on Do Not Disturb, also say which ones were
-    skipped. Speech recognition sometimes adds a stray word ("The announce dinner is
-    ready"): still treat it as an announcement." `script.voice_announce` is exposed to Assist.
+    said, without the word announce. Then reply with exactly "Announced." if it reached
+    any speakers, followed only by which Echos were on Do Not Disturb if its result lists
+    any. Say nothing about earlier requests: each announcement stands alone. Speech
+    recognition often adds a stray word at the start, the tail of the wake word ("The
+    announce …", "Anna, announce …"): ignore it and still treat it as an announcement."
+    `script.voice_announce` is exposed to Assist.
 - The Echo (ESPHome device "Echo Dot - Custom") is in the Kitchen area. That is how
   "play X" with no room picks `media_player.kitchen_2`. `media_player.kitchen` and
   `media_player.kitchen_4` are unexposed from Assist, so the agent doesn't pick them.
