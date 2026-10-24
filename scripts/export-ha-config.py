@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import urllib.request
 from pathlib import Path
 
@@ -45,7 +46,22 @@ ITEMS = (
     ("automation", "1792565711045", "kitchen_lower_sonos_while_the_echo_listens"),
     ("script", "voice_send_music_request_to_lidarr", "voice_send_music_request_to_lidarr"),
     ("script", "voice_start_music_assistant_playback", "voice_start_music_assistant_playback"),
+    ("automation", "media_arr_alerts", "media_arr_alerts"),
+    ("automation", "media_health_report", "media_health_report"),
 )
+
+# A webhook ID is the only thing that lets a caller in, and this repo is public. IDs
+# ending in a long random suffix (media_arr_<hex>) are written as <prefix>_<redacted>;
+# the real ones live in Home Assistant and in 1Password.
+SECRET_SUFFIX = re.compile(r"_[0-9a-f]{16,}$")
+
+
+def redact(config: dict) -> dict:
+    config = json.loads(json.dumps(config))
+    for trigger in config.get("triggers", []):
+        if trigger.get("trigger") == "webhook" and "webhook_id" in trigger:
+            trigger["webhook_id"] = SECRET_SUFFIX.sub("_<redacted>", trigger["webhook_id"])
+    return config
 
 
 class Dumper(yaml.SafeDumper):
@@ -113,7 +129,7 @@ def main() -> None:
             config = fetch(kind, config_id, args.raw_dir)
         path = OUT_DIR / f"{kind}s" / f"{name}.yaml"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(render(kind, name, config), encoding="utf-8")
+        path.write_text(render(kind, name, redact(config)), encoding="utf-8")
         print(f"wrote {path.relative_to(REPO_ROOT)}")
 
 

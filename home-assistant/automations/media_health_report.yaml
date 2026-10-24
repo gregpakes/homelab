@@ -1,0 +1,104 @@
+# Copy of the Home Assistant automation "Media: health report" (automation.media_health_report),
+# written by scripts/export-ha-config.py. Home Assistant is the live copy:
+# change it there, then re-export. home-assistant/README.md says how to restore it.
+id: media_health_report
+alias: 'Media: health report'
+description: >-
+  The media-health-reporter CronJob (homelab argocd/infrastructure/servarr/) posts counts here every 15
+  minutes: Tdarr's Music library (passed, queued, needing attention), Tdarr video errors, and for Lidarr,
+  Radarr and Sonarr the queue items needing attention, health warnings and missing items. They go into
+  the input_number helpers the Media dashboard shows. The phone hears about it when more music files need
+  attention than before (the music check couldn't run, or Lidarr couldn't replace a file), and once when
+  no report has arrived for an hour. The webhook ID is a secret, kept in 1Password item media-alerts-webhooks,
+  so it's kept out of the public repo.
+triggers:
+  - trigger: webhook
+    id: report
+    webhook_id: media_health_<redacted>
+    allowed_methods:
+      - POST
+    local_only: true
+    note: >-
+      The reporter posts from inside the k3s cluster, so the call arrives from a node's LAN address.
+  - trigger: time_pattern
+    id: watchdog
+    minutes: 5
+actions:
+  - choose:
+      - alias: A report - store the counts
+        conditions:
+          - condition: trigger
+            id: report
+        sequence:
+          - variables:
+              before: '{{ states(''input_number.tdarr_music_needs_attention'') | int(0) }}'
+              counts:
+                input_number.tdarr_music_passed: '{{ trigger.json.tdarr.music.passed | default(none) }}'
+                input_number.tdarr_music_queued: '{{ trigger.json.tdarr.music.queued | default(none) }}'
+                input_number.tdarr_music_needs_attention: '{{ trigger.json.tdarr.music.attention | default(none)
+                  }}'
+                input_number.tdarr_video_errors: '{{ trigger.json.tdarr.video_errors | default(none) }}'
+                input_number.lidarr_queue_needs_attention: '{{ trigger.json.lidarr.attention | default(none)
+                  }}'
+                input_number.radarr_queue_needs_attention: '{{ trigger.json.radarr.attention | default(none)
+                  }}'
+                input_number.sonarr_queue_needs_attention: '{{ trigger.json.sonarr.attention | default(none)
+                  }}'
+                input_number.lidarr_health_warnings: '{{ trigger.json.lidarr.health | default(none) }}'
+                input_number.radarr_health_warnings: '{{ trigger.json.radarr.health | default(none) }}'
+                input_number.sonarr_health_warnings: '{{ trigger.json.sonarr.health | default(none) }}'
+                input_number.lidarr_missing_albums: '{{ trigger.json.lidarr.missing | default(none) }}'
+                input_number.radarr_missing_movies: '{{ trigger.json.radarr.missing | default(none) }}'
+                input_number.sonarr_missing_episodes: '{{ trigger.json.sonarr.missing | default(none)
+                  }}'
+          - repeat:
+              for_each: |-
+                {% set ns = namespace(items=[]) %} {% for key, value in counts.items() if value is not none %}
+                  {% set ns.items = ns.items + [{'key': key, 'value': value}] %}
+                {% endfor %} {{ ns.items }}
+              sequence:
+                - action: input_number.set_value
+                  continue_on_error: true
+                  note: A source the reporter couldn't reach is sent as null and left as it was.
+                  target:
+                    entity_id: '{{ repeat.item.key }}'
+                  data:
+                    value: '{{ repeat.item.value | int(0) }}'
+          - action: input_datetime.set_datetime
+            target:
+              entity_id: input_datetime.media_health_last_report
+            data:
+              timestamp: '{{ now().timestamp() }}'
+          - if:
+              - condition: template
+                value_template: '{{ (trigger.json.tdarr.music.attention | default(0) | int(0)) > before
+                  }}'
+            then:
+              - action: notify.mobile_app_gregs_iphone
+                data:
+                  title: 'Tdarr: music needs attention'
+                  message: >-
+                    {{ trigger.json.tdarr.music.attention }} music file(s) failed the integrity check
+                    and weren't replaced (was {{ before }}). See the Music library's error list in Tdarr.
+                  data:
+                    url: https://tdarr.gregpakes.co.uk
+                    group: media
+      - alias: No report for an hour - say so once
+        conditions:
+          - condition: trigger
+            id: watchdog
+          - condition: template
+            value_template: >-
+              {% set last = as_timestamp(states('input_datetime.media_health_last_report'), 0) %} {{ last
+              > 0 and 3600 <= (now().timestamp() - last) < 7200 }}
+        sequence:
+          - action: notify.mobile_app_gregs_iphone
+            data:
+              title: 'Media health: no report for an hour'
+              message: >-
+                The media-health-reporter CronJob hasn't posted since {{ as_datetime(states('input_datetime.media_health_last_report')).strftime('%H:%M')
+                }}. The Media dashboard counts are stale.
+              data:
+                group: media
+mode: queued
+max: 5

@@ -1,0 +1,171 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/app-template-4.5.0/charts/other/app-template/values.schema.json
+
+# Every 15 minutes, collects media health counts and posts them to Home Assistant's
+# "Media: health report" automation (home-assistant/automations/media_health_report.yaml),
+# which keeps the Media dashboard's helpers up to date and alerts the phone:
+# - Tdarr's Music library: files that passed the integrity check, are still queued, or
+#   failed it and weren't replaced (the "Music integrity" flow, tdarr/README.md), and
+#   the Media library's video errors
+# - Lidarr, Radarr, Sonarr: queue items needing attention, health warnings, missing items
+# Event alerts (stuck imports, health errors) come straight from the arrs' own webhook
+# connections to "Media: arr alerts"; this only reports counts. A source it can't read is
+# sent as null and left as it was; a run that reads nothing fails the Job.
+controllers:
+  main:
+    type: cronjob
+    cronjob:
+      schedule: "*/15 * * * *"
+      timeZone: Europe/London
+      concurrencyPolicy: Forbid
+      startingDeadlineSeconds: 300
+      successfulJobsHistory: 1
+      failedJobsHistory: 3
+      backoffLimit: 0
+      # A failed Job fires kube-prometheus-stack's KubeJobFailed alert (Pushover) until the
+      # Job is gone. This clears a one-off failure after a day; logs stay in Loki.
+      ttlSecondsAfterFinished: 86400
+    pod:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+    containers:
+      reporter:
+        image:
+          repository: python
+          tag: "3.15-slim"
+        command: ["python3", "-u", "/app/media-health-report.py"]
+        env:
+          TZ: Europe/London
+          TDARR_URL: http://tdarr-web:8265
+          TDARR_MUSIC_LIBRARY: musicLibrary
+          # The "Media" library
+          TDARR_VIDEO_LIBRARY: 3-XueVfwO
+          LIDARR_URL: http://lidarr:8686
+          RADARR_URL: http://radarr:8989
+          SONARR_URL: http://sonarr:8989
+        # The arrs' API keys, and HA_WEBHOOK_URL (Home Assistant on the Yellow, by LAN
+        # address, so the webhook's local_only check passes)
+        envFrom:
+          - secretRef: { name: media-health-reporter-secrets }
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+
+configMaps:
+  script:
+    data:
+      media-health-report.py: |
+        """
+        Collect media health counts and post them to Home Assistant's "Media: health report" webhook.
+
+        Tdarr: the Music library's files that passed the integrity check, are still queued, or
+        failed it and weren't replaced, plus the Media (video) library's errors. Lidarr, Radarr,
+        Sonarr: queue items needing attention, health warnings, missing items. A source that
+        can't be read is sent as null, which Home Assistant leaves as it was.
+        """
+
+        import json
+        import os
+        import sys
+        import urllib.request
+
+        TDARR_URL = os.environ.get("TDARR_URL", "http://tdarr-web:8265").rstrip("/")
+        TDARR_MUSIC_LIBRARY = os.environ.get("TDARR_MUSIC_LIBRARY", "musicLibrary")
+        TDARR_VIDEO_LIBRARY = os.environ.get("TDARR_VIDEO_LIBRARY", "3-XueVfwO")
+        HA_WEBHOOK_URL = os.environ["HA_WEBHOOK_URL"]
+        ARRS = {
+            # name: (base URL, API version, env var holding its API key)
+            "lidarr": (os.environ.get("LIDARR_URL", "http://lidarr:8686"), "v1", "LIDARR_API_KEY"),
+            "radarr": (os.environ.get("RADARR_URL", "http://radarr:8989"), "v3", "RADARR_API_KEY"),
+            "sonarr": (os.environ.get("SONARR_URL", "http://sonarr:8989"), "v3", "SONARR_API_KEY"),
+        }
+        # Queue states an arr shows a warning for: the download is stuck or its import is blocked
+        ATTENTION_STATES = {"importBlocked", "importFailed", "failedPending", "failed"}
+
+
+        def request(url, data=None, headers=None):
+            body = json.dumps(data).encode() if data is not None else None
+            req = urllib.request.Request(url, data=body, method="POST" if body else "GET",
+                                         headers={"Content-Type": "application/json", **(headers or {})})
+            with urllib.request.urlopen(req, timeout=60) as response:
+                text = response.read().decode()
+                return json.loads(text) if text else None
+
+
+        def tdarr_pies(library_id):
+            pies = request(f"{TDARR_URL}/api/v2/stats/get-pies", {"data": {"libraryId": library_id}})["pieStats"]
+            count = lambda kind, *names: sum(s["value"] for s in pies["status"].get(kind, []) if s["name"] in names)
+            return pies, count
+
+
+        def tdarr():
+            result = {"music": None, "video_errors": None}
+            try:
+                _, count = tdarr_pies(TDARR_MUSIC_LIBRARY)
+                result["music"] = {
+                    "passed": count("transcode", "Not required", "Transcode success"),
+                    "queued": count("transcode", "Queued", "Hold", "Processing"),
+                    "attention": count("transcode", "Transcode error"),
+                }
+            except Exception as err:
+                print(f"tdarr music: {err}", file=sys.stderr)
+            try:
+                _, count = tdarr_pies(TDARR_VIDEO_LIBRARY)
+                result["video_errors"] = count("transcode", "Transcode error") + count("healthcheck", "Error")
+            except Exception as err:
+                print(f"tdarr video: {err}", file=sys.stderr)
+            return result
+
+
+        def arr(name, base, version, key_env):
+            api = f"{base.rstrip('/')}/api/{version}/"
+            headers = {"X-Api-Key": os.environ[key_env]}
+            result = {"attention": None, "health": None, "missing": None}
+            try:
+                queue = request(api + "queue?pageSize=500", headers=headers)["records"]
+                result["attention"] = sum(
+                    1 for r in queue
+                    if r.get("trackedDownloadStatus") in ("warning", "error")
+                    or r.get("trackedDownloadState") in ATTENTION_STATES)
+            except Exception as err:
+                print(f"{name} queue: {err}", file=sys.stderr)
+            try:
+                result["health"] = len(request(api + "health", headers=headers))
+            except Exception as err:
+                print(f"{name} health: {err}", file=sys.stderr)
+            try:
+                result["missing"] = request(api + "wanted/missing?pageSize=1&monitored=true", headers=headers)["totalRecords"]
+            except Exception as err:
+                print(f"{name} missing: {err}", file=sys.stderr)
+            return result
+
+
+        def main():
+            report = {"tdarr": tdarr()}
+            for name, (base, version, key_env) in ARRS.items():
+                report[name] = arr(name, base, version, key_env)
+            print(json.dumps(report))
+            request(HA_WEBHOOK_URL, report)
+            # A run that read nothing at all means the reporter itself is broken: fail the Job so
+            # it alerts, rather than posting nulls forever
+            values = [report["tdarr"]["music"], report["tdarr"]["video_errors"]] + \
+                     [v for name in ARRS for v in report[name].values()]
+            if all(v is None for v in values):
+                sys.exit("no source could be read")
+
+
+        if __name__ == "__main__":
+            main()
+
+persistence:
+  script:
+    type: configMap
+    identifier: script
+    globalMounts:
+      - path: /app
+        readOnly: true
