@@ -1,0 +1,181 @@
+# Copy of the Home Assistant automation "Voice: media controls" (automation.voice_media_controls),
+# written by scripts/export-ha-config.py. Home Assistant is the live copy:
+# change it there, then re-export. home-assistant/README.md says how to restore it.
+id: '1792848361589'
+alias: 'Voice: media controls'
+description: >-
+  Handles play/resume, pause/stop, next, previous, repeat and shuffle locally, on the speaker in the room
+  of the voice device that heard the request (Music Assistant player first). HA's built-in media intents
+  miss when speech-to-text leaks the wake word ("Alexa, next track"), and it has no built-in for a bare
+  "play", repeat or shuffle, so those went to the LLM. Pause, play, next and previous reply with nothing,
+  since you hear the result; repeat and shuffle say what they did. "Stop" while the device's timer is
+  ringing silences the timer instead. Works in any room with one voice satellite and one speaker: nothing
+  names a room or entity.
+triggers:
+  - trigger: conversation
+    id: pause
+    command:
+      - '[alexa|anna|the] (pause|stop) [the] [music|song|track|it]'
+      - '[alexa|anna|the] stop playing'
+    note: >-
+      The optional leading word is the tail of the "Alexa" wake word, which the Echo leaks into the recording.
+  - trigger: conversation
+    id: resume
+    command:
+      - '[alexa|anna|the] play'
+      - '[alexa|anna|the] (resume|unpause|continue) [the] [music|song|track|playing]'
+      - '[alexa|anna|the] carry on'
+  - trigger: conversation
+    id: next
+    command:
+      - '[alexa|anna|the] (next|skip) [this] [song|track|one]'
+      - '[alexa|anna|the] play [the] next (song|track|one)'
+  - trigger: conversation
+    id: previous
+    command:
+      - '[alexa|anna|the] previous [song|track|one]'
+      - '[alexa|anna|the] go back [a] [song|track]'
+      - '[alexa|anna|the] play [the] (previous|last) (song|track|one)'
+  - trigger: conversation
+    id: repeat_one
+    command:
+      - '[alexa|anna|the] repeat [this|the] (song|track|one)'
+      - '[alexa|anna|the] (loop|put) [this|the] (song|track) [on repeat]'
+      - '[alexa|anna|the] (turn on repeat|repeat on)'
+  - trigger: conversation
+    id: repeat_off
+    command:
+      - '[alexa|anna|the] (turn off repeat|repeat off|stop repeating)'
+  - trigger: conversation
+    id: shuffle_on
+    command:
+      - '[alexa|anna|the] shuffle [on|this|it|the music|the playlist|the album]'
+      - '[alexa|anna|the] turn on shuffle'
+  - trigger: conversation
+    id: shuffle_off
+    command:
+      - '[alexa|anna|the] (turn off shuffle|shuffle off|stop shuffling)'
+actions:
+  - variables:
+      area: '{{ area_id(trigger.device_id) if trigger.device_id else none }}'
+      own: '{{ device_entities(trigger.device_id) if trigger.device_id else [] }}'
+      ma: '{{ integration_entities(''music_assistant'') | list }}'
+      cands: >-
+        {%- set ns = namespace(r=[]) -%}{%- if area -%}{%- for e in area_entities(area) | select('match',
+        'media_player\.') | select('is_state_attr', 'device_class', 'speaker') -%}{%- set d = device_id(e)
+        -%}{%- if not (d and (device_entities(d) | select('match', 'assist_satellite\.') | list)) -%}{%-
+        set ns.r = ns.r + [e] -%}{%- endif -%}{%- endfor -%}{%- endif -%}{{ ns.r }}
+      ordered: '{{ (cands | select(''in'', ma) | list) + (cands | reject(''in'', ma) | list) }}'
+      playing: '{{ ordered | select(''is_state'', ''playing'') | list }}'
+      paused: >-
+        {%- set ns = namespace(r=[]) -%}{%- for e in ordered -%}{%- if is_state(e, 'paused') or (is_state(e,
+        'idle') and state_attr(e, 'media_content_id')) -%}{%- set ns.r = ns.r + [e] -%}{%- endif -%}{%-
+        endfor -%}{{ ns.r }}
+      target: >-
+        {{ ((paused | first) if trigger.id == 'resume' else ((playing | first) if trigger.id == 'pause'
+        else ((playing + paused) | first))) | default('', true) }}
+      room: '{{ (''the '' ~ area_name(area)) if area else ''this room'' }}'
+      ringing: >-
+        {{ own | select('match', 'binary_sensor\..*timer_ringing') | select('is_state', 'on') | list |
+        count > 0 }}
+      stop_button: '{{ own | select(''match'', ''button\..*stop_ringing'') | first | default('''') }}'
+    note: >-
+      Speakers (device_class speaker) in the room of the device that heard the request, leaving out any
+      that belong to a voice satellite and non-speakers such as a Spotify account entity, Music Assistant
+      players first. Resume picks a paused one, pause a playing one; the rest pick a playing one, else
+      a paused one. Music Assistant reports a paused Sonos as idle, so an idle player that still has a
+      track loaded counts as paused.
+  - if:
+      - condition: trigger
+        id: pause
+      - condition: template
+        value_template: '{{ ringing and stop_button != '''' }}'
+    then:
+      - action: button.press
+        target:
+          entity_id: '{{ stop_button }}'
+      - set_conversation_response: ''
+      - stop: Silenced the ringing timer
+  - if:
+      - condition: template
+        value_template: '{{ target == '''' }}'
+    then:
+      - set_conversation_response: >-
+          {{ ("There's nothing paused in " ~ room ~ '.') if trigger.id == 'resume' else ("Nothing's playing
+          in " ~ room ~ '.') }}
+      - stop: No speaker to control
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: pause
+        sequence:
+          - action: media_player.media_pause
+            target:
+              entity_id: '{{ target }}'
+          - set_conversation_response: ''
+      - conditions:
+          - condition: trigger
+            id: resume
+        sequence:
+          - action: media_player.media_play
+            target:
+              entity_id: '{{ target }}'
+          - set_conversation_response: ''
+      - conditions:
+          - condition: trigger
+            id: next
+        sequence:
+          - action: media_player.media_next_track
+            target:
+              entity_id: '{{ target }}'
+          - set_conversation_response: ''
+      - conditions:
+          - condition: trigger
+            id: previous
+        sequence:
+          - action: media_player.media_previous_track
+            target:
+              entity_id: '{{ target }}'
+          - set_conversation_response: ''
+      - conditions:
+          - condition: trigger
+            id: repeat_one
+        sequence:
+          - action: media_player.repeat_set
+            target:
+              entity_id: '{{ target }}'
+            data:
+              repeat: one
+          - set_conversation_response: Repeating this song.
+      - conditions:
+          - condition: trigger
+            id: repeat_off
+        sequence:
+          - action: media_player.repeat_set
+            target:
+              entity_id: '{{ target }}'
+            data:
+              repeat: 'off'
+          - set_conversation_response: Repeat off.
+      - conditions:
+          - condition: trigger
+            id: shuffle_on
+        sequence:
+          - action: media_player.shuffle_set
+            target:
+              entity_id: '{{ target }}'
+            data:
+              shuffle: true
+          - set_conversation_response: Shuffle on.
+      - conditions:
+          - condition: trigger
+            id: shuffle_off
+        sequence:
+          - action: media_player.shuffle_set
+            target:
+              entity_id: '{{ target }}'
+            data:
+              shuffle: false
+          - set_conversation_response: Shuffle off.
+mode: queued
+max: 3

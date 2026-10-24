@@ -50,6 +50,7 @@ ITEMS = (
     ("automation", "media_stuck_downloads", "media_stuck_downloads"),
     ("automation", "1792841672349", "voice_announce_to_the_house"),
     ("script", "voice_announce", "voice_announce"),
+    ("automation", "1792848361589", "voice_media_controls"),
 )
 
 # A webhook ID is the only thing that lets a caller in, and this repo is public, so every
