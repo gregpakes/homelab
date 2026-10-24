@@ -52,8 +52,12 @@ sequence:
               message: '{{ message }}'
               target: '{{ echos }}'
               data:
-                type: announce
+                type: tts
             continue_on_error: true
+            note: >-
+              Alexa speak, not announce: on 2026-10-24 Amazon accepted announcements to the living room
+              Echo Plus (200 OK) but it never played them, while the same Echo played a speak request.
+              Speak has no chime.
       - if:
           - condition: template
             value_template: '{{ satellites | count > 0 }}'
