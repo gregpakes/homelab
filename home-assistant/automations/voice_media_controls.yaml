@@ -15,10 +15,11 @@ triggers:
   - trigger: conversation
     id: pause
     command:
-      - '[alexa|anna|the] (pause|stop) [the] [music|song|track|it]'
+      - '[alexa|anna|the] (pause|stop) [pause|stop] [the] [music|song|track|it]'
       - '[alexa|anna|the] stop playing'
     note: >-
       The optional leading word is the tail of the "Alexa" wake word, which the Echo leaks into the recording.
+      The optional second pause/stop catches a repeated command ("Pause. Pause").
   - trigger: conversation
     id: resume
     command:
