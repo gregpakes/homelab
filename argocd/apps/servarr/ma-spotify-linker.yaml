@@ -13,7 +13,7 @@ spec:
     # 1) The nightly CronJob (script, state volume)
     - repoURL: https://bjw-s-labs.github.io/helm-charts/
       chart: app-template
-      targetRevision: 4.5.0
+      targetRevision: 4.6.2
       helm:
         valueFiles:
           - $values/argocd/infrastructure/servarr/ma-spotify-linker/values.yaml
