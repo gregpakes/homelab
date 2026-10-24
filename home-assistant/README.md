@@ -49,11 +49,13 @@ here goes stale.
 ## Settings that only exist in a UI (recorded 2026-10-21)
 
 - Assist pipeline "Openrouter - Haiku", used by the Echo:
-  - Speech-to-text: Home Assistant Cloud, en-GB. It sometimes loses or garbles the first
-    word ("The announce …", "Face" for "Play"). ElevenLabs Scribe v2 (integration
-    option `stt_model`, language `en-US`, its only English code) is the alternative tried
-    on 2026-10-24, but the ElevenLabs API key lacks the `speech_to_text` permission, so
-    every request failed with a 401. Add that permission to the key before trying it again.
+  - Speech-to-text: ElevenLabs (integration option speech model Scribe v2, automatic
+    language detection off), language `en-US` (its only English code). On trial since
+    2026-10-24 because Home Assistant Cloud (en-GB) kept losing or garbling the first
+    word ("The announce …", "Face" for "Play"). The ElevenLabs API key needs the
+    Speech to Text permission as well as Text to Speech (without it every request fails
+    with a 401), and speech-to-text uses the same quota as the replies. To go back, set
+    Speech-to-text to Home Assistant Cloud, English (United Kingdom) on this pipeline.
   - Text-to-speech: ElevenLabs (integration default model Flash v2.5), language `en`.
     The voice is picked on the pipeline. Changed from Home Assistant Cloud's Libby on
     2026-10-23.
