@@ -13,7 +13,7 @@ spec:
     # 1) The 15-minute CronJob and its script
     - repoURL: https://bjw-s-labs.github.io/helm-charts/
       chart: app-template
-      targetRevision: 4.5.0
+      targetRevision: 5.3.0
       helm:
         valueFiles:
           - $values/argocd/infrastructure/servarr/media-health-reporter/values.yaml
