@@ -42,10 +42,17 @@ here goes stale.
     The voice is picked on the pipeline. Changed from Home Assistant Cloud's Libby on
     2026-10-23.
   - Conversation agent: OpenRouter `anthropic/claude-haiku-5.5`, with control of Home
-    Assistant (Assist) and "Prefer handling commands locally" both on.
+    Assistant (Assist) and "Prefer handling commands locally" both on. Its prompt ends
+    with: "When you start music exactly as asked, reply with just OK: the music starting
+    is the confirmation. Only describe what you played if it differs from what was asked,
+    or if you could not play it." That covers requests that reach Haiku without the
+    fast-play automation, such as "Play" misheard as "Face". They then say "OK" rather
+    than a sentence; only the automation can drop the reply entirely.
 - The Echo (ESPHome device "Echo Dot - Custom") is in the Kitchen area. That is how
   "play X" with no room picks `media_player.kitchen_2`. `media_player.kitchen` and
   `media_player.kitchen_4` are unexposed from Assist, so the agent doesn't pick them.
+  So is `media_player.spotify_greg_pakes` (HA Spotify integration): Haiku tried to play on
+  it first and failed.
 - To-do list "Music requests" (`todo.music_requests`, Local To-do). It must exist before
   the Lidarr script runs.
 - Text helper "Voice last music request" (`input_text.voice_last_music_request`, max
