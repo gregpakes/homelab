@@ -54,7 +54,7 @@ redis:
   image:
     registry: docker.io
     repository: redis
-    tag: "7-alpine"
+    tag: "8-alpine"
   auth:
     existingSecret: patchmon-secrets
     existingSecretPasswordKey: redis-password
