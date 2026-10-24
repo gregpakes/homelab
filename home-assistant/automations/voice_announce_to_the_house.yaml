@@ -21,12 +21,18 @@ actions:
     data:
       message: '{{ trigger.slots.message | trim }}'
     response_variable: announced
+  - variables:
+      dnd_note: >-
+        {%- set n = announced.on_do_not_disturb -%}{%- if n -%}{{ n | join(' and ') }} {{ 'is' if n |
+        count == 1 else 'are' }} on Do Not Disturb.{%- endif -%}
   - if:
       - condition: template
         value_template: '{{ announced.speakers_reached > 0 }}'
     then:
-      - set_conversation_response: Announced.
+      - set_conversation_response: Announced. {{ dnd_note }}
     else:
-      - set_conversation_response: Sorry, none of the announcement speakers are online.
+      - set_conversation_response: >-
+          {{ ('Nothing played: ' ~ dnd_note) if dnd_note else 'Sorry, none of the announcement speakers
+          are online.' }}
 mode: queued
 max: 3

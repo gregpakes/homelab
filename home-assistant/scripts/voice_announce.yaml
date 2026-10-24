@@ -5,7 +5,7 @@ alias: Announce to the house
 description: >-
   Announce a spoken message to the whole house: every Echo and voice speaker. Use this for any request
   to announce, broadcast or tell everyone something, never HassBroadcast. Returns how many speakers it
-  reached.
+  reached and which Echos were skipped because they are on Do Not Disturb.
 icon: mdi:bullhorn
 mode: parallel
 max: 5
@@ -18,21 +18,29 @@ fields:
       text: {}
 sequence:
   - variables:
-      echos: >-
+      online_echos: >-
         {{ label_entities('announce') | select('match', 'media_player\.') | select('has_value') | list
         }}
+      dnd_echos: >-
+        {%- set ns = namespace(dnd=[]) -%}{%- for e in online_echos -%}{%- set sw = device_entities(device_id(e))
+        | select('match', 'switch\..*do_not_disturb') | list -%}{%- if sw and is_state(sw[0], 'on') -%}{%-
+        set ns.dnd = ns.dnd + [e] -%}{%- endif -%}{%- endfor -%}{{ ns.dnd }}
+      echos: '{{ online_echos | reject(''in'', dnd_echos) | list }}'
       satellites: >-
         {{ label_entities('announce') | select('match', 'assist_satellite\.') | select('is_state', 'idle')
         | list }}
-      result: '{{ {''speakers_reached'': echos | count + satellites | count} }}'
+      result: >-
+        {{ {'speakers_reached': echos | count + satellites | count, 'on_do_not_disturb': dnd_echos | map('state_attr',
+        'friendly_name') | list} }}
     note: >-
-      Online Echos labelled Announce, and labelled satellites that are idle. The satellite handling this
-      request is busy, so it is skipped.
+      Online Echos labelled Announce, minus those whose Do Not Disturb switch is on (Alexa drops announcements
+      to them silently), and labelled satellites that are idle. The satellite handling this request is
+      busy, so it is skipped.
   - if:
       - condition: template
         value_template: '{{ result.speakers_reached == 0 }}'
     then:
-      - stop: No announcement speaker is online
+      - stop: No announcement speaker is available
         response_variable: result
   - parallel:
       - if:
