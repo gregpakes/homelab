@@ -12,7 +12,8 @@ here goes stale.
 | --- | --- |
 | `automations/voice_play_music_fast_via_music_assistant.yaml` | "Alexa, play X": finds an exact artist, song, album or playlist in your own library, then Spotify, and plays it on the room's Music Assistant player without the LLM. With no exact match it plays a near-miss (plural, punctuation or spacing difference, such as "Salmon Cats" → "Salmon Cat") if it is the only one of its kind, and says "Playing …". Asking again within 30 s of a near-miss skips the guess, and "… on Spotify" skips the library. Anything else goes to the Haiku agent. Matched artists, albums and songs go to Lidarr |
 | `automations/music_download_albums_played_from_spotify.yaml` | Sends the album of any Spotify track a Music Assistant player has played for 30 s to Lidarr, so it plays from the library next time |
-| `automations/voice_announce_to_the_house.yaml` | "Alexa, announce/broadcast X" (or "tell everyone X"): sends an Alexa announcement to every online Echo labelled Announce and announces on every online HA voice satellite labelled Announce, except the one you spoke to. Replaces HA's built-in broadcast, which only reaches HA satellites and says "Done" when none is online |
+| `automations/voice_announce_to_the_house.yaml` | Fast path for "Alexa, announce/broadcast X" (or "tell everyone X"): hands the message to the announce script without the LLM and says "Announced.". Replaces HA's built-in broadcast, which only reaches HA satellites and says "Done" when none is online |
+| `scripts/voice_announce.yaml` | "Announce to the house": sends an Alexa announcement to every online Echo labelled Announce and announces on every idle HA voice satellite labelled Announce (the one handling the request is busy, so it is skipped). Exposed to Assist, so Haiku calls it when a sentence misses the fast path |
 | `automations/kitchen_lower_sonos_while_the_echo_listens.yaml` | Ducks the kitchen Sonos to 30% while the kitchen Echo listens, then restores it |
 | `automations/patchmon_notify_phone.yaml` | Pushes PatchMon alerts (host down, failed patch runs, reboots, login problems) to the iPhone. PatchMon calls it through a webhook; the real webhook ID is redacted here because this repo is public |
 | `scripts/voice_send_music_request_to_lidarr.yaml` | Adds an artist (whole discography) or one album to Lidarr, monitors it and searches. Logs each request on the Music requests to-do list |
@@ -54,6 +55,13 @@ here goes stale.
     2026-10-23.
   - Conversation agent: OpenRouter `anthropic/claude-haiku-5.5`, with control of Home
     Assistant (Assist) and "Prefer handling commands locally" both on.
+  - The agent's prompt (Settings → Devices & services → OpenRouter → the Haiku
+    conversation entry → Reconfigure) ends with the "OK" music rule and this announce rule:
+    "To announce, broadcast or tell everyone something, always use the "Announce to the
+    house" script, never HassBroadcast (it cannot reach the Echos). Pass the message as
+    said, without the word announce. If it reached any speakers, reply with just:
+    Announced. Speech recognition sometimes adds a stray word ("The announce dinner is
+    ready"): still treat it as an announcement." `script.voice_announce` is exposed to Assist.
 - The Echo (ESPHome device "Echo Dot - Custom") is in the Kitchen area. That is how
   "play X" with no room picks `media_player.kitchen_2`. `media_player.kitchen` and
   `media_player.kitchen_4` are unexposed from Assist, so the agent doesn't pick them.

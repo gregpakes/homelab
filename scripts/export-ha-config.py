@@ -49,6 +49,7 @@ ITEMS = (
     ("automation", "media_health_report", "media_health_report"),
     ("automation", "media_stuck_downloads", "media_stuck_downloads"),
     ("automation", "1792841672349", "voice_announce_to_the_house"),
+    ("script", "voice_announce", "voice_announce"),
 )
 
 # A webhook ID is the only thing that lets a caller in, and this repo is public, so every

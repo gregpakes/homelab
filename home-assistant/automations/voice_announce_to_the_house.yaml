@@ -4,56 +4,29 @@
 id: '1792841672349'
 alias: 'Voice: announce to the house'
 description: >-
-  "Alexa, announce/broadcast X" on the flashed Echo used to reach only HA voice satellites (HA's built-in
-  broadcast intent), never the stock Echos, and said "Done" even when every satellite was offline. This
-  sentence trigger takes over: it sends an Alexa announcement to every online media_player labelled Announce
-  and assist_satellite.announce to every online satellite labelled Announce except the one that heard
-  the request. Edit the Announce label to change who hears it.
+  Fast path for "Alexa, announce/broadcast X" that skips the LLM. HA's built-in broadcast intent only
+  reaches HA voice satellites, never the stock Echos, and said "Done" even when every satellite was offline,
+  so this sentence trigger takes over and hands the message to script.voice_announce. Sentences that don't
+  match here (e.g. STT adds a word) reach Haiku, whose prompt tells it to call the same script.
 triggers:
   - trigger: conversation
     command:
-      - (announce|broadcast) {message}
-      - tell everyone [that] {message}
-    note: Matched before HA's own HassBroadcast intent, which this replaces.
+      - '[the] (announce|broadcast) [that] {message}'
+      - '[the] tell everyone [that] {message}'
+    note: >-
+      Matched before HA's own HassBroadcast intent, which this replaces. [the] because STT has heard "The
+      announce ...".
 actions:
-  - variables:
+  - action: script.voice_announce
+    data:
       message: '{{ trigger.slots.message | trim }}'
-      own_entities: '{{ device_entities(trigger.device_id) if trigger.device_id else [] }}'
-      echos: >-
-        {{ label_entities('announce') | select('match', 'media_player\.') | select('has_value') | list
-        }}
-      satellites: >-
-        {{ label_entities('announce') | select('match', 'assist_satellite\.') | select('has_value') |
-        reject('in', own_entities) | list }}
+    response_variable: announced
   - if:
       - condition: template
-        value_template: '{{ echos | count + satellites | count == 0 }}'
+        value_template: '{{ announced.speakers_reached > 0 }}'
     then:
+      - set_conversation_response: Announced.
+    else:
       - set_conversation_response: Sorry, none of the announcement speakers are online.
-      - stop: No online speaker labelled Announce
-  - set_conversation_response: Announced.
-  - parallel:
-      - if:
-          - condition: template
-            value_template: '{{ echos | count > 0 }}'
-        then:
-          - action: notify.alexa_media
-            data:
-              message: '{{ message }}'
-              target: '{{ echos }}'
-              data:
-                type: announce
-            continue_on_error: true
-      - if:
-          - condition: template
-            value_template: '{{ satellites | count > 0 }}'
-        then:
-          - action: assist_satellite.announce
-            target:
-              entity_id: '{{ satellites }}'
-            data:
-              message: '{{ message }}'
-              preannounce: true
-            continue_on_error: true
 mode: queued
 max: 3
