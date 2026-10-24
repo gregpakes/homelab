@@ -11,11 +11,12 @@ description: >-
 triggers:
   - trigger: conversation
     command:
-      - '[the] (announce|broadcast) [that] {message}'
-      - '[the] tell everyone [that] {message}'
+      - '[alexa|anna|the] (announce|broadcast) [that] {message}'
+      - '[alexa|anna|the] tell everyone [that] {message}'
     note: >-
-      Matched before HA's own HassBroadcast intent, which this replaces. [the] because STT has heard "The
-      announce ...".
+      Matched before HA's own HassBroadcast intent, which this replaces. The optional leading word is
+      the tail of the "Alexa" wake word, which the Echo leaks into the recording ("The announce ...",
+      "Anna, announce ...").
 actions:
   - action: script.voice_announce
     data:

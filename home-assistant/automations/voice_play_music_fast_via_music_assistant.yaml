@@ -18,18 +18,21 @@ description: >-
 triggers:
   - trigger: conversation
     command:
-      - play {query} (in|on) [the] {room}
-      - play {title} by {artist}
-      - play {query}
+      - '[alexa|anna|the] play {query} (in|on) [the] {room}'
+      - '[alexa|anna|the] play {title} by {artist}'
+      - '[alexa|anna|the] play {query}'
+    note: >-
+      The optional leading word is the tail of the "Alexa" wake word, which the Echo leaks into the recording
+      ("Alexa, play ...", "Anna, ...", "The ...").
 actions:
   - variables:
       raw_room: '{{ (trigger.slots.get(''room'') or '''') | regex_replace(''[.!?,]+$'', '''') | trim }}'
       room_ok: >-
         {{ raw_room != '' and (raw_room | lower == 'spotify' or area_id(raw_room) is not none) }}
       raw_query: >-
-        {%- if raw_room and not room_ok -%}{{ trigger.sentence | regex_replace('^\W*play\s+', '', ignorecase=True)
-        | regex_replace('[.!?,]+$', '') | trim }}{%- else -%}{{ (trigger.slots.get('query') or trigger.slots.get('title')
-        or '') | regex_replace('[.!?,]+$', '') | trim }}{%- endif -%}
+        {%- if raw_room and not room_ok -%}{{ trigger.sentence | regex_replace('^\W*((alexa|anna|the)\W+)?play\s+',
+        '', ignorecase=True) | regex_replace('[.!?,]+$', '') | trim }}{%- else -%}{{ (trigger.slots.get('query')
+        or trigger.slots.get('title') or '') | regex_replace('[.!?,]+$', '') | trim }}{%- endif -%}
       raw_artist: '{{ (trigger.slots.get(''artist'') or '''') | regex_replace(''[.!?,]+$'', '''') | trim
         }}'
       spotify_only: >-
