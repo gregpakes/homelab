@@ -68,9 +68,16 @@ here goes stale.
     house" script, never HassBroadcast (it cannot reach the Echos). Pass the message as
     said, without the word announce. Then reply with exactly "Announced." if it reached
     any speakers, followed only by which Echos were on Do Not Disturb if its result lists
-    any. Say nothing about earlier requests: each announcement stands alone. Speech
-    recognition often adds a stray word at the start, the tail of the wake word ("The
-    announce …", "Anna, announce …"): ignore it and still treat it as an announcement."
+    any. Speech recognition often adds a stray word at the start, the tail of the wake
+    word ("The announce …", "Anna, announce …"), or repeats a word ("Pause. Pause"):
+    ignore it and act on the request."
+    Near the top it also says: "Answer only the latest request. Never comment on earlier
+    requests in this conversation: many are handled by Home Assistant before they reach
+    you, and an earlier request with an empty reply was carried out successfully, not a
+    failure." The Echo keeps one conversation going for a few minutes, so Haiku sees the
+    silent local commands (an empty reply) and used to call them failures. The music rule
+    covers pausing and skipping too: "When you start, pause or skip music exactly as
+    asked, reply with just OK".
     `script.voice_announce` is exposed to Assist.
   - Web search on the same conversation entry: "tool" (added 2026-10-24), so Haiku
     searches only when a question needs it. Each search costs a little extra on
