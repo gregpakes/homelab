@@ -10,11 +10,12 @@ here goes stale.
 
 | File | What it does |
 | --- | --- |
-| `automations/voice_play_music_fast_via_music_assistant.yaml` | "Alexa, play X": finds an exact artist, song, album or playlist in your own library, then Spotify, and plays it on the room's Music Assistant player without the LLM. With no exact match it plays a near-miss (plural, punctuation or spacing difference, such as "Salmon Cats" → "Salmon Cat") if it is the only one of its kind, and says "Playing …". Asking again within 30 s of a near-miss skips the guess, and "… on Spotify" skips the library. Anything else goes to the Haiku agent. Matched artists, albums and songs go to Lidarr |
+| `automations/voice_play_music_fast_via_music_assistant.yaml` | "Alexa, play X": finds an exact artist, song, album or playlist in your own library, then Spotify, and plays it on the room's Music Assistant player without the LLM. With no exact match it plays a near-miss (plural, punctuation or spacing difference, such as "Salmon Cats" → "Salmon Cat") if it is the only one of its kind, and says "Playing …". Asking again within 30 s of a near-miss skips the guess, and "… on Spotify" skips the library. Anything else goes to the Haiku agent, told which room the request came from and not to ask questions (the reply ends the conversation, so the Echo cannot hear an answer). "Play X on/in Y" only treats Y as a room when it is an area or Spotify, so titles like "Jelly on a Plate" stay whole. Matched artists, albums and songs go to Lidarr |
 | `automations/music_download_albums_played_from_spotify.yaml` | Sends the album of any Spotify track a Music Assistant player has played for 30 s to Lidarr, so it plays from the library next time |
 | `automations/voice_announce_to_the_house.yaml` | Fast path for "Alexa, announce/broadcast X" (or "tell everyone X"): hands the message to the announce script without the LLM and says "Announced.". Replaces HA's built-in broadcast, which only reaches HA satellites and says "Done" when none is online |
 | `scripts/voice_announce.yaml` | "Announce to the house": has every online Echo labelled Announce speak the message (Alexa Media `type: tts`; real Alexa announcements were accepted by Amazon but never played on the Echo Plus) and announces on every idle HA voice satellite labelled Announce (the one handling the request is busy, so it is skipped). Echos on Do Not Disturb are skipped, because Alexa drops announcements to them silently, and the reply names them. Exposed to Assist, so Haiku calls it when a sentence misses the fast path |
-| `automations/kitchen_lower_sonos_while_the_echo_listens.yaml` | Ducks the kitchen Sonos to 30% while the kitchen Echo listens, then restores it |
+| `automations/kitchen_lower_sonos_while_the_echo_listens.yaml` | "Voice: lower room music while an Echo listens": in any room, while a satellite labelled "Duck music while listening" listens, drops the speaker playing in its area to 30%, then restores it. The file keeps its old name so the entity ID and export entry stay put |
+| `automations/voice_media_controls.yaml` | Play/resume, pause/stop, next, previous, repeat this song and shuffle, handled locally (no LLM) on the speaker in the room of the Echo you spoke to. Accepts a leaked "Alexa, …" in front. "Stop" while the Echo's timer rings silences the timer |
 | `automations/patchmon_notify_phone.yaml` | Pushes PatchMon alerts (host down, failed patch runs, reboots, login problems) to the iPhone. PatchMon calls it through a webhook; the real webhook ID is redacted here because this repo is public |
 | `scripts/voice_send_music_request_to_lidarr.yaml` | Adds an artist (whole discography) or one album to Lidarr, monitors it and searches. Logs each request on the Music requests to-do list |
 | `scripts/voice_start_music_assistant_playback.yaml` | Starts playback in the background, so the voice request ends without waiting for it |
@@ -71,6 +72,14 @@ here goes stale.
     recognition often adds a stray word at the start, the tail of the wake word ("The
     announce …", "Anna, announce …"): ignore it and still treat it as an announcement."
     `script.voice_announce` is exposed to Assist.
+  - Web search on the same conversation entry: "tool" (added 2026-10-24), so Haiku
+    searches only when a question needs it. Each search costs a little extra on
+    OpenRouter. The prompt has two lines for it: "Respond simply and to the point in plain
+    text, never markdown (no asterisks, bullets or links)." and "You can search the web.
+    Search only when a question needs current or specific information you don't know
+    (reviews, ratings, news, opening times, prices); never search for home control or
+    music requests. Answer in your own words in a sentence or two: never paste text from
+    the search results, read out web addresses or list sources."
 - The Echo (ESPHome device "Echo Dot - Custom") is in the Kitchen area. That is how
   "play X" with no room picks `media_player.kitchen_2`. `media_player.kitchen` and
   `media_player.kitchen_4` are unexposed from Assist, so the agent doesn't pick them.
@@ -81,6 +90,8 @@ here goes stale.
   `home_assistant_voice_096e49_assist_satellite`, `samsung_sm_x210_assist_satellite`.
   TVs, the soundbar and the Fire TV are left out on purpose, and so is
   `media_player.greg_s_echo_dot`, the Echo that now runs echo-dot-assist.
+- Label "Duck music while listening" (`duck_music_while_listening`, added 2026-10-24) is on
+  `assist_satellite.echo_dot_2_15ecca_assist_satellite`; each room's Echo satellite needs it.
 - To-do list "Music requests" (`todo.music_requests`, Local To-do). It must exist before
   the Lidarr script runs.
 - Media alerts (set up 2026-10-24):
@@ -113,6 +124,22 @@ here goes stale.
 - The "Music Assistant Local LLM Enhanced Voice Support" blueprint automation is disabled,
   not deleted. It used `conversation.chatgpt`, which has no credit, and replied "Done" to
   every play request.
+
+## Adding a room
+
+The voice automations work out the room from the Echo that heard the request, so a room
+needs no automation changes. It needs one flashed Echo and one Sonos:
+
+1. Put the Echo's device and the Sonos in the room's area. Music Assistant's player for that
+   Sonos must be in the same area (fast play picks the Music Assistant player there).
+2. Point the Echo at the "Openrouter - Haiku" pipeline.
+3. Label the Echo's satellite "Duck music while listening" and "Announce".
+4. Expose the Music Assistant player to Assist and unexpose the native Sonos entity, as in
+   the kitchen, so Haiku plays through Music Assistant.
+
+Speakers are found as media players in the area with `device_class: speaker` that don't
+belong to a voice satellite, so a Spotify account entity or the Echo itself is never
+picked.
 
 ## Restoring
 

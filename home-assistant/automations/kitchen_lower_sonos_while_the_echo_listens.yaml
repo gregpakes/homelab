@@ -1,37 +1,55 @@
-# Copy of the Home Assistant automation "Kitchen: lower Sonos while the Echo listens" (automation.kitchen_lower_sonos_while_the_echo_listens),
+# Copy of the Home Assistant automation "Voice: lower room music while an Echo listens" (automation.kitchen_lower_sonos_while_the_echo_listens),
 # written by scripts/export-ha-config.py. Home Assistant is the live copy:
 # change it there, then re-export. home-assistant/README.md says how to restore it.
 id: '1792565711045'
-alias: 'Kitchen: lower Sonos while the Echo listens'
+alias: 'Voice: lower room music while an Echo listens'
 description: >-
-  Drops the kitchen Sonos to 30% of its volume while the kitchen Echo listens and answers, then puts it
-  back. A volume change made by voice during the request is carried over to the restored level.
+  Drops the music playing in a room to 30% of its volume while that room's voice satellite listens and
+  answers, then puts it back. A volume change made by voice during the request is carried over to the
+  restored level. Works in any room: put the "Duck music while listening" label on the room's satellite.
+  The speaker is the playing media player in the satellite's area that is a speaker (device_class speaker)
+  and not part of a voice satellite, so a Spotify account entity or the Echo itself is never touched;
+  the native player comes first (the Sonos entity rather than its Music Assistant player, as both drive
+  the same speaker). Runs one at a time, so a follow-up question in the same conversation doesn't duck
+  an already-ducked volume.
 triggers:
   - trigger: assist_satellite.listening
     target:
-      entity_id: assist_satellite.echo_dot_2_15ecca_assist_satellite
+      label_id: duck_music_while_listening
 conditions:
-  - condition: media_player.is_playing
-    target:
-      entity_id: media_player.kitchen
+  - condition: template
+    value_template: '{{ speaker != '''' }}'
+    note: Something is playing in this satellite's room.
 actions:
   - variables:
-      original_volume: '{{ state_attr(''media_player.kitchen'', ''volume_level'') | float(0) }}'
+      original_volume: '{{ state_attr(speaker, ''volume_level'') | float(0) }}'
       ducked_volume: '{{ [original_volume, [(original_volume * 0.3) | round(2), 0.05] | max] | min }}'
   - action: media_player.volume_set
     target:
-      entity_id: media_player.kitchen
+      entity_id: '{{ speaker }}'
     data:
       volume_level: '{{ ducked_volume }}'
-  - wait_template: '{{ is_state(''assist_satellite.echo_dot_2_15ecca_assist_satellite'', ''idle'') }}'
+  - wait_template: '{{ is_state(satellite, ''idle'') }}'
     timeout: 00:02:00
   - alias: Restore, keeping any voice volume change made during the request
     action: media_player.volume_set
     target:
-      entity_id: media_player.kitchen
+      entity_id: '{{ speaker }}'
     data:
       volume_level: >-
-        {{ [[original_volume + (state_attr('media_player.kitchen', 'volume_level') | float(ducked_volume))
-        - ducked_volume, 0] | max, 1] | min | round(2) }}
+        {{ [[original_volume + (state_attr(speaker, 'volume_level') | float(ducked_volume)) - ducked_volume,
+        0] | max, 1] | min | round(2) }}
 mode: single
 max_exceeded: silent
+variables:
+  satellite: '{{ trigger.entity_id }}'
+  area: '{{ area_id(satellite) }}'
+  ma: '{{ integration_entities(''music_assistant'') | list }}'
+  cands: >-
+    {%- set ns = namespace(r=[]) -%}{%- if area -%}{%- for e in area_entities(area) | select('match',
+    'media_player\.') | select('is_state_attr', 'device_class', 'speaker') | select('is_state', 'playing')
+    -%}{%- set d = device_id(e) -%}{%- if not (d and (device_entities(d) | select('match', 'assist_satellite\.')
+    | list)) -%}{%- set ns.r = ns.r + [e] -%}{%- endif -%}{%- endfor -%}{%- endif -%}{{ ns.r }}
+  speaker: >-
+    {{ ((cands | reject('in', ma) | list) + (cands | select('in', ma) | list)) | first | default('', true)
+    }}

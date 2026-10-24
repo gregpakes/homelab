@@ -12,21 +12,29 @@ description: >-
   skips the guess and hands to the LLM, telling it the last pick was wrong. "... on/from Spotify" skips
   your library. Everything else is handed to the Haiku agent, so no request is dropped. Exact matches
   are not announced (empty response, Assist skips TTS); the LLM is told to answer just OK in that case,
-  which is dropped too. The last request is kept in input_text.voice_last_music_request.
+  which is dropped too. The last request is kept in input_text.voice_last_music_request. The "play X in/on
+  ROOM" form only counts ROOM as a room when it is an area (or Spotify), so titles like "Jelly on a Plate"
+  stay whole.
 triggers:
   - trigger: conversation
     command:
-      - play {query} (in|on) [the] {room}
-      - play {title} by {artist}
-      - play {query}
+      - '[alexa|anna|the] play {query} (in|on) [the] {room}'
+      - '[alexa|anna|the] play {title} by {artist}'
+      - '[alexa|anna|the] play {query}'
+    note: >-
+      The optional leading word is the tail of the "Alexa" wake word, which the Echo leaks into the recording
+      ("Alexa, play ...", "Anna, ...", "The ...").
 actions:
   - variables:
+      raw_room: '{{ (trigger.slots.get(''room'') or '''') | regex_replace(''[.!?,]+$'', '''') | trim }}'
+      room_ok: >-
+        {{ raw_room != '' and (raw_room | lower == 'spotify' or area_id(raw_room) is not none) }}
       raw_query: >-
-        {{ (trigger.slots.get('query') or trigger.slots.get('title') or '') | regex_replace('[.!?,]+$',
-        '') | trim }}
+        {%- if raw_room and not room_ok -%}{{ trigger.sentence | regex_replace('^\W*((alexa|anna|the)\W+)?play\s+',
+        '', ignorecase=True) | regex_replace('[.!?,]+$', '') | trim }}{%- else -%}{{ (trigger.slots.get('query')
+        or trigger.slots.get('title') or '') | regex_replace('[.!?,]+$', '') | trim }}{%- endif -%}
       raw_artist: '{{ (trigger.slots.get(''artist'') or '''') | regex_replace(''[.!?,]+$'', '''') | trim
         }}'
-      raw_room: '{{ (trigger.slots.get(''room'') or '''') | regex_replace(''[.!?,]+$'', '''') | trim }}'
       spotify_only: >-
         {{ raw_room | lower == 'spotify' or raw_query | regex_match('.*\s(on|from)\s+spotify$', ignorecase=True)
         or raw_artist | regex_match('.*\s(on|from)\s+spotify$', ignorecase=True) }}
@@ -34,7 +42,7 @@ actions:
         {{ raw_query | regex_replace('\s+(on|from)\s+spotify$', '', ignorecase=True) | trim }}
       artist: >-
         {{ raw_artist | regex_replace('\s+(on|from)\s+spotify$', '', ignorecase=True) | trim }}
-      room: '{{ '''' if raw_room | lower == ''spotify'' else raw_room }}'
+      room: '{{ raw_room if room_ok and raw_room | lower != ''spotify'' else '''' }}'
       target_area: >-
         {{ area_id(room) if room else (area_id(trigger.device_id) if trigger.device_id else none) }}
       player: >-
@@ -50,11 +58,13 @@ actions:
         {{ last is mapping and last.get('near', false) == true and last.get('q') == qkey and (as_timestamp(now())
         - (last.get('t', 0) | float(0))) < 30 }}
       llm_text: >-
-        {{ trigger.sentence }}{{ ' (asked in the ' ~ area_name(target_area) ~ ')' if target_area and not
-        room else '' }}{{ (' A moment ago this same request played ' ~ last.get('name', '') ~ ' and the
-        user has asked again, so that was probably the wrong pick: search Spotify and play something else.')
-        if repeat else '' }} If you start playing what was asked, reply with just OK. If you play something
-        different or cannot play it, say so briefly.
+        {{ trigger.sentence }}{{ (' (asked from the ' ~ area_name(target_area) ~ ': play it on the ' ~
+        area_name(target_area) ~ ' speaker)') if target_area and not room else '' }}{{ (' A moment ago
+        this same request played ' ~ last.get('name', '') ~ ' and the user has asked again, so that was
+        probably the wrong pick: search Spotify and play something else.') if repeat else '' }} If you
+        start playing what was asked, reply with just OK. If you play something different or cannot play
+        it, say so briefly. Do not ask a question: the user cannot answer one here, so make the most likely
+        choice.
       lib: {}
       sp: {}
       pick: {}
