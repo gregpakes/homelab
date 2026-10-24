@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ma-spotify-linker
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: servarr
+  sources:
+
+    # 1) The nightly CronJob (script, state volume)
+    - repoURL: https://bjw-s-labs.github.io/helm-charts/
+      chart: app-template
+      targetRevision: 4.5.0
+      helm:
+        valueFiles:
+          - $values/argocd/infrastructure/servarr/ma-spotify-linker/values.yaml
+
+    # 2) values.yaml and the ExternalSecret
+    - repoURL: https://github.com/gregpakes/homelab
+      targetRevision: main
+      ref: values
+      path: argocd/infrastructure/servarr/ma-spotify-linker
+      directory:
+        recurse: true
+
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
