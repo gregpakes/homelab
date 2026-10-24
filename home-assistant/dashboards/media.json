@@ -16,7 +16,7 @@
             },
             {
               "type": "markdown",
-              "content": "Stuck imports, failed imports and health **errors** land on this list and on your phone. A health restore ticks its item off. Tick items off yourself once dealt with."
+              "content": "Only what the automation couldn't fix lands here and on your phone: a download still stuck after **8 hours** (Cleanuparr strikes and clears the rest), and health **errors**. Items close themselves when the queue is clear or the health check passes again."
             },
             {
               "type": "todo-list",

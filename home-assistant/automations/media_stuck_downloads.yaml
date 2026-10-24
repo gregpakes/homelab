@@ -1,0 +1,86 @@
+# Copy of the Home Assistant automation "Media: stuck downloads" (automation.media_stuck_downloads),
+# written by scripts/export-ha-config.py. Home Assistant is the live copy:
+# change it there, then re-export. home-assistant/README.md says how to restore it.
+id: media_stuck_downloads
+alias: 'Media: stuck downloads'
+description: >-
+  Cleanuparr deals with failed and stuck downloads on its own: it strikes them every hour and, after 5
+  strikes, removes and blocklists them so the arr searches again. So the phone only hears about a download
+  when an arr's "needs attention" count (from the media-health-reporter CronJob) has stayed above 0 for
+  8 hours, which means Cleanuparr couldn't clear it. That opens an item on the Media issues list, which
+  closes when the count is back to 0. It counts items, not which ones: a queue that keeps getting new
+  stuck items can trigger it too.
+triggers:
+  - trigger: numeric_state
+    id: stuck
+    entity_id:
+      - input_number.lidarr_queue_needs_attention
+      - input_number.radarr_queue_needs_attention
+      - input_number.sonarr_queue_needs_attention
+    above: 0
+    for:
+      hours: 8
+  - trigger: numeric_state
+    id: cleared
+    entity_id:
+      - input_number.lidarr_queue_needs_attention
+      - input_number.radarr_queue_needs_attention
+      - input_number.sonarr_queue_needs_attention
+    below: 1
+actions:
+  - action: todo.get_items
+    target:
+      entity_id: todo.media_issues
+    data:
+      status: needs_action
+    response_variable: open_items
+  - variables:
+      open_uids: |-
+        {{ open_items['todo.media_issues']['items'] | selectattr('description', 'defined')
+           | selectattr('description', 'search', key ~ '$') | map(attribute='uid') | list }}
+  - choose:
+      - alias: Still stuck after 8 hours - notify and open an item (once)
+        conditions:
+          - condition: trigger
+            id: stuck
+          - condition: template
+            value_template: '{{ open_uids | count == 0 }}'
+        sequence:
+          - action: notify.mobile_app_gregs_iphone
+            data:
+              title: '{{ app }}: download stuck for 8 hours'
+              message: >-
+                {{ states(trigger.entity_id) | int(0) }} download(s) in {{ app }}'s queue still need attention
+                after Cleanuparr's strikes. Check Activity > Queue.
+              data:
+                url: https://{{ app | lower }}.gregpakes.co.uk/activity/queue
+                group: media
+                push:
+                  interruption-level: time-sensitive
+          - action: todo.add_item
+            target:
+              entity_id: todo.media_issues
+            data:
+              item: '{{ app }}: download stuck for 8+ hours'
+              description: >-
+                Stuck since about {{ (now() - timedelta(hours=8)).strftime('%-d %b %H:%M') }}. Check {{
+                app }} Activity > Queue.{{ '\n' ~ key }}
+      - alias: Queue clear again - close the item
+        conditions:
+          - condition: trigger
+            id: cleared
+        sequence:
+          - repeat:
+              for_each: '{{ open_uids }}'
+              sequence:
+                - action: todo.update_item
+                  target:
+                    entity_id: todo.media_issues
+                  data:
+                    item: '{{ repeat.item }}'
+                    status: completed
+variables:
+  app: '{{ trigger.entity_id.split(''.'')[1].split(''_'')[0] | title }}'
+  key: stuck:{{ app }}
+mode: queued
+max: 10

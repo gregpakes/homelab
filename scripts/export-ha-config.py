@@ -47,6 +47,7 @@ ITEMS = (
     ("script", "voice_start_music_assistant_playback", "voice_start_music_assistant_playback"),
     ("automation", "media_arr_alerts", "media_arr_alerts"),
     ("automation", "media_health_report", "media_health_report"),
+    ("automation", "media_stuck_downloads", "media_stuck_downloads"),
 )
 
 # A webhook ID is the only thing that lets a caller in, and this repo is public, so every

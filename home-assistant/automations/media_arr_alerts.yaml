@@ -4,13 +4,13 @@
 id: media_arr_alerts
 alias: 'Media: arr alerts'
 description: >-
-  Lidarr, Radarr and Sonarr post their webhook events here (Settings > Connect > "Home Assistant"). Things
-  that need a person (stuck imports, failed imports, health errors) notify the phone and open an item
-  on the Media issues list; a health restore closes the item for the same health check. A Lidarr download
-  failure only notifies: Lidarr blocklists and re-searches by itself, and the Tdarr music check marks
-  broken downloads failed on purpose. Health warnings (a flapping indexer) don't notify; they show as
-  counts on the Media dashboard. The webhook ID is a secret, kept in 1Password item media-alerts-webhooks,
-  so it's kept out of the public repo.
+  Lidarr, Radarr and Sonarr post their webhook events here (Settings > Connect > "Home Assistant (media
+  alerts)"). Only health errors (e.g. a download client unreachable) notify the phone and open an item
+  on the Media issues list; a health restore closes the item for the same health check. Failed downloads
+  and imports aren't sent: Cleanuparr strikes and removes them and the arrs re-search, so the "Media:
+  stuck downloads" automation alerts only when a download is still stuck after 8 hours. Health warnings
+  (a flapping indexer) don't notify; they show as counts on the Media dashboard. The webhook ID is a secret,
+  kept in 1Password item media-alerts-webhooks, so it's kept out of the public repo.
 triggers:
   - trigger: webhook
     webhook_id: <redacted>
@@ -32,12 +32,10 @@ actions:
               message: Webhook to Home Assistant works.
               data:
                 group: media
-      - alias: Needs a person - open a Media issues item and notify, once per open issue
+      - alias: Health error - open a Media issues item and notify, once per open issue
         conditions:
           - condition: template
-            value_template: |-
-              {{ event in ['ManualInteractionRequired', 'ImportFailure']
-                 or (event == 'Health' and level == 'error') }}
+            value_template: '{{ event == ''Health'' and level == ''error'' }}'
         sequence:
           - action: todo.get_items
             target:
@@ -58,10 +56,7 @@ actions:
             then:
               - action: notify.mobile_app_gregs_iphone
                 data:
-                  title: |-
-                    {{ app }}: {{ {'ManualInteractionRequired': 'import needs you',
-                                   'ImportFailure': 'import failed',
-                                   'Health': 'health error'}[event] }}
+                  title: '{{ app }}: health error'
                   message: '{{ subject }}{{ '' - '' ~ detail if detail and detail != subject else ''''
                     }}'
                   data:
@@ -98,19 +93,6 @@ actions:
                   data:
                     item: '{{ repeat.item }}'
                     status: completed
-      - alias: Lidarr download failed - just say so, it re-searches by itself
-        conditions:
-          - condition: template
-            value_template: '{{ event == ''DownloadFailure'' }}'
-        sequence:
-          - action: notify.mobile_app_gregs_iphone
-            data:
-              title: '{{ app }}: download failed, searching again'
-              message: '{{ subject }}{{ '' - '' ~ detail if detail and detail != subject else '''' }}'
-              data:
-                group: media
-                push:
-                  interruption-level: passive
 variables:
   app: '{{ trigger.json.instanceName | default(''arr'', true) }}'
   event: '{{ trigger.json.eventType | default('''') }}'
