@@ -97,16 +97,16 @@ configMaps:
                 return json.loads(text) if text else None
 
 
-        def tdarr_pies(library_id):
-            pies = request(f"{TDARR_URL}/api/v2/stats/get-pies", {"data": {"libraryId": library_id}})["pieStats"]
-            count = lambda kind, *names: sum(s["value"] for s in pies["status"].get(kind, []) if s["name"] in names)
-            return pies, count
+        def tdarr_counter(library_id):
+            """Return count(kind, *statuses): how many of the library's files have one of the statuses."""
+            status = request(f"{TDARR_URL}/api/v2/stats/get-pies", {"data": {"libraryId": library_id}})["pieStats"]["status"]
+            return lambda kind, *names: sum(s["value"] for s in status.get(kind, []) if s["name"] in names)
 
 
         def tdarr():
             result = {"music": None, "video_errors": None}
             try:
-                _, count = tdarr_pies(TDARR_MUSIC_LIBRARY)
+                count = tdarr_counter(TDARR_MUSIC_LIBRARY)
                 result["music"] = {
                     "passed": count("transcode", "Not required", "Transcode success"),
                     "queued": count("transcode", "Queued", "Hold", "Processing"),
@@ -115,7 +115,7 @@ configMaps:
             except Exception as err:
                 print(f"tdarr music: {err}", file=sys.stderr)
             try:
-                _, count = tdarr_pies(TDARR_VIDEO_LIBRARY)
+                count = tdarr_counter(TDARR_VIDEO_LIBRARY)
                 result["video_errors"] = count("transcode", "Transcode error") + count("healthcheck", "Error")
             except Exception as err:
                 print(f"tdarr video: {err}", file=sys.stderr)

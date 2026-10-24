@@ -14,7 +14,7 @@ description: >-
 triggers:
   - trigger: webhook
     id: report
-    webhook_id: media_health_<redacted>
+    webhook_id: <redacted>
     allowed_methods:
       - POST
     local_only: true

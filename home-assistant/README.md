@@ -16,7 +16,7 @@ here goes stale.
 | `automations/patchmon_notify_phone.yaml` | Pushes PatchMon alerts (host down, failed patch runs, reboots, login problems) to the iPhone. PatchMon calls it through a webhook; the real webhook ID is redacted here because this repo is public |
 | `scripts/voice_send_music_request_to_lidarr.yaml` | Adds an artist (whole discography) or one album to Lidarr, monitors it and searches. Logs each request on the Music requests to-do list |
 | `scripts/voice_start_music_assistant_playback.yaml` | Starts playback in the background, so the voice request ends without waiting for it |
-| `automations/media_arr_alerts.yaml` | Lidarr, Radarr and Sonarr post their webhook events here. Stuck or failed imports and health errors notify the phone and open an item on the Media issues list (a health restore closes it); a Lidarr download failure only notifies |
+| `automations/media_arr_alerts.yaml` | Lidarr, Radarr and Sonarr post their webhook events here. Stuck or failed imports and health errors open an item on the Media issues list and notify the phone, once per open item (health items are keyed on the app and health check, so a restore closes them even when the message has changed); a Lidarr download failure only notifies |
 | `automations/media_health_report.yaml` | Takes the `media-health-reporter` CronJob's counts every 15 minutes (Tdarr music check, Tdarr video errors, each arr's stuck queue items, health warnings, missing items) into the Media dashboard's helpers. Notifies when more music files need attention, and once when no report has come for an hour |
 | `dashboards/media.json` | The "Media" dashboard (`dashboard-media`), as Home Assistant stores it |
 | `configuration/rest_command.yaml` | The `rest_command` block from `configuration.yaml` that the Lidarr script calls |
@@ -104,7 +104,7 @@ here goes stale.
    export script to match.
 5. For the media alerts: create the Media issues to-do list and the helpers listed above,
    paste the two automations with the webhook IDs from 1Password in place of
-   `<redacted>`, re-create the arrs' webhook connections, and create a dashboard with
+   `<redacted>` (the export writes every webhook ID that way), re-create the arrs' webhook connections, and create a dashboard with
    URL `dashboard-media` whose raw configuration is `dashboards/media.json`.
 6. Check the IDs that come from other integrations, which change if those are set up
    again:

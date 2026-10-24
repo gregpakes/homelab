@@ -28,7 +28,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import urllib.request
 from pathlib import Path
 
@@ -50,17 +49,15 @@ ITEMS = (
     ("automation", "media_health_report", "media_health_report"),
 )
 
-# A webhook ID is the only thing that lets a caller in, and this repo is public. IDs
-# ending in a long random suffix (media_arr_<hex>) are written as <prefix>_<redacted>;
-# the real ones live in Home Assistant and in 1Password.
-SECRET_SUFFIX = re.compile(r"_[0-9a-f]{16,}$")
-
-
+# A webhook ID is the only thing that lets a caller in, and this repo is public, so every
+# one is written as <redacted>, whatever it looks like (a random part can contain
+# underscores, so keeping a "prefix" could leak some of it). The real ones live in
+# Home Assistant and in 1Password; the automation's alias says which is which.
 def redact(config: dict) -> dict:
     config = json.loads(json.dumps(config))
     for trigger in config.get("triggers", []):
         if trigger.get("trigger") == "webhook" and "webhook_id" in trigger:
-            trigger["webhook_id"] = SECRET_SUFFIX.sub("_<redacted>", trigger["webhook_id"])
+            trigger["webhook_id"] = "<redacted>"
     return config
 
 
