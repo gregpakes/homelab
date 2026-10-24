@@ -10,7 +10,7 @@ here goes stale.
 
 | File | What it does |
 | --- | --- |
-| `automations/voice_play_music_fast_via_music_assistant.yaml` | "Alexa, play X": finds an exact artist, song, album or playlist in your own library, then Spotify, and plays it on the room's Music Assistant player without the LLM. Anything else goes to the Haiku agent. Matched artists, albums and songs go to Lidarr |
+| `automations/voice_play_music_fast_via_music_assistant.yaml` | "Alexa, play X": finds an exact artist, song, album or playlist in your own library, then Spotify, and plays it on the room's Music Assistant player without the LLM. With no exact match it plays a near-miss (plural, punctuation or spacing difference, such as "Salmon Cats" → "Salmon Cat") if it is the only one of its kind, and says "Playing …". Asking again within 30 s of a near-miss skips the guess, and "… on Spotify" skips the library. Anything else goes to the Haiku agent. Matched artists, albums and songs go to Lidarr |
 | `automations/music_download_albums_played_from_spotify.yaml` | Sends the album of any Spotify track a Music Assistant player has played for 30 s to Lidarr, so it plays from the library next time |
 | `automations/kitchen_lower_sonos_while_the_echo_listens.yaml` | Ducks the kitchen Sonos to 30% while the kitchen Echo listens, then restores it |
 | `automations/patchmon_notify_phone.yaml` | Pushes PatchMon alerts (host down, failed patch runs, reboots, login problems) to the iPhone. PatchMon calls it through a webhook; the real webhook ID is redacted here because this repo is public |
@@ -37,7 +37,10 @@ here goes stale.
 ## Settings that only exist in a UI (recorded 2026-10-21)
 
 - Assist pipeline "Openrouter - Haiku", used by the Echo:
-  - Speech-to-text and text-to-speech: Home Assistant Cloud, en-GB, voice Libby.
+  - Speech-to-text: Home Assistant Cloud, en-GB.
+  - Text-to-speech: ElevenLabs (integration default model Flash v2.5), language `en`.
+    The voice is picked on the pipeline. Changed from Home Assistant Cloud's Libby on
+    2026-10-23.
   - Conversation agent: OpenRouter `anthropic/claude-haiku-5.5`, with control of Home
     Assistant (Assist) and "Prefer handling commands locally" both on.
 - The Echo (ESPHome device "Echo Dot - Custom") is in the Kitchen area. That is how
@@ -45,6 +48,9 @@ here goes stale.
   `media_player.kitchen_4` are unexposed from Assist, so the agent doesn't pick them.
 - To-do list "Music requests" (`todo.music_requests`, Local To-do). It must exist before
   the Lidarr script runs.
+- Text helper "Voice last music request" (`input_text.voice_last_music_request`, max
+  length 255). The fast-play automation stores the last request in it as JSON, so it can
+  tell when a near-miss is asked for again.
 - Music Assistant:
   - Spotify provider with a personal developer client ID, set under Reconfigure, last step.
   - Filesystem (NFS) provider reading the Lidarr library from UniFi Drive:
@@ -63,7 +69,8 @@ here goes stale.
 1. Add `configuration/rest_command.yaml` to `/config/configuration.yaml`, and
    `lidarr_api_key` to `/config/secrets.yaml`. Restart HA.
 2. Create the Music requests to-do list (Settings → Devices & services → Add integration →
-   Local To-do).
+   Local To-do), and the "Voice last music request" text helper (Settings → Devices &
+   services → Helpers → Create helper → Text, max length 255).
 3. For each file in `scripts/`: Settings → Automations & scenes → Scripts → Create script →
    ⋮ → Edit in YAML, then paste the file. When saving, the entity ID must match the file
    name, because the automations call `script.voice_send_music_request_to_lidarr` and
