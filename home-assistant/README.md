@@ -71,6 +71,14 @@ here goes stale.
     recognition often adds a stray word at the start, the tail of the wake word ("The
     announce …", "Anna, announce …"): ignore it and still treat it as an announcement."
     `script.voice_announce` is exposed to Assist.
+  - Web search on the same conversation entry: "tool" (added 2026-10-24), so Haiku
+    searches only when a question needs it. Each search costs a little extra on
+    OpenRouter. The prompt has two lines for it: "Respond simply and to the point in plain
+    text, never markdown (no asterisks, bullets or links)." and "You can search the web.
+    Search only when a question needs current or specific information you don't know
+    (reviews, ratings, news, opening times, prices); never search for home control or
+    music requests. Answer in your own words in a sentence or two: never paste text from
+    the search results, read out web addresses or list sources."
 - The Echo (ESPHome device "Echo Dot - Custom") is in the Kitchen area. That is how
   "play X" with no room picks `media_player.kitchen_2`. `media_player.kitchen` and
   `media_player.kitchen_4` are unexposed from Assist, so the agent doesn't pick them.
