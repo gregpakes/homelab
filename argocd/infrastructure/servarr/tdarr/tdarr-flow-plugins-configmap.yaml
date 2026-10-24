@@ -412,7 +412,15 @@ data:
       }
 
       var notes = [];
-      if (grab) {
+      // Every broken track of a release reaches here; only the first should fail the grab,
+      // or the release lands on the blocklist once per track
+      var alreadyFailed = grab && (history || []).some(function (e) {
+        return e.eventType === 'downloadFailed' && grab.downloadId && e.downloadId === grab.downloadId
+          && Date.parse(e.date) >= Date.parse(grab.date);
+      });
+      if (alreadyFailed) {
+        notes.push('grab ' + grab.id + ' already marked failed');
+      } else if (grab) {
         try {
           await call('POST', 'history/failed/' + grab.id);
           notes.push('grab ' + grab.id + ' marked failed (release blocklisted)');

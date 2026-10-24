@@ -56,7 +56,8 @@ never showed Tdarr the music at all.
   also zeros, which is why a plain zero-byte scan gives false positives and this doesn't.
   If ffmpeg can't run the file goes to output 3 and nothing is deleted.
 - `reportBrokenToLidarr` finds the Lidarr track file by path (`/media/media/music` in
-  Tdarr is `/downloads/media/music` in Lidarr), marks the grab it came from as failed,
+  Tdarr is `/downloads/media/music` in Lidarr), marks the grab it came from as failed
+  (once per release: later broken tracks of the same grab skip this step),
   deletes the file and queues an `AlbumSearch`. Lidarr's "Redownload failed" is on, so the
   failed grab triggers a search too. At most 40 files a day per node; set the flow's
   `dryRun` input to `true` to log what it would do instead. The node's `LIDARR_API_KEY`
