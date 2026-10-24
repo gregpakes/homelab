@@ -1,0 +1,247 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/app-template-4.5.0/charts/other/app-template/values.schema.json
+
+# Links Music Assistant's library tracks to their Spotify versions, so a Spotify playlist
+# plays your own copy of a track when you have it.
+#
+# Music Assistant (2.10.7, the add-on on the HA Yellow) already prefers a library track
+# when it loads a queue item: player_queues/queue_loader.py swaps a Spotify track for the
+# library track that carries a mapping to it, and the stream picks the best-quality
+# mapping, which is the local file. But tracks that arrive by scanning the music folder
+# (everything Lidarr imports) get no Spotify mapping; only refresh_item and
+# music/match_providers search Spotify for one. This job calls music/match_providers for
+# every library track without a Spotify mapping, newest first, one at a time.
+#
+# Each match costs a Spotify search plus a fetch or two, against the same developer
+# Client ID that playback uses. So it runs at night, paces itself, and stops at STOP_AT.
+# A track Spotify has no strict match for (another release, a live take) is retried after
+# RETRY_DAYS; attempts are kept on a small Longhorn volume.
+controllers:
+  main:
+    type: cronjob
+    cronjob:
+      schedule: "0 1 * * *"
+      timeZone: Europe/London
+      concurrencyPolicy: Forbid
+      startingDeadlineSeconds: 3600
+      successfulJobsHistory: 3
+      failedJobsHistory: 3
+      # A failed run is retried by the next night's, not straight away
+      backoffLimit: 0
+      # A failed Job fires kube-prometheus-stack's KubeJobFailed alert (Pushover) until the
+      # Job is gone. This clears a one-off failure after a day; logs stay in Loki.
+      ttlSecondsAfterFinished: 86400
+    pod:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    containers:
+      linker:
+        image:
+          repository: python
+          tag: "3.15-slim"
+        command: ["python3", "-u", "/app/link-spotify.py"]
+        env:
+          TZ: Europe/London
+          # The Music Assistant add-on on the HA Yellow, outside the cluster
+          MA_URL: http://172.16.30.124:8095
+          STATE_FILE: /state/attempts.json
+          # Local time the run stops at, before anyone is likely to be playing music
+          STOP_AT: "06:00"
+          # Seconds between tracks. About 900 tracks a night.
+          PACE_SECONDS: "20"
+          RETRY_DAYS: "30"
+          # "true" lists what it would match and changes nothing
+          DRY_RUN: "false"
+        # MA_TOKEN: a Music Assistant long-lived token of an admin user (1Password
+        # item ma-spotify-linker, see externalsecret.yaml)
+        envFrom:
+          - secretRef: { name: ma-spotify-linker-secrets }
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+
+configMaps:
+  script:
+    data:
+      link-spotify.py: |
+        """
+        Link Music Assistant library tracks to their Spotify versions.
+
+        Lists the library newest first, and for each track with no Spotify mapping calls
+        music/match_providers, which searches Spotify and adds a mapping only on a strict
+        match (same artist, title, album and duration). Stops at STOP_AT local time.
+        """
+
+        import datetime
+        import json
+        import os
+        import pathlib
+        import sys
+        import time
+        import urllib.error
+        import urllib.request
+
+        MA_URL = os.environ.get("MA_URL", "http://172.16.30.124:8095").rstrip("/")
+        MA_TOKEN = os.environ["MA_TOKEN"]
+        STATE_FILE = pathlib.Path(os.environ.get("STATE_FILE", "/state/attempts.json"))
+        STOP_AT = os.environ.get("STOP_AT", "06:00")
+        PACE_SECONDS = float(os.environ.get("PACE_SECONDS", "20"))
+        RETRY_DAYS = float(os.environ.get("RETRY_DAYS", "30"))
+        DRY_RUN = os.environ.get("DRY_RUN", "false").lower() == "true"
+        # Comma-separated library track ids, to run on just those (for testing)
+        ONLY_TRACK_IDS = {i.strip() for i in os.environ.get("ONLY_TRACK_IDS", "").split(",") if i.strip()}
+        MAX_TRACKS = int(os.environ.get("MAX_TRACKS", "0"))
+        # Stop the run, so the Job fails and alerts, after this many errors in a row
+        MAX_CONSECUTIVE_ERRORS = 5
+
+
+        def api(command, **args):
+            body = json.dumps({"message_id": "ma-spotify-linker", "command": command, "args": args})
+            request = urllib.request.Request(
+                f"{MA_URL}/api",
+                data=body.encode(),
+                headers={"Authorization": f"Bearer {MA_TOKEN}", "Content-Type": "application/json"},
+            )
+            # A match waits out Spotify's rate limiter inside Music Assistant, so allow long calls
+            with urllib.request.urlopen(request, timeout=600) as response:
+                return json.load(response)
+
+
+        def has_spotify(track):
+            return any(m.get("provider_domain") == "spotify" for m in track.get("provider_mappings", []))
+
+
+        def describe(track):
+            artists = ", ".join(a["name"] for a in track.get("artists", []))
+            return f"{artists} - {track['name']} (library {track['item_id']})"
+
+
+        def stop_time():
+            now = datetime.datetime.now()
+            hour, minute = (int(part) for part in STOP_AT.split(":"))
+            stop = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            return stop if stop > now else stop + datetime.timedelta(days=1)
+
+
+        def load_state():
+            try:
+                return json.loads(STATE_FILE.read_text())
+            except FileNotFoundError:
+                return {}
+
+
+        def save_state(state):
+            STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+            temp = STATE_FILE.with_name(STATE_FILE.name + ".tmp")
+            temp.write_text(json.dumps(state, indent=1, sort_keys=True))
+            temp.replace(STATE_FILE)
+
+
+        def library_tracks():
+            offset = 0
+            while True:
+                page = api(
+                    "music/tracks/library_items",
+                    limit=500,
+                    offset=offset,
+                    order_by="timestamp_added_desc",
+                    summary=False,
+                )
+                if not page:
+                    return
+                yield from page
+                offset += len(page)
+
+
+        def main():
+            stop = stop_time()
+            state = load_state()
+            retry_after = time.time() - RETRY_DAYS * 86400
+            total = linked_before = recent = 0
+            candidates = []
+            for track in library_tracks():
+                total += 1
+                if ONLY_TRACK_IDS and str(track["item_id"]) not in ONLY_TRACK_IDS:
+                    continue
+                if has_spotify(track):
+                    linked_before += 1
+                    continue
+                if state.get(str(track["item_id"]), {}).get("tried", 0) > retry_after:
+                    recent += 1
+                    continue
+                candidates.append(track)
+            if MAX_TRACKS:
+                candidates = candidates[:MAX_TRACKS]
+            print(
+                f"{total} library tracks: {linked_before} already on Spotify, {recent} tried in "
+                f"the last {RETRY_DAYS:g} days, {len(candidates)} to match before {stop:%H:%M}",
+                flush=True,
+            )
+
+            matched = unmatched = errors = consecutive_errors = 0
+            for index, track in enumerate(candidates):
+                if datetime.datetime.now() >= stop:
+                    print(f"Reached {STOP_AT}; {len(candidates) - index} left for the next run")
+                    break
+                if index:
+                    time.sleep(PACE_SECONDS)
+                track_id = str(track["item_id"])
+                if DRY_RUN:
+                    print(f"would match {describe(track)}")
+                    continue
+                try:
+                    api("music/match_providers", media_type="track", db_id=track_id)
+                    refreshed = api(
+                        "music/tracks/get",
+                        item_id=track_id,
+                        provider_instance_id_or_domain="library",
+                        allow_update_metadata=False,
+                        recursive=False,
+                    )
+                except (urllib.error.URLError, TimeoutError) as err:
+                    errors += 1
+                    consecutive_errors += 1
+                    print(f"error on {describe(track)}: {err}", file=sys.stderr)
+                    if isinstance(err, urllib.error.HTTPError) and err.code in (401, 403):
+                        sys.exit("Music Assistant refused the token")
+                    if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
+                        sys.exit(f"{consecutive_errors} errors in a row, stopping")
+                    continue
+                consecutive_errors = 0
+                found = has_spotify(refreshed)
+                matched += found
+                unmatched += not found
+                print(f"{'linked' if found else 'no match'}: {describe(track)}", flush=True)
+                state[track_id] = {"tried": int(time.time()), "linked": found}
+                save_state(state)
+
+            print(f"Done: {matched} linked, {unmatched} with no Spotify match, {errors} errors")
+
+
+        if __name__ == "__main__":
+            main()
+
+persistence:
+  script:
+    type: configMap
+    identifier: script
+    globalMounts:
+      - path: /app
+        readOnly: true
+  # When each track was last tried, so one Spotify has no match for isn't searched again
+  # every night
+  state:
+    type: persistentVolumeClaim
+    storageClass: longhorn
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    retain: true
+    globalMounts:
+      - path: /state

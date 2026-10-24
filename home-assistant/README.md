@@ -30,7 +30,13 @@ here goes stale.
    `/downloads/media/music`, tagging the files.
 5. Music Assistant reads that folder over NFS, so the next request finds it in the library
    first.
-6. If an import fails, Cleanuparr removes and blocklists the download after five hourly
+6. Each night (01:00-06:00) the `ma-spotify-linker` CronJob
+   (`argocd/infrastructure/servarr/ma-spotify-linker/`) links new library tracks to their
+   Spotify versions through Music Assistant's `music/match_providers`. A Spotify playlist
+   or radio then plays your own copy of any track you have, because Music Assistant swaps
+   a Spotify track for the linked library track when it loads it, and streams the
+   best-quality copy.
+7. If an import fails, Cleanuparr removes and blocklists the download after five hourly
    strikes, and Lidarr searches for another release. The Lidarr patterns it acts on are in
    `argocd/infrastructure/servarr/cleanuparr/values.yaml`.
 
