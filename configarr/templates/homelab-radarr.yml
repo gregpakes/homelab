@@ -6600,7 +6600,9 @@ delay_profiles:
     enableTorrent: true
     preferredProtocol: usenet
     usenetDelay: 0
-    torrentDelay: 0
+    # Minutes. Without a delay, preferredProtocol is only a tie-break and the first
+    # acceptable RSS release wins; TorrentLeech often beats usenet by about an hour.
+    torrentDelay: 120
     bypassIfHighestQuality: true
     bypassIfAboveCustomFormatScore: false
     minimumCustomFormatScore: 0
