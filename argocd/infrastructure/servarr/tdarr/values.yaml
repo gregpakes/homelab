@@ -8,8 +8,10 @@
 #   Folder watching on; scan on start and scheduled scans off.
 # Flow "Music integrity" (id musicIntegrity). Canonical copy tdarr/music-integrity-flow.json.
 # Library "Music": source /media/media/music, cache /temp, output in place, containers
-#   mp3,flac,m4a,ogg,opus, health checks off (the flow is the check), new files held
-#   10 minutes, using that flow. The Media library's video-only filter skips music.
+#   mp3,flac,m4a,ogg,opus, new files held 10 minutes, using that flow. Health checks on,
+#   type thorough (ffmpeg; HandBrake's quick check expects video): Tdarr queues nothing
+#   from a library with health checks off. The ffmpeg check itself passes zero-filled
+#   files, so the flow is the real check. The Media library's video-only filter skips music.
 # Node "tdarr-node": 1 GPU transcode worker, 1 CPU health-check worker, no CPU transcodes.
 controllers:
   server:

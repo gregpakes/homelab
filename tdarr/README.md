@@ -66,3 +66,5 @@ never showed Tdarr the music at all.
   and why (the job log carries the decoded and declared lengths).
 - The Music library holds new files for 10 minutes, so a file Lidarr is still copying
   in isn't checked half-written.
+- Its health checks must stay on (thorough, i.e. ffmpeg): with them off Tdarr shows a
+  warning and queues nothing from the library. HandBrake's quick check expects video.
