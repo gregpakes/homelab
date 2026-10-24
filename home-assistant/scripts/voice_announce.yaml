@@ -1,0 +1,73 @@
+# Copy of the Home Assistant script "Announce to the house" (script.voice_announce),
+# written by scripts/export-ha-config.py. Home Assistant is the live copy:
+# change it there, then re-export. home-assistant/README.md says how to restore it.
+alias: Announce to the house
+description: >-
+  Announce a spoken message to the whole house: every Echo and voice speaker. Use this for any request
+  to announce, broadcast or tell everyone something, never HassBroadcast. Returns how many speakers it
+  reached and which Echos were skipped because they are on Do Not Disturb.
+icon: mdi:bullhorn
+mode: parallel
+max: 5
+fields:
+  message:
+    name: Message
+    description: What to announce, as the person said it, e.g. "lunch is ready".
+    required: true
+    selector:
+      text: {}
+sequence:
+  - variables:
+      online_echos: >-
+        {{ label_entities('announce') | select('match', 'media_player\.') | select('has_value') | list
+        }}
+      dnd_echos: >-
+        {%- set ns = namespace(dnd=[]) -%}{%- for e in online_echos -%}{%- set sw = device_entities(device_id(e))
+        | select('match', 'switch\..*do_not_disturb') | list -%}{%- if sw and is_state(sw[0], 'on') -%}{%-
+        set ns.dnd = ns.dnd + [e] -%}{%- endif -%}{%- endfor -%}{{ ns.dnd }}
+      echos: '{{ online_echos | reject(''in'', dnd_echos) | list }}'
+      satellites: >-
+        {{ label_entities('announce') | select('match', 'assist_satellite\.') | select('is_state', 'idle')
+        | list }}
+      result: >-
+        {{ {'speakers_reached': echos | count + satellites | count, 'on_do_not_disturb': dnd_echos | map('state_attr',
+        'friendly_name') | list} }}
+    note: >-
+      Online Echos labelled Announce, minus those whose Do Not Disturb switch is on (Alexa drops announcements
+      to them silently), and labelled satellites that are idle. The satellite handling this request is
+      busy, so it is skipped.
+  - if:
+      - condition: template
+        value_template: '{{ result.speakers_reached == 0 }}'
+    then:
+      - stop: No announcement speaker is available
+        response_variable: result
+  - parallel:
+      - if:
+          - condition: template
+            value_template: '{{ echos | count > 0 }}'
+        then:
+          - action: notify.alexa_media
+            data:
+              message: '{{ message }}'
+              target: '{{ echos }}'
+              data:
+                type: tts
+            continue_on_error: true
+            note: >-
+              Alexa speak, not announce: on 2026-10-24 Amazon accepted announcements to the living room
+              Echo Plus (200 OK) but it never played them, while the same Echo played a speak request.
+              Speak has no chime.
+      - if:
+          - condition: template
+            value_template: '{{ satellites | count > 0 }}'
+        then:
+          - action: assist_satellite.announce
+            target:
+              entity_id: '{{ satellites }}'
+            data:
+              message: '{{ message }}'
+              preannounce: true
+            continue_on_error: true
+  - stop: Announced
+    response_variable: result

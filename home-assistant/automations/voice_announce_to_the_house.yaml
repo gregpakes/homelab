@@ -1,0 +1,38 @@
+# Copy of the Home Assistant automation "Voice: announce to the house" (automation.voice_announce_to_the_house),
+# written by scripts/export-ha-config.py. Home Assistant is the live copy:
+# change it there, then re-export. home-assistant/README.md says how to restore it.
+id: '1792841672349'
+alias: 'Voice: announce to the house'
+description: >-
+  Fast path for "Alexa, announce/broadcast X" that skips the LLM. HA's built-in broadcast intent only
+  reaches HA voice satellites, never the stock Echos, and said "Done" even when every satellite was offline,
+  so this sentence trigger takes over and hands the message to script.voice_announce. Sentences that don't
+  match here (e.g. STT adds a word) reach Haiku, whose prompt tells it to call the same script.
+triggers:
+  - trigger: conversation
+    command:
+      - '[the] (announce|broadcast) [that] {message}'
+      - '[the] tell everyone [that] {message}'
+    note: >-
+      Matched before HA's own HassBroadcast intent, which this replaces. [the] because STT has heard "The
+      announce ...".
+actions:
+  - action: script.voice_announce
+    data:
+      message: '{{ trigger.slots.message | trim }}'
+    response_variable: announced
+  - variables:
+      dnd_note: >-
+        {%- set n = announced.on_do_not_disturb -%}{%- if n -%}{{ n | join(' and ') }} {{ 'is' if n |
+        count == 1 else 'are' }} on Do Not Disturb.{%- endif -%}
+  - if:
+      - condition: template
+        value_template: '{{ announced.speakers_reached > 0 }}'
+    then:
+      - set_conversation_response: Announced. {{ dnd_note }}
+    else:
+      - set_conversation_response: >-
+          {{ ('Nothing played: ' ~ dnd_note) if dnd_note else 'Sorry, none of the announcement speakers
+          are online.' }}
+mode: queued
+max: 3

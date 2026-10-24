@@ -12,6 +12,8 @@ here goes stale.
 | --- | --- |
 | `automations/voice_play_music_fast_via_music_assistant.yaml` | "Alexa, play X": finds an exact artist, song, album or playlist in your own library, then Spotify, and plays it on the room's Music Assistant player without the LLM. With no exact match it plays a near-miss (plural, punctuation or spacing difference, such as "Salmon Cats" → "Salmon Cat") if it is the only one of its kind, and says "Playing …". Asking again within 30 s of a near-miss skips the guess, and "… on Spotify" skips the library. Anything else goes to the Haiku agent. Matched artists, albums and songs go to Lidarr |
 | `automations/music_download_albums_played_from_spotify.yaml` | Sends the album of any Spotify track a Music Assistant player has played for 30 s to Lidarr, so it plays from the library next time |
+| `automations/voice_announce_to_the_house.yaml` | Fast path for "Alexa, announce/broadcast X" (or "tell everyone X"): hands the message to the announce script without the LLM and says "Announced.". Replaces HA's built-in broadcast, which only reaches HA satellites and says "Done" when none is online |
+| `scripts/voice_announce.yaml` | "Announce to the house": has every online Echo labelled Announce speak the message (Alexa Media `type: tts`; real Alexa announcements were accepted by Amazon but never played on the Echo Plus) and announces on every idle HA voice satellite labelled Announce (the one handling the request is busy, so it is skipped). Echos on Do Not Disturb are skipped, because Alexa drops announcements to them silently, and the reply names them. Exposed to Assist, so Haiku calls it when a sentence misses the fast path |
 | `automations/kitchen_lower_sonos_while_the_echo_listens.yaml` | Ducks the kitchen Sonos to 30% while the kitchen Echo listens, then restores it |
 | `automations/patchmon_notify_phone.yaml` | Pushes PatchMon alerts (host down, failed patch runs, reboots, login problems) to the iPhone. PatchMon calls it through a webhook; the real webhook ID is redacted here because this repo is public |
 | `scripts/voice_send_music_request_to_lidarr.yaml` | Adds an artist (whole discography) or one album to Lidarr, monitors it and searches. Logs each request on the Music requests to-do list |
@@ -47,15 +49,38 @@ here goes stale.
 ## Settings that only exist in a UI (recorded 2026-10-21)
 
 - Assist pipeline "Openrouter - Haiku", used by the Echo:
-  - Speech-to-text: Home Assistant Cloud, en-GB.
+  - Speech-to-text: ElevenLabs (integration option speech model Scribe v2, automatic
+    language detection off), language `en-US` (its only English code). On trial since
+    2026-10-24 because Home Assistant Cloud (en-GB) kept losing or garbling the first
+    word ("The announce …", "Face" for "Play"). The ElevenLabs API key needs the
+    Speech to Text permission as well as Text to Speech (without it every request fails
+    with a 401), and speech-to-text uses the same quota as the replies. To go back, set
+    Speech-to-text to Home Assistant Cloud, English (United Kingdom) on this pipeline.
   - Text-to-speech: ElevenLabs (integration default model Flash v2.5), language `en`.
     The voice is picked on the pipeline. Changed from Home Assistant Cloud's Libby on
     2026-10-23.
   - Conversation agent: OpenRouter `anthropic/claude-haiku-5.5`, with control of Home
     Assistant (Assist) and "Prefer handling commands locally" both on.
+  - The agent's prompt (Settings → Devices & services → OpenRouter → the Haiku
+    conversation entry → Reconfigure) ends with the "OK" music rule and this announce rule:
+    "To announce, broadcast or tell everyone something, always use the "Announce to the
+    house" script, never HassBroadcast (it cannot reach the Echos). Pass the message as
+    said, without the word announce. Then reply with exactly "Announced." if it reached
+    any speakers, followed only by which Echos were on Do Not Disturb if its result lists
+    any. Say nothing about earlier requests: each announcement stands alone. Speech
+    recognition often adds a stray word at the start, the tail of the wake word ("The
+    announce …", "Anna, announce …"): ignore it and still treat it as an announcement."
+    `script.voice_announce` is exposed to Assist.
 - The Echo (ESPHome device "Echo Dot - Custom") is in the Kitchen area. That is how
   "play X" with no room picks `media_player.kitchen_2`. `media_player.kitchen` and
   `media_player.kitchen_4` are unexposed from Assist, so the agent doesn't pick them.
+- Label "Announce" (`announce`, added 2026-10-24) decides who hears voice announcements:
+  the Echos `media_player.alexa_play_room`, `camille_s_echo_spot`, `sloane_s_echo_spot_2`,
+  `show`, `alexa_kitchen`, `alexa_dining_room` (Alexa Media Player), and the satellites
+  `assist_satellite.echo_dot_2_15ecca_assist_satellite`,
+  `home_assistant_voice_096e49_assist_satellite`, `samsung_sm_x210_assist_satellite`.
+  TVs, the soundbar and the Fire TV are left out on purpose, and so is
+  `media_player.greg_s_echo_dot`, the Echo that now runs echo-dot-assist.
 - To-do list "Music requests" (`todo.music_requests`, Local To-do). It must exist before
   the Lidarr script runs.
 - Media alerts (set up 2026-10-24):
@@ -103,11 +128,13 @@ here goes stale.
 4. For each file in `automations/`: Automations → Create automation → ⋮ → Edit in YAML,
    then paste the file. If HA saves it under a new config id, update `ITEMS` in the
    export script to match.
-5. For the media alerts: create the Media issues to-do list and the helpers listed above,
+5. For announcements: create the Announce label (Settings → Areas, labels & zones →
+   Labels) and put it on the entities listed above.
+6. For the media alerts: create the Media issues to-do list and the helpers listed above,
    paste the two automations with the webhook IDs from 1Password in place of
    `<redacted>` (the export writes every webhook ID that way), re-create the arrs' webhook connections, and create a dashboard with
    URL `dashboard-media` whose raw configuration is `dashboards/media.json`.
-6. Check the IDs that come from other integrations, which change if those are set up
+7. Check the IDs that come from other integrations, which change if those are set up
    again:
    - the Music Assistant `config_entry_id` in the fast-play automation
    - the conversation agent `conversation.anthropic_claude_haiku_5_5`
