@@ -16,7 +16,8 @@ here goes stale.
 | `automations/patchmon_notify_phone.yaml` | Pushes PatchMon alerts (host down, failed patch runs, reboots, login problems) to the iPhone. PatchMon calls it through a webhook; the real webhook ID is redacted here because this repo is public |
 | `scripts/voice_send_music_request_to_lidarr.yaml` | Adds an artist (whole discography) or one album to Lidarr, monitors it and searches. Logs each request on the Music requests to-do list |
 | `scripts/voice_start_music_assistant_playback.yaml` | Starts playback in the background, so the voice request ends without waiting for it |
-| `automations/media_arr_alerts.yaml` | Lidarr, Radarr and Sonarr post their webhook events here. Stuck or failed imports and health errors open an item on the Media issues list and notify the phone, once per open item (health items are keyed on the app and health check, so a restore closes them even when the message has changed); a Lidarr download failure only notifies |
+| `automations/media_arr_alerts.yaml` | Lidarr, Radarr and Sonarr post their webhook events here. Only health errors notify the phone and open an item on the Media issues list, once per open item; health items are keyed on the app and health check, so a restore closes them even when the message has changed |
+| `automations/media_stuck_downloads.yaml` | Cleanuparr clears failed and stuck downloads itself, so the phone only hears about one when an arr's "needs attention" count has stayed above 0 for 8 hours. Opens a Media issues item, closed when the count is back to 0 |
 | `automations/media_health_report.yaml` | Takes the `media-health-reporter` CronJob's counts every 15 minutes (Tdarr music check, Tdarr video errors, each arr's stuck queue items, health warnings, missing items) into the Media dashboard's helpers. Notifies when more music files need attention, and once when no report has come for an hour |
 | `dashboards/media.json` | The "Media" dashboard (`dashboard-media`), as Home Assistant stores it |
 | `configuration/rest_command.yaml` | The `rest_command` block from `configuration.yaml` that the Lidarr script calls |
@@ -69,9 +70,9 @@ here goes stale.
     (the CronJob reads that one through its ExternalSecret).
   - Lidarr, Radarr and Sonarr each have a Settings > Connect > Webhook called
     "Home Assistant (media alerts)", POST to `http://172.16.30.124:8123/api/webhook/<arr-webhook-id>`,
-    health warnings not included. Lidarr: On Download Failure, On Import Failure, On Health
-    Issue, On Health Restored. Radarr and Sonarr: On Manual Interaction Required, On Health
-    Issue, On Health Restored. Configarr doesn't manage notifications, so these are UI-only.
+    health warnings not included. All three send only On Health Issue and On Health Restored
+    (failed downloads and imports are Cleanuparr's job; Lidarr's import-failure payload
+    carries no artist, album or reason anyway). Configarr doesn't manage notifications, so these are UI-only.
 - Text helper "Voice last music request" (`input_text.voice_last_music_request`, max
   length 255). The fast-play automation stores the last request in it as JSON, so it can
   tell when a near-miss is asked for again.
