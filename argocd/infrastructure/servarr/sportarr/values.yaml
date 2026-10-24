@@ -43,7 +43,7 @@ controllers:
       sportarr:
         image:
           repository: sportarr/sportarr
-          tag: 4.1.10.1120
+          tag: 4.1.11.1121
         env:
           TZ: Europe/London
           PUID: "1000"
