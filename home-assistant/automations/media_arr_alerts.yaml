@@ -1,0 +1,135 @@
+# Copy of the Home Assistant automation "Media: arr alerts" (automation.media_arr_alerts),
+# written by scripts/export-ha-config.py. Home Assistant is the live copy:
+# change it there, then re-export. home-assistant/README.md says how to restore it.
+id: media_arr_alerts
+alias: 'Media: arr alerts'
+description: >-
+  Lidarr, Radarr and Sonarr post their webhook events here (Settings > Connect > "Home Assistant"). Things
+  that need a person (stuck imports, failed imports, health errors) notify the phone and open an item
+  on the Media issues list; a health restore closes the item for the same health check. A Lidarr download
+  failure only notifies: Lidarr blocklists and re-searches by itself, and the Tdarr music check marks
+  broken downloads failed on purpose. Health warnings (a flapping indexer) don't notify; they show as
+  counts on the Media dashboard. The webhook ID is a secret, kept in 1Password item media-alerts-webhooks,
+  so it's kept out of the public repo.
+triggers:
+  - trigger: webhook
+    webhook_id: <redacted>
+    allowed_methods:
+      - POST
+    local_only: true
+    note: >-
+      The arrs post from inside the k3s cluster, so the call arrives from a node's LAN address.
+actions:
+  - choose:
+      - alias: Connection test from the arr's Connect page
+        conditions:
+          - condition: template
+            value_template: '{{ event == ''Test'' }}'
+        sequence:
+          - action: notify.mobile_app_gregs_iphone
+            data:
+              title: '{{ app }}: test'
+              message: Webhook to Home Assistant works.
+              data:
+                group: media
+      - alias: Needs a person - open a Media issues item and notify, once per open issue
+        conditions:
+          - condition: template
+            value_template: |-
+              {{ event in ['ManualInteractionRequired', 'ImportFailure']
+                 or (event == 'Health' and level == 'error') }}
+        sequence:
+          - action: todo.get_items
+            target:
+              entity_id: todo.media_issues
+            data:
+              status: needs_action
+            response_variable: open_items
+          - variables:
+              already_open: |-
+                {% set items = open_items['todo.media_issues']['items'] %} {% if key %}
+                  {{ items | selectattr('description', 'defined') | selectattr('description', 'search', key ~ '$') | list | count > 0 }}
+                {% else %}
+                  {{ issue | truncate(250) in (items | map(attribute='summary') | list) }}
+                {% endif %}
+          - if:
+              - condition: template
+                value_template: '{{ not already_open }}'
+            then:
+              - action: notify.mobile_app_gregs_iphone
+                data:
+                  title: |-
+                    {{ app }}: {{ {'ManualInteractionRequired': 'import needs you',
+                                   'ImportFailure': 'import failed',
+                                   'Health': 'health error'}[event] }}
+                  message: '{{ subject }}{{ '' - '' ~ detail if detail and detail != subject else ''''
+                    }}'
+                  data:
+                    group: media
+                    push:
+                      interruption-level: time-sensitive
+              - action: todo.add_item
+                target:
+                  entity_id: todo.media_issues
+                data:
+                  item: '{{ issue | truncate(250) }}'
+                  description: >-
+                    {{ event }} {{ now().strftime('%-d %b %H:%M') }}: {{ detail }}{{ '\n' ~ key if key
+                    else '' }}
+      - alias: Health restored - close the Media issues item for the same check
+        conditions:
+          - condition: template
+            value_template: '{{ event == ''HealthRestored'' }}'
+        sequence:
+          - action: todo.get_items
+            target:
+              entity_id: todo.media_issues
+            data:
+              status: needs_action
+            response_variable: open_items
+          - repeat:
+              for_each: |-
+                {{ open_items['todo.media_issues']['items'] | selectattr('description', 'defined')
+                   | selectattr('description', 'search', key ~ '$') | map(attribute='uid') | list }}
+              sequence:
+                - action: todo.update_item
+                  target:
+                    entity_id: todo.media_issues
+                  data:
+                    item: '{{ repeat.item }}'
+                    status: completed
+      - alias: Lidarr download failed - just say so, it re-searches by itself
+        conditions:
+          - condition: template
+            value_template: '{{ event == ''DownloadFailure'' }}'
+        sequence:
+          - action: notify.mobile_app_gregs_iphone
+            data:
+              title: '{{ app }}: download failed, searching again'
+              message: '{{ subject }}{{ '' - '' ~ detail if detail and detail != subject else '''' }}'
+              data:
+                group: media
+                push:
+                  interruption-level: passive
+variables:
+  app: '{{ trigger.json.instanceName | default(''arr'', true) }}'
+  event: '{{ trigger.json.eventType | default('''') }}'
+  subject: >-
+    {%- set j = trigger.json -%} {%- if j.movie is defined and j.movie -%}{{ j.movie.title }}{{ ' (' ~
+    j.movie.year ~ ')' if j.movie.year else '' }} {%- elif j.series is defined and j.series -%}{{ j.series.title
+    }} {%- if j.episodes is defined and j.episodes %} {{ j.episodes | map(attribute='seasonNumber') |
+    first | default('') }}x{{ '%02d' | format(j.episodes | map(attribute='episodeNumber') | first | default(0))
+    }}{% endif %} {%- elif j.artist is defined and j.artist -%}{{ j.artist.name }}{% if j.albums is defined
+    and j.albums %} - {{ j.albums | map(attribute='title') | join(', ') }}{% endif %} {%- elif j.releaseTitle
+    is defined -%}{{ j.releaseTitle }} {%- else -%}{{ j.message | default('') }}{%- endif -%}
+  detail: >-
+    {%- set j = trigger.json -%} {%- if j.downloadStatusMessages is defined and j.downloadStatusMessages
+    -%} {{ j.downloadStatusMessages | map(attribute='messages') | map('join', '; ') | join('; ') | truncate(200)
+    }} {%- else -%}{{ (j.message | default('')) | truncate(200) }}{%- endif -%}
+  level: '{{ trigger.json.level | default('''') | lower }}'
+  issue: '{{ app }}: {{ subject }}'
+  key: >-
+    {{ 'health:' ~ app ~ '/' ~ trigger.json.type | default('') if event in ['Health', 'HealthRestored']
+    else '' }}
+mode: queued
+max: 20

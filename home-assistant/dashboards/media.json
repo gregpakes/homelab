@@ -1,0 +1,223 @@
+{
+  "views": [
+    {
+      "title": "Media",
+      "path": "media",
+      "type": "sections",
+      "max_columns": 3,
+      "sections": [
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Needs attention",
+              "icon": "mdi:alert-circle-outline"
+            },
+            {
+              "type": "markdown",
+              "content": "Stuck imports, failed imports and health **errors** land on this list and on your phone. A health restore ticks its item off. Tick items off yourself once dealt with."
+            },
+            {
+              "type": "todo-list",
+              "entity": "todo.media_issues",
+              "title": "Media issues",
+              "hide_completed": true
+            },
+            {
+              "type": "tile",
+              "entity": "input_number.tdarr_music_needs_attention",
+              "name": "Music files to look at",
+              "vertical": false,
+              "color": "red",
+              "icon": "mdi:music-note-off"
+            },
+            {
+              "type": "tile",
+              "entity": "input_number.lidarr_queue_needs_attention",
+              "name": "Lidarr stuck downloads",
+              "vertical": false,
+              "color": "red",
+              "icon": "mdi:download-off"
+            },
+            {
+              "type": "tile",
+              "entity": "input_number.radarr_queue_needs_attention",
+              "name": "Radarr stuck downloads",
+              "vertical": false,
+              "color": "red",
+              "icon": "mdi:download-off"
+            },
+            {
+              "type": "tile",
+              "entity": "input_number.sonarr_queue_needs_attention",
+              "name": "Sonarr stuck downloads",
+              "vertical": false,
+              "color": "red",
+              "icon": "mdi:download-off"
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Music",
+              "icon": "mdi:music"
+            },
+            {
+              "type": "tile",
+              "entity": "input_number.tdarr_music_passed",
+              "name": "Integrity check passed",
+              "vertical": false,
+              "color": "green",
+              "icon": "mdi:check-decagram-outline"
+            },
+            {
+              "type": "tile",
+              "entity": "input_number.tdarr_music_queued",
+              "name": "Waiting to be checked",
+              "vertical": false,
+              "color": "blue",
+              "icon": "mdi:tray-full"
+            },
+            {
+              "type": "tile",
+              "entity": "input_number.lidarr_missing_albums",
+              "name": "Missing albums",
+              "vertical": false,
+              "color": "amber",
+              "icon": "mdi:album"
+            },
+            {
+              "type": "tile",
+              "entity": "input_number.lidarr_health_warnings",
+              "name": "Lidarr health warnings",
+              "vertical": false,
+              "color": "amber",
+              "icon": "mdi:alert-outline"
+            },
+            {
+              "type": "todo-list",
+              "entity": "todo.music_requests",
+              "title": "Music requests",
+              "hide_completed": true
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Films & TV",
+              "icon": "mdi:movie-open-outline"
+            },
+            {
+              "type": "tile",
+              "entity": "input_number.radarr_missing_movies",
+              "name": "Missing films",
+              "vertical": false,
+              "color": "amber",
+              "icon": "mdi:movie-search-outline"
+            },
+            {
+              "type": "tile",
+              "entity": "input_number.sonarr_missing_episodes",
+              "name": "Missing episodes",
+              "vertical": false,
+              "color": "amber",
+              "icon": "mdi:television-classic-off"
+            },
+            {
+              "type": "tile",
+              "entity": "input_number.radarr_health_warnings",
+              "name": "Radarr health warnings",
+              "vertical": false,
+              "color": "amber",
+              "icon": "mdi:alert-outline"
+            },
+            {
+              "type": "tile",
+              "entity": "input_number.sonarr_health_warnings",
+              "name": "Sonarr health warnings",
+              "vertical": false,
+              "color": "amber",
+              "icon": "mdi:alert-outline"
+            },
+            {
+              "type": "tile",
+              "entity": "input_number.tdarr_video_errors",
+              "name": "Tdarr video errors",
+              "vertical": false,
+              "color": "red",
+              "icon": "mdi:filmstrip-off"
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Reporter and apps",
+              "icon": "mdi:information-outline"
+            },
+            {
+              "type": "tile",
+              "entity": "input_datetime.media_health_last_report",
+              "name": "Last health report",
+              "vertical": false,
+              "icon": "mdi:clock-check-outline"
+            },
+            {
+              "type": "markdown",
+              "content": "Counts come from the `media-health-reporter` CronJob every 15 minutes. If none arrives for an hour your phone is told once."
+            },
+            {
+              "type": "button",
+              "name": "Tdarr",
+              "icon": "mdi:movie-cog-outline",
+              "show_state": false,
+              "tap_action": {
+                "action": "url",
+                "url_path": "https://tdarr.gregpakes.co.uk"
+              }
+            },
+            {
+              "type": "button",
+              "name": "Lidarr",
+              "icon": "mdi:music-box-multiple-outline",
+              "show_state": false,
+              "tap_action": {
+                "action": "url",
+                "url_path": "https://lidarr.gregpakes.co.uk"
+              }
+            },
+            {
+              "type": "button",
+              "name": "Radarr",
+              "icon": "mdi:filmstrip",
+              "show_state": false,
+              "tap_action": {
+                "action": "url",
+                "url_path": "https://radarr.gregpakes.co.uk"
+              }
+            },
+            {
+              "type": "button",
+              "name": "Sonarr",
+              "icon": "mdi:television",
+              "show_state": false,
+              "tap_action": {
+                "action": "url",
+                "url_path": "https://sonarr.gregpakes.co.uk"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

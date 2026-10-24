@@ -16,6 +16,9 @@ here goes stale.
 | `automations/patchmon_notify_phone.yaml` | Pushes PatchMon alerts (host down, failed patch runs, reboots, login problems) to the iPhone. PatchMon calls it through a webhook; the real webhook ID is redacted here because this repo is public |
 | `scripts/voice_send_music_request_to_lidarr.yaml` | Adds an artist (whole discography) or one album to Lidarr, monitors it and searches. Logs each request on the Music requests to-do list |
 | `scripts/voice_start_music_assistant_playback.yaml` | Starts playback in the background, so the voice request ends without waiting for it |
+| `automations/media_arr_alerts.yaml` | Lidarr, Radarr and Sonarr post their webhook events here. Stuck or failed imports and health errors open an item on the Media issues list and notify the phone, once per open item (health items are keyed on the app and health check, so a restore closes them even when the message has changed); a Lidarr download failure only notifies |
+| `automations/media_health_report.yaml` | Takes the `media-health-reporter` CronJob's counts every 15 minutes (Tdarr music check, Tdarr video errors, each arr's stuck queue items, health warnings, missing items) into the Media dashboard's helpers. Notifies when more music files need attention, and once when no report has come for an hour |
+| `dashboards/media.json` | The "Media" dashboard (`dashboard-media`), as Home Assistant stores it |
 | `configuration/rest_command.yaml` | The `rest_command` block from `configuration.yaml` that the Lidarr script calls |
 
 ## How the music flows
@@ -54,6 +57,21 @@ here goes stale.
   `media_player.kitchen_4` are unexposed from Assist, so the agent doesn't pick them.
 - To-do list "Music requests" (`todo.music_requests`, Local To-do). It must exist before
   the Lidarr script runs.
+- Media alerts (set up 2026-10-24):
+  - To-do list "Media issues" (`todo.media_issues`, Local To-do).
+  - Helpers the reporter fills: input_number `tdarr_music_passed`, `tdarr_music_queued`,
+    `tdarr_music_needs_attention`, `tdarr_video_errors`, `{lidarr,radarr,sonarr}_queue_needs_attention`,
+    `{lidarr,radarr,sonarr}_health_warnings`, `lidarr_missing_albums`,
+    `radarr_missing_movies`, `sonarr_missing_episodes` (all 0-100000, step 1, box), and
+    input_datetime `media_health_last_report` (date and time).
+  - The two webhook IDs are in 1Password item `media-alerts-webhooks` (Homelab vault):
+    `arr-webhook-id` for "Media: arr alerts", `health-webhook-id` for "Media: health report"
+    (the CronJob reads that one through its ExternalSecret).
+  - Lidarr, Radarr and Sonarr each have a Settings > Connect > Webhook called
+    "Home Assistant (media alerts)", POST to `http://172.16.30.124:8123/api/webhook/<arr-webhook-id>`,
+    health warnings not included. Lidarr: On Download Failure, On Import Failure, On Health
+    Issue, On Health Restored. Radarr and Sonarr: On Manual Interaction Required, On Health
+    Issue, On Health Restored. Configarr doesn't manage notifications, so these are UI-only.
 - Text helper "Voice last music request" (`input_text.voice_last_music_request`, max
   length 255). The fast-play automation stores the last request in it as JSON, so it can
   tell when a near-miss is asked for again.
@@ -84,7 +102,11 @@ here goes stale.
 4. For each file in `automations/`: Automations → Create automation → ⋮ → Edit in YAML,
    then paste the file. If HA saves it under a new config id, update `ITEMS` in the
    export script to match.
-5. Check the IDs that come from other integrations, which change if those are set up
+5. For the media alerts: create the Media issues to-do list and the helpers listed above,
+   paste the two automations with the webhook IDs from 1Password in place of
+   `<redacted>` (the export writes every webhook ID that way), re-create the arrs' webhook connections, and create a dashboard with
+   URL `dashboard-media` whose raw configuration is `dashboards/media.json`.
+6. Check the IDs that come from other integrations, which change if those are set up
    again:
    - the Music Assistant `config_entry_id` in the fast-play automation
    - the conversation agent `conversation.anthropic_claude_haiku_5_5`

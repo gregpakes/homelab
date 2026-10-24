@@ -62,8 +62,11 @@ never showed Tdarr the music at all.
   failed grab triggers a search too. At most 40 files a day per node; set the flow's
   `dryRun` input to `true` to log what it would do instead. The node's `LIDARR_API_KEY`
   comes from the `lidarr-secrets` Secret.
-- Every file that isn't OK fails the flow, so Tdarr's error list shows what was caught
-  and why (the job log carries the decoded and declared lengths).
+- A broken file Lidarr was told to replace ends the flow normally. A broken file Lidarr
+  couldn't be told about (not found, daily limit, dry run) and a file that couldn't be
+  checked fail the flow, so Tdarr's error list, and the Media dashboard's "music files
+  to look at" count built from it, hold only files that need a person. The job log
+  carries the decoded and declared lengths.
 - The Music library holds new files for 10 minutes, so a file Lidarr is still copying
   in isn't checked half-written.
 - Its health checks must stay on (thorough, i.e. ffmpeg): with them off Tdarr shows a
